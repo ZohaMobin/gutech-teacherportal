@@ -1,16 +1,17 @@
 .ProgressReport-container {
+    align-items: center;
     width: 80%;
     margin: auto;
     font-family: Arial, sans-serif;
   }
   
   h2 {
-    text-align: center;
+    text-align: left;
     margin-bottom: 20px;
     color: #ff5733;
   }
   
-  Progress {
+  .ProgressReport  {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
