@@ -1,47 +1,114 @@
-.ProgressReport-container {
-    align-items: center;
-    width: 80%;
-    margin: auto;
-    font-family: Arial, sans-serif;
-  }
-  
-  h2 {
-    text-align: left;
-    margin-bottom: 20px;
-    color: #ff5733;
-  }
-  
-  .ProgressReport  {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-  }
-  
-  thead th {
-    background-color: #f2f2f2;
-    color: #333;
-    font-weight: bold;
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-  }
-  
-  tbody td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-  }
-  
-  tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .highlight-row {
-    background-color: #ffcccc !important;
-    color: #333;
-    font-weight: bold;
-  }
-  
-  tbody tr:hover {
-    background-color: #f1f1f1;
-  }
+/* Container for scatter graph and GPA boxes */
+.gpa-dashboard {
+  display: flex;
+  flex-direction: row;  /* Align horizontally */
+  justify-content: space-between;  /* Space between the graph and the boxes */
+  margin-bottom: 20px;  /* Space below */
+  width: 100%;
+  padding: 20px;
+}
+
+/* Scatter plot style */
+.gpa-dashboard .scatter-graph {
+  width: 60%;  /* Take 60% of the width for the scatter graph */
+  height: 300px;  /* Adjust the height of the scatter plot */
+  margin-right: 20px;  /* Space between the graph and the GPA boxes */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for better separation */
+  border-radius: 8px;
+}
+
+/* GPA info boxes */
+.gpa-info-box {
+  width: 35%;  /* Take 35% of the width for the GPA boxes */
+  display: flex;
+  flex-direction: column;  /* Stack the boxes vertically */
+  justify-content: space-evenly;
+  padding: 10px;
+}
+
+/* Individual GPA box style */
+.gpa-box {
+  background-color: #f4f4f4;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease;
+}
+
+/* Specific styles for each GPA box */
+.gpa-box h3 {
+  font-size: 18px;
+  color: #333;
+}
+
+.gpa-box p {
+  font-size: 16px;
+  color: #555;
+}
+
+/* Hover effect for GPA boxes */
+.gpa-box:hover {
+  background-color:#991D20;
+  color: white;
+}
+
+/* Adjusting the size of high, average, and low GPA boxes */
+.highest-gpa,
+.lowest-gpa,
+.average-gpa {
+  font-size: 14px;
+  padding: 10px;
+}
+
+.highest-gpa {
+  background-color: #d4edda; /* Greenish background */
+}
+
+.lowest-gpa {
+  background-color: #f8d7da; /* Red background */
+}
+
+.average-gpa {
+  background-color: #cce5ff; /* Blue background */
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+table th,
+table td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Low attendance styling */
+.low-attendance {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Layout adjustments to ensure the table is placed below */
+.gpa-dashboard + table {
+  margin-top: 40px;  /* Add space between GPA dashboard and table */
+}
