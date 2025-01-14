@@ -3,7 +3,9 @@ import Table from "../../Components/Table";
 import "./Teacher_Gradings.css";
 
 const GradingPage = () => {
-  const [subject, setSubject] = useState("Subject");
+   const [subject, setSubject] = useState("Subject");
+   const [course, setCourse] = useState("Select your course");
+   const [batch, setBatch] = useState("Select your batch");
 
   const quizzes = [
     {
@@ -69,12 +71,28 @@ const GradingPage = () => {
           <input type="text" placeholder="Search std_id" />
         </div>
         <div className="dropdown">
-          <button className="dropdown-button">Select your course</button>
-          {/* Dropdown content for course */}
+          <select
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+            className="dropdown-select"
+          >
+            <option disabled>Select your course</option>
+            <option value="Discrete">Discrete</option>
+            <option value="PSPF">PSPF</option>
+            <option value="Calculus">Calculus</option>
+          </select>
         </div>
+
         <div className="dropdown">
-          <button className="dropdown-button">Select your batch</button>
-          {/* Dropdown content for batch */}
+          <select
+            value={batch}
+            onChange={(e) => setBatch(e.target.value)}
+            className="dropdown-select"
+          >
+            <option disabled>Select your batch</option>
+            <option value="fall-25">Fall-25</option>
+            <option value="spring-26">Spring-26</option>
+          </select>
         </div>
       </div>
       <h1>Grades of {subject}</h1>
