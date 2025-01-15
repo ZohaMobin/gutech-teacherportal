@@ -43,11 +43,11 @@
   src: url('./Fonts/Poppins/Poppins-Regular.ttf') format('truetype');
 }
 @font-face {
-  font-family: 'Poppins-SemiBold';
+  font-family: 'Poppins-Medium';
   src: url('./Fonts/Poppins/Poppins-Medium.ttf') format('truetype');
 }
 @font-face {
-  font-family: 'Poppins-Medium';
+  font-family: 'Poppins-SemiBold';
   src: url('./Fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
 }
 
