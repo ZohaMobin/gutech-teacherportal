@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+  justify-items: center;
 }
 
 .App-logo {
@@ -35,4 +36,21 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@font-face {
+  font-family: 'Poppins-Regular';
+  src: url('./Fonts/Poppins/Poppins-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Poppins-SemiBold';
+  src: url('./Fonts/Poppins/Poppins-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Poppins-Medium';
+  src: url('./Fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
+}
+
+.body {
+  font-family: Poppins-Regular;
 }
