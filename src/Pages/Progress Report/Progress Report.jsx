@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";  // Import useState
 import { Scatter } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from "chart.js";
 import "./Progress Report.css";
@@ -7,17 +7,26 @@ import "./Progress Report.css";
 ChartJS.register(CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const ProgressReport = () => {
+  // Student data
   const data = [
-    { name: "Student 1", roll: "BCS-543", attendance: "90%", gpa: "3.8", quizzes: "10/10", midExam: "20/25", finalExam: "30/30" },
-    { name: "Student 2", roll: "BCS-543", attendance: "85%", gpa: "3.5", quizzes: "9/10", midExam: "19/25", finalExam: "28/30" },
-    { name: "Student 3", roll: "BCS-543", attendance: "75%", gpa: "2.9", quizzes: "8/10", midExam: "16/25", finalExam: "22/30" },
-    { name: "Student 9", roll: "BCS-543", attendance: "45%", gpa: "3.3", quizzes: "10/10", midExam: "20/25", finalExam: "27/30" },
-    { name: "Student 4", roll: "BCS-543", attendance: "80%", gpa: "3.2", quizzes: "7/10", midExam: "18/25", finalExam: "25/30" },
-    { name: "Student 5", roll: "BCS-543", attendance: "90%", gpa: "3.7", quizzes: "10/10", midExam: "20/25", finalExam: "28/30" },
-    { name: "Student 6", roll: "BCS-543", attendance: "70%", gpa: "2.5", quizzes: "5/10", midExam: "12/25", finalExam: "15/30" },
-    { name: "Student 7", roll: "BCS-543", attendance: "95%", gpa: "3.9", quizzes: "10/10", midExam: "22/25", finalExam: "30/30" },
-    { name: "Student 8", roll: "BCS-543", attendance: "80%", gpa: "3.0", quizzes: "9/10", midExam: "19/25", finalExam: "23/30" },
+    { name: "Student 1", roll: "BCS-543", attendance: "90%", gpa: 3.8, quizzes: "10/10", midExam: "20/25", finalExam: "30/30" },
+    { name: "Student 2", roll: "BCS-543", attendance: "85%", gpa: 3.5, quizzes: "9/10", midExam: "19/25", finalExam: "28/30" },
+    { name: "Student 3", roll: "BCS-543", attendance: "35%", gpa: 2.9, quizzes: "8/10", midExam: "16/25", finalExam: "22/30" },
+    { name: "Student 4", roll: "BCS-543", attendance: "80%", gpa: 3.2, quizzes: "7/10", midExam: "18/25", finalExam: "25/30" },
+    { name: "Student 5", roll: "BCS-543", attendance: "90%", gpa: 3.7, quizzes: "10/10", midExam: "20/25", finalExam: "28/30" },
+    { name: "Student 6", roll: "BCS-543", attendance: "70%", gpa: 2.5, quizzes: "5/10", midExam: "12/25", finalExam: "15/30" },
+    { name: "Student 7", roll: "BCS-543", attendance: "95%", gpa: 3.9, quizzes: "10/10", midExam: "22/25", finalExam: "30/30" },
+    { name: "Student 8", roll: "BCS-543", attendance: "80%", gpa: 3.0, quizzes: "9/10", midExam: "19/25", finalExam: "23/30" },
+    { name: "Student 9", roll: "BCS-543", attendance: "85%", gpa: 2.3, quizzes: "10/10", midExam: "20/25", finalExam: "27/30" },
   ];
+
+  // State to store the selected class
+  const [selectedClass, setSelectedClass] = useState(""); 
+
+  // Handle class change
+  const handleClassChange = (event) => {
+    setSelectedClass(event.target.value);
+  };
 
   // Calculate average GPA
   const totalGpa = data.reduce((sum, row) => sum + parseFloat(row.gpa), 0);
@@ -42,6 +51,7 @@ const ProgressReport = () => {
     return `${totalScore}/${totalMax}`;
   };
 
+  // Scatter chart data
   const scatterData = {
     datasets: [
       {
@@ -50,13 +60,27 @@ const ProgressReport = () => {
           x: index + 1,
           y: parseFloat(student.gpa),
           label: student.name,
-          backgroundColor: 'rgba(30, 197, 134,)',  // Ensure this is set
-          borderColor: 'rgba(75, 192, 192, 0.6)',  // Border color for points
         })),
+        backgroundColor: data.map((student) => {
+          const gpa = parseFloat(student.gpa);
+          return gpa >= 3.5
+            ? 'rgba(0, 255, 0, 0.6)' // Green for GPA >= 3.5
+            : gpa >= 3
+            ? 'rgba(255, 0, 0, 0.6)' // Red for GPA >= 3
+            : 'rgba(0, 0, 255, 0.6)'; // Blue for GPA < 3
+        }),
+        borderColor: data.map((student) => {
+          const gpa = parseFloat(student.gpa);
+          return gpa >= 3.5
+            ? 'rgba(0, 128, 0, 1)' // Dark Green for GPA >= 3.5
+            : gpa >= 3
+            ? 'rgba(128, 0, 0, 1)' // Dark Red for GPA >= 3
+            : 'rgba(0, 0, 128, 1)'; // Dark Blue for GPA < 3
+        }),
+        borderWidth: 1, // Optional: Makes the borders more visible
       },
     ],
   };
-  
 
   // Scatter plot options
   const options = {
@@ -88,6 +112,21 @@ const ProgressReport = () => {
 
   return (
     <div>
+      {/* Dropdown for class selection */}
+      <div>
+        <label htmlFor="classSelect">Select Class: </label>
+        <select id="classSelect" value={selectedClass} onChange={handleClassChange}>
+          <option value="">Select a Class</option>
+          <option value="PSPF">PSPF</option>
+          <option value="PSPF LAB">PSPF LAB</option>
+          <option value="WEB TECH">WEB TECH</option>
+          <option value="WEB TECH LAB">WEB TECH LAB</option>
+        </select>
+      </div>
+
+      {/* Display selected class */}
+      <p>You selected: {selectedClass || "No class selected"}</p>
+
       <div className="gpa-dashboard">
         {/* Scatter graph */}
         <div className="scatter-graph">
@@ -101,7 +140,7 @@ const ProgressReport = () => {
             <p>{highestGpaStudent.name} ({highestGpaStudent.gpa})</p>
           </div>
           <div className="gpa-box average-gpa">
-            <h3>Average GPA</h3>
+            <h3>Average Class GPA</h3>
             <p>{averageGpa}</p>
           </div>
           <div className="gpa-box lowest-gpa">
@@ -127,7 +166,10 @@ const ProgressReport = () => {
         </thead>
         <tbody>
           {data.map((student, index) => (
-            <tr key={index} className={parseFloat(student.attendance) < 50 ? "low-attendance" : ""}>
+            <tr
+              key={index}
+              className={parseFloat(student.attendance.replace('%', '')) < 50 ? "low-attendance" : ""}
+            >
               <td>{student.name}</td>
               <td>{student.roll}</td>
               <td>{student.attendance}</td>

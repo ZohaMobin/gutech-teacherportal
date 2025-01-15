@@ -11,10 +11,13 @@
 /* Scatter plot style */
 .gpa-dashboard .scatter-graph {
   width: 60%;  /* Take 60% of the width for the scatter graph */
-  height: 300px;  /* Adjust the height of the scatter plot */
+  height: 400px;  /* Adjust the height of the scatter plot */
   margin-right: 20px;  /* Space between the graph and the GPA boxes */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for better separation */
   border-radius: 8px;
+  margin-top: 30px;
+  background-color: whitesmoke;
+  color: black;
 }
 
 /* GPA info boxes */
@@ -46,12 +49,6 @@
 .gpa-box p {
   font-size: 16px;
   color: #555;
-}
-
-/* Hover effect for GPA boxes */
-.gpa-box:hover {
-  background-color:#991D20;
-  color: white;
 }
 
 /* Adjusting the size of high, average, and low GPA boxes */
@@ -100,15 +97,57 @@ table tr:nth-child(even) {
 
 table tr:hover {
   background-color: #f1f1f1;
+  color: black;
 }
 
-/* Low attendance styling */
 .low-attendance {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #991D20;
+  color: white;
 }
 
 /* Layout adjustments to ensure the table is placed below */
 .gpa-dashboard + table {
   margin-top: 40px;  /* Add space between GPA dashboard and table */
+}
+
+/* Styling for the dropdown container */
+select {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 10px 0;
+  width: 100%; /* Make dropdown take full width of its container */
+  max-width: 300px;  /* Optional: limit max width */
+  cursor: pointer;
+}
+
+/* Label for the dropdown */
+label {
+  font-size: 18px;
+  margin-right: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Display selected class message */
+p {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+/* Hover effects for dropdown */
+select:hover {
+  border-color: #991D20;
+}
+
+
+select:focus {
+  outline: none;
+  border-color: #991D20;
+  box-shadow: 0 0 5px #991D20;
 }
