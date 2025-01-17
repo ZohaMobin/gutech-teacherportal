@@ -1,13 +1,13 @@
 import React from "react";
-import "./ChatList.css"; 
+import "./Student_Chats.css"; 
 
 const ChatList = () => {
 
   const students = [
     { id: 1, name: "M. Bilal Azfar", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
     { id: 2, name: "M. Amaz", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
-    { id: 3, name: "Abu Bakar Siddiqui", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
-    { id: 3, name: "Hafiz.M.Huzaifa Khan", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
+    { id: 3, name: "Abu Bakar Siddique", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
+    { id: 4, name: "Hafiz.M.Huzaifa Khan", time: "10:56 AM", message: "Sir I'm asking about Xyz topics as you disc..." },
   ];
 
   return (
