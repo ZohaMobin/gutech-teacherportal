@@ -1,7 +1,9 @@
-.main-div {
+.main-studentPerformance-div {
+    display: flex;
+    flex-direction: column;
     border: 1.5px solid #E2E8F0;
-    padding: 5px 25px 25px 25px;
-    margin-top: 10%;
+    padding: 30px 35px;
+    gap: 25px;
     text-align: left;
     border-radius: 10px;
     box-shadow: 0px 0px 4.5px 0px #EBEEF2;
@@ -9,7 +11,7 @@
     width: fit-content;
 }
 
-.second-div {
+.second-studentPerformance-div {
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -53,7 +55,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 10px;
+    padding-top: 9px;
     border-radius: 6px;
     transition: 0.3s ease;
 }
@@ -88,9 +90,15 @@
     font-size: 11px;
     color: #991D20;
     rotate: -90deg;
-    text-align: start;
+    text-align: center;
     align-self: center;
-    margin: 0px -30px 48px -50px;
+    width: max-content;
+    margin: -45px -30px 0px -52px;
+}
+
+.y-axis-label p {
+    margin: 0;
+    padding: 0;
 }
 
 .x-axis-label {
@@ -110,7 +118,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 30px;
+    width: 165px;
     padding: 0px 20px;
     border-radius: 13px;
 }

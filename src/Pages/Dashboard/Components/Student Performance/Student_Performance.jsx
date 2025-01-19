@@ -48,9 +48,9 @@ const Student_Performance = () => {
   };
 
   return (
-    <div className="main-div">
-      <p style={{ fontFamily: "Poppins-Semibold" }}>Student Performance</p>
-      <div className="second-div"> {/* Div containing chart and summary */}
+    <div className="main-studentPerformance-div">
+      <p style={{fontFamily: "Poppins-Medium", fontSize: 20, margin: 0, padding: 0}}>Student Performance</p>
+      <div className="second-studentPerformance-div"> {/* Div containing chart and summary */}
 
         {/* Weekly chart */}
         <div className="chart-main">
