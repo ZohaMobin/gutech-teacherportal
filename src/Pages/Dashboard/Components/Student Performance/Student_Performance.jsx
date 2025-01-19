@@ -6,8 +6,8 @@ import Filter_Dropdown from './Components/Filter_Dropdown.jsx';
 const Student_Performance = () => {
   const gpaData = {
     "Batch 01": [1.2, 1.3, 1.4, 1.5, 1.5, 1.6, 1.7, 1.8, 2.0, 2.1, 2.2, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.5, 2.5, 2.6, 2.7, 2.8, 2.9, 2.8, 2.9, 2.7, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.4, 3.6, 3.7, 3.7, 4.0, 4.0],
-    "Batch 02": [3.5, 3.8, 2.9, 3.7, 2.4, 3.3, 3.1, 2.5, 3.9, 3.2],
-    "Batch 03": [2.7, 2.9, 3.0, 2.8, 2.5, 3.4, 3.2, 2.6, 3.1, 2.9]
+    "Batch 02": [1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.3, 2.5, 2.6, 2.7, 2.8, 2.9, 2.7, 2.8, 3.0, 3.1, 3.0, 3.2, 3.3, 3.4, 3.4, 3.5, 3.5, 3.7, 3.8, 3.9, 4.0],
+    "Batch 03": [1.7, 1.8, 1.9, 2.0, 2.1, 2.3, 2.4, 2.5, 2.5, 2.6, 2.7, 2.8, 2.9, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.3, 3.5, 3.6, 3.8, 3.0, 3.2, 3.1, 2.8, 3.0, 2.7, 2.6, 3.2, 3.4]
   };
 
   const [selectedBatch, setSelectedBatch] = useState("Batch 01");
@@ -32,7 +32,7 @@ const Student_Performance = () => {
 
   const gpaCounts = gpaBrackets.map(bracket => countGpasInBracket(gpas, bracket));
 
-  const maxCount = Math.ceil(Math.max(...gpaCounts) / 10) * 10;
+  const maxCount = Math.max(...gpaCounts);
 
   const yAxisIntervals = Array.from({ length: numIntervals + 1 }, (_, index) =>
     Math.round((maxCount / numIntervals) * index)
@@ -85,11 +85,11 @@ const Student_Performance = () => {
               {/* X-axis */}
               <ul className="chart-x-axis">
                 {gpaBrackets.map((bracket, index) => (
-                  <li key={index} className="x-axis-interval-values">
-                    {bracket.min} - {bracket.max}
-                  </li>
+                    <li key={index} className="x-axis-interval-values">
+                    {index === gpaBrackets.length - 1 ? bracket.max : `${bracket.min} - ${bracket.max}`}
+                    </li>
                 ))}
-              </ul>
+                </ul>
               <p className="x-axis-label">Class GPA</p>
             </div>
           </div>
