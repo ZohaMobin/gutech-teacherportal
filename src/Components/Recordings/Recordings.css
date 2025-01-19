@@ -1,0 +1,111 @@
+/* Recordings.css */
+
+.recordings-container {
+    text-align: center;
+    margin: 20px;
+    font-family: Arial, sans-serif;
+    color: #323232; /* Main text color */
+    font-weight: bold;
+  }
+  
+  .recordings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    padding: 0 20px;
+  }
+  
+  .recording-card {
+    border: 2px solid #323232; /* Darker border for contrast */
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    background-color: #f9f9f9; /* Light background for readability */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Hover effect */
+  }
+  
+  .recording-card:hover {
+    transform: scale(1.02); /* Slight zoom on hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .recording-card h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #991D20; /* Primary color for titles */
+  }
+  
+  .recording-card p {
+    color: #555; /* Neutral color for text */
+    margin: 5px 0;
+    line-height: 1.5;
+  }
+  
+  .recording-actions {
+    margin-top: 20px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .watch-now {
+    background-color: #991D20; /* Primary button color */
+    color: white;
+    margin-right: 10px;
+  }
+  
+  .watch-now:hover {
+    background-color: #323232; /* Hover effect */
+    transform: translateY(-2px); /* Subtle lift on hover */
+  }
+  
+  .download {
+    background-color: #323232; /* Secondary button color */
+    color: white;
+  }
+  
+  .download:hover {
+    background-color: #991D20; /* Hover effect */
+    transform: translateY(-2px); /* Subtle lift on hover */
+  }
+  
+  button:active {
+    transform: translateY(0); /* Reset lift on click */
+    opacity: 0.8; /* Slightly dim on active click */
+  }
+  button .fa-play {
+    margin-right: 8px;
+    font-size: 1em; /* Adjust size as needed */
+    vertical-align: middle;
+  }
+  .upload-material {
+  background-color: #323232; /* Secondary button color */
+  color: white;
+  padding: 10px 20px;
+  margin-left: 10px; /* Spacing between buttons */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.upload-material:hover {
+  background-color: #991D20; /* Hover color matches theme */
+  transform: translateY(-2px); /* Subtle lift on hover */
+}
+
+.upload-material:active {
+  transform: translateY(0); /* Reset lift on click */
+  opacity: 0.8; /* Slight dim on active click */
+}
