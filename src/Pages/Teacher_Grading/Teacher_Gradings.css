@@ -101,7 +101,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background-color: #3b82f6;
+  background-color: #991D20;
   color: white;
   border: none;
   border-radius: 6px;
@@ -110,9 +110,6 @@
   transition: background-color 0.2s;
 }
 
-.add-button:hover {
-  background-color: #2563eb;
-}
 
 .data-table {
   width: 100%;
