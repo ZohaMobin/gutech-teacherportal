@@ -1,18 +1,21 @@
 import React from "react";
-import './Components/Attendance Summary/Attendance_Summary';
-import Attendance_Summary from "./Components/Attendance Summary/Attendance_Summary";
+import '../Dashboard/Dashboard.css';
+import Student_Performance from "./Components/Student Performance/Student_Performance";
 import Announcement from "./Components/Announcements/Announcements";
-import ChatList from "./Components/Student Chats/Student_Chats";
-import Calender from "./Components/Calendar/Calendar";
+import Student_Chats from "./Components/Student Chats/Student_Chats";
+import Upcoming_Lessons from "./Components/Upcoming Lessons/Upcoming_Lessons";
 
 
 function Dashboard () {
     return (
-        <div>
+        <div className="components-div">
+            <Student_Performance />
+            <div className="upcomingLessons-studentChats">
+                <span style={{transformOrigin: "top left", transform: "scale(1.21)", marginRight: 120}}> <Upcoming_Lessons /> </span>
+                <Student_Chats />
+            </div>
+            
             <Announcement />
-            <ChatList />
-            <Attendance_Summary />
-            <Calender />
         </div>
     );
 }

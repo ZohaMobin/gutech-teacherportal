@@ -1,0 +1,17 @@
+.components-div {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: start;
+    justify-self: start;
+    justify-items: start;
+    max-width: 1241px;
+    margin: 5%;
+    justify-self: center;
+}
+
+.upcomingLessons-studentChats {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}

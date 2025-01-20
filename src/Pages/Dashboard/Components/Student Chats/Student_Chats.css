@@ -1,87 +1,71 @@
-.chat-container {
-    width: 300px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #fff;
-    font-family: Arial, sans-serif;
-  }
-  
-  .chat-container h3 {
-    font-size: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .badge {
-    background-color: rgb(153, 29, 34);
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 50%;
-  }
-  
-  .batch-dropdown {
-    margin-top: 5px;
-    font-size: 14px;
-    color: #777;
-  }
-  
-  .chat-list {
-    list-style: none;
-    padding: 0;
-    margin: 10px 0;
-  }
-  
-  .chat-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .chat-avatar {
-    width: 40px;
-    height: 40px;
-    background-color: #ddd;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .avatar-placeholder {
-    width: 24px;
-    height: 24px;
-    background-color: #bbb;
-    border-radius: 50%;
-  }
-  
-  .chat-details {
-    flex: 1;
-    margin-left: 10px;
-  }
-  
-  .chat-name {
-    font-size: 14px;
-    font-weight: bold;
-    margin: 0;
-  }
-  
-  .chat-message {
-    font-size: 12px;
-    color: #555;
-    margin: 0;
-  }
-  
-  .chat-time {
-    font-size: 12px;
-    color: #999;
-  }
-  
-  .view-all {
-    text-align: center;
-    font-size: 14px;
-    color: rgb(153, 29, 34);
-    cursor: pointer;
-  }
-  
+.main-chat-div {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border: 1.5px solid #E2E8F0;
+  padding: 30px 35px;
+  text-align: left;
+  border-radius: 10px;
+  box-shadow: 0px 0px 4.5px 0px #EBEEF2;
+  height: fit-content;
+  width: fit-content;
+}
+
+.main-chat-div p {
+  margin: 0;
+  padding: 0;
+}
+
+.title-and-chatCount {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.chat-count {
+  background-color: #1D1E1E;
+  height: 25px;
+  width: 25px;
+  text-align: center;
+  font-size: 14px;
+  align-content: center;
+  color: white;
+  border-radius: 20px;
+}
+
+.chats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-img {
+  width: 63px;
+  height: 63px;
+  border-radius: 100%;
+  overflow: hidden;
+}
+
+.chat-div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #E5E7EB;
+  border-radius: 18px;
+  padding: 18px 22px;
+}
+
+.main-text-div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.chatName-and-chatTime {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
