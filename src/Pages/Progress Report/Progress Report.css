@@ -25,14 +25,14 @@
   width: 35%;  /* Take 35% of the width for the GPA boxes */
   display: flex;
   flex-direction: column;  /* Stack the boxes vertically */
-  justify-content: space-evenly;
-  padding: 10px;
+  justify-content: center;
+  padding: 5px;
 }
 
 /* Individual GPA box style */
 .gpa-box {
   background-color: #f4f4f4;
-  padding: 15px;
+  padding: 5px;
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -56,7 +56,7 @@
 .lowest-gpa,
 .average-gpa {
   font-size: 14px;
-  padding: 10px;
+  padding: 5px;
 }
 
 .highest-gpa {

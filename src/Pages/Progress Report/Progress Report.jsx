@@ -64,15 +64,15 @@ const ProgressReport = () => {
         backgroundColor: data.map((student) => {
           const gpa = parseFloat(student.gpa);
           return gpa >= 3.5
-            ? 'rgba(0, 255, 0, 0.6)' // Green for GPA >= 3.5
+            ? '#d4edda' // Green for GPA >= 3.5
             : gpa >= 3
-            ? 'rgba(255, 0, 0, 0.6)' // Red for GPA >= 3
-            : 'rgba(0, 0, 255, 0.6)'; // Blue for GPA < 3
+            ? '#f8d7da' // Red for GPA >= 3
+            : '#cce5ff'; // Blue for GPA < 3
         }),
         borderColor: data.map((student) => {
           const gpa = parseFloat(student.gpa);
           return gpa >= 3.5
-            ? 'rgba(0, 128, 0, 1)' // Dark Green for GPA >= 3.5
+            ? 'rgb(17, 128, 17)' // Dark Green for GPA >= 3.5
             : gpa >= 3
             ? 'rgba(128, 0, 0, 1)' // Dark Red for GPA >= 3
             : 'rgba(0, 0, 128, 1)'; // Dark Blue for GPA < 3
