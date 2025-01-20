@@ -1,3 +1,4 @@
+
 .portal-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -100,7 +101,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background-color: #991D20;
+  background-color: #3b82f6;
   color: white;
   border: none;
   border-radius: 6px;
@@ -110,7 +111,7 @@
 }
 
 .add-button:hover {
-  background-color: #7A1618;
+  background-color: #2563eb;
 }
 
 .data-table {
@@ -176,8 +177,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #991D20;
-  box-shadow: 0 0 0 1px rgba(153, 29, 32, 0.5);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
 }
 
 /* Responsive Design */

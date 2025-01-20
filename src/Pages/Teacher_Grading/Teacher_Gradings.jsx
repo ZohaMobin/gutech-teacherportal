@@ -5,6 +5,7 @@ import "./Teacher_Gradings.css";
 const GradingPage = () => {
   const [activeTab, setActiveTab] = useState("quizzes");
   const [program, setProgram] = useState("");
+  const [subject, setSubject] = useState("Subject");
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
   const [searchName, setSearchName] = useState("");
