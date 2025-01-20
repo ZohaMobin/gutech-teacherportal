@@ -3,6 +3,7 @@ import './Components/Attendance Summary/Attendance_Summary';
 import Attendance_Summary from "./Components/Attendance Summary/Attendance_Summary";
 import Announcement from "./Components/Announcements/Announcements";
 import ChatList from "./Components/Student Chats/Student_Chats";
+import Calender from "./Components/Calendar/Calendar";
 
 
 function Dashboard () {
@@ -11,6 +12,7 @@ function Dashboard () {
             <Announcement />
             <ChatList />
             <Attendance_Summary />
+            <Calender />
         </div>
     );
 }
