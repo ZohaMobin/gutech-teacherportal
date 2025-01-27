@@ -18,7 +18,7 @@ function Announcement() {
 
   return (
     <div className="main-announcement-div">
-      <p style={{fontFamily: "Poppins-Medium", fontSize: 20}}>Latest Announcements</p>
+      <p style={{fontFamily: "Poppins-Medium", fontSize: 20}}>Latest Announcements</p> 
       <div className="announcement-divs">
         
         <div className="announcement">
