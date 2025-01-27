@@ -95,7 +95,16 @@ const Sidebar = () => {
               {!isCollapsed && "Dashboard"}
             </li>
           </Link>
-
+          <Link to="/progress report" className="sideBar-link">
+           <li>
+             <img
+               src="/resources-inactive.svg"
+               alt="Resources Icon"
+               className="icon "
+             />
+             {!isCollapsed && "Progress Report"}
+           </li>
+         </Link>
 
           <Link to="/assignments" className="sideBar-link">
           <li>
