@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, Plus } from "lucide-react";
-import "./Teacher_Gradings.css";
+import "./Teacher_Gradings.css";  
 
 const GradingPage = () => {
   const [activeTab, setActiveTab] = useState("quizzes");
