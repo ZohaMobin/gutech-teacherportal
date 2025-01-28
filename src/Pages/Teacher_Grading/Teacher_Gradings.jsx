@@ -16,68 +16,40 @@ const GradingPage = () => {
     totalMarks: "",
     weightage: "",
   });
-
-  // Sample data
-  const quizzes = [
-    {
-      stdName: "Ahsan",
-      stdId: "F21-123",
-      course: "Discrete",
-      batch: "fall-25",
-      quizNo: 1,
-      marks: "8/10",
-      weightage: "92%",
-      average: "92%",
-    },
-  ];
-  const assignments = [
-    {
-      stdName: "Ahsan",
-      stdId: "F21-123",
-      course: "Discrete",
-      batch: "fall-25",
-      quizNo: 1,
-      marks: "8/10",
-      weightage: "92%",
-    },
-  ];
-  const mids = [
-    {
-      stdName: "Ahsan",
-      stdId: "F21-123",
-      course: "Discrete",
-      batch: "fall-25",
-      quizNo: 1,
-      marks: "8/10",
-      weightage: "92%",
-    },
-  ];
-  const finals = [
-    {
-      stdName: "Ahsan",
-      stdId: "F21-123",
-      course: "Discrete",
-      batch: "fall-25",
-      quizNo: 1,
-      marks: "8/10",
-      weightage: "92%",
-    },
-  ];
-
-  const assessmentTypes = {
-    quizzes: { title: "Quizzes", data: quizzes },
-    assignments: { title: "Assignments", data: assignments },
-    mids: { title: "Mids", data: mids },
-    finals: { title: "Finals", data: finals },
-  };
+  const [assessments, setAssessments] = useState({
+    quizzes: [],
+    assignments: [],
+    mids: [],
+    finals: [],
+  });
 
   const handleAddAssessment = () => {
-    // Add assessment logic here
-    setShowAddModal(false);
+    if (
+      newAssessment.title &&
+      newAssessment.totalMarks &&
+      newAssessment.weightage
+    ) {
+      const newEntry = {
+        stdName: "New Student", // You can modify this as needed
+        stdId: "F21-999", // You can modify this as needed
+        course: course || "Discrete", // Default course if not selected
+        batch: batch || "fall-25", // Default batch if not selected
+        quizNo: assessments[activeTab].length + 1,
+        marks: `${newAssessment.totalMarks}/10`, // Assuming total marks is out of 10
+        weightage: `${newAssessment.weightage}%`,
+      };
+
+      setAssessments({
+        ...assessments,
+        [activeTab]: [...assessments[activeTab], newEntry],
+      });
+
+      setNewAssessment({ title: "", totalMarks: "", weightage: "" });
+      setShowAddModal(false);
+    }
   };
 
   const handleUploadExcel = () => {
-    // Upload Excel logic here
     alert("Upload Excel button clicked");
   };
 
@@ -143,26 +115,26 @@ const GradingPage = () => {
 
       <div className="tab-container fade-in">
         <div className="tab-header">
-          {Object.keys(assessmentTypes).map((type) => (
+          {Object.keys(assessments).map((type) => (
             <button
               key={type}
               className={`tab-button ${activeTab === type ? "active" : ""}`}
               onClick={() => setActiveTab(type)}
             >
-              {assessmentTypes[type].title}
+              {type.charAt(0).toUpperCase() + type.slice(1)}
             </button>
           ))}
         </div>
 
         <div className="table-section">
           <div className="table-header">
-            <h2>{assessmentTypes[activeTab].title}</h2>
+            <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
             <button
               className="add-button"
               onClick={() => setShowAddModal(true)}
             >
               <Plus size={18} />
-              Add {assessmentTypes[activeTab].title.slice(0, -1)}
+              Add {activeTab.slice(0, -1)}
             </button>
           </div>
 
@@ -178,12 +150,12 @@ const GradingPage = () => {
               </tr>
             </thead>
             <tbody>
-              {assessmentTypes[activeTab].data.map((item, index) => (
+              {assessments[activeTab].map((item, index) => (
                 <tr key={index}>
                   <td>{item.stdName}</td>
                   <td>{item.stdId}</td>
                   <td>{item.course}</td>
-                  <td>{item[`${activeTab.slice(0, -1)}No`]}</td>
+                  <td>{item.quizNo}</td>
                   <td>{item.marks}</td>
                   <td>{item.weightage}</td>
                 </tr>
@@ -196,9 +168,7 @@ const GradingPage = () => {
       {showAddModal && (
         <div className="modal fade-in">
           <div className="modal-header">
-            <h3 className="modal-title">
-              Add New {assessmentTypes[activeTab].title.slice(0, -1)}
-            </h3>
+            <h3 className="modal-title">Add New {activeTab.slice(0, -1)}</h3>
           </div>
           <div className="form-grid">
             <input
@@ -235,20 +205,18 @@ const GradingPage = () => {
               }
             />
           </div>
-          <div className="flex gap-4">
+          <div className="button-container">
             <button className="add-button" onClick={handleAddAssessment}>
               Create
             </button>
             <button
-              className="add-button"
-              style={{ backgroundColor: "#4CAF50" }}
+              className="add-button upload-button"
               onClick={handleUploadExcel}
             >
               Upload Excel
             </button>
             <button
-              className="add-button"
-              style={{ backgroundColor: "#64748b" }}
+              className="add-button cancel-button"
               onClick={() => setShowAddModal(false)}
             >
               Cancel
