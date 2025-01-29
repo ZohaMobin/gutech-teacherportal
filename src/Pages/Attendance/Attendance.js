@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import './Attendance.css';
+import './Attendance.css'; 
 
 const Attendance = () => {
   const [searchQuery, setSearchQuery] = useState('');
