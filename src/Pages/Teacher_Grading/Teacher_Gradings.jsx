@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
 import "./Teacher_Gradings.css";  
+import axios from "axios";
 
 const GradingPage = () => {
   const [activeTab, setActiveTab] = useState("quizzes");
@@ -49,8 +50,37 @@ const GradingPage = () => {
     }
   };
 
-  const handleUploadExcel = () => {
-    alert("Upload Excel button clicked");
+
+  //GET API
+  useEffect(() => {
+    axios.get("http://localhost:5000/assessments")
+    .then((response) => {
+     setAssessments(response.data);
+     console.log(response.data); 
+    })
+    .catch((error) => {
+      console.error("Error fetching assessments:", error);
+    })
+  }, []);
+
+
+  //POST API
+  const handleUploadExcel = async (e) => {
+    e.preventDefault();
+    const quizzData = {
+      title: newAssessment.title,
+      totalMarks: newAssessment.totalMarks,
+      weightage: newAssessment.weightage,
+    };
+    try {
+      const response = await axios.post(
+        "https://jsonplaceholder.typicode.com/users",
+        quizzData
+      );
+      console.log("User Created: " + response.data.name);
+    } catch (error) {
+      console.log("Error: " + error.message);
+    }
   };
 
   return (
