@@ -1,53 +1,444 @@
-/* Recordings.css */
+/* ========================
+   InsideRecording.css
+   ======================== */
+   .inside-recording-management {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #6b0000;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    background-color: #991D20;
+    color: white;
+}
 
+.inside-recording-management h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.inside-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.inside-form-container input,
+.inside-form-container textarea {
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid grey;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    color: #6b0000;
+    transition: border-color 0.3s;
+}
+
+.inside-form-container input:focus,
+.inside-form-container textarea:focus {
+    border-color: #991D20;
+    outline: none;
+    box-shadow: 0 0 5px rgba(153, 29, 32, 0.5);
+}
+
+.inside-form-container textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.inside-add-recording-btn {
+    background-color: #6b0000;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.inside-add-recording-btn:hover {
+    background-color: #991D20;
+    transform: scale(1.05);
+}
+
+.inside-no-recordings {
+    text-align: center;
+    color: white;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.inside-recording-list {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.inside-recording-item {
+    border-bottom: 1px solid grey;
+    padding: 15px;
+    background-color: #2e2e2e;
+    color: white;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.inside-recording-item strong {
+    font-size: 18px;
+    color: white;
+}
+
+.inside-recording-item a {
+    color: grey;
+    text-decoration: none;
+}
+
+.inside-recording-item a:hover {
+    text-decoration: underline;
+}
+
+.inside-recording-item p {
+    margin: 5px 0 0;
+    color: lightgrey;
+}
+
+/* ========================
+   RecordingLinks & General Container Styles
+   ======================== */
+.recording-links-container {
+    padding: 40px 20px;
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.recording-links-container h1 {
+    color: #991D20;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0;
+    text-align: center;
+}
+
+.recording-links-container h3 {
+    color: #555;
+    font-size: 1.2rem;
+    font-weight: normal;
+    margin: 10px 0 30px;
+    text-align: center;
+}
+
+/* Filter Section */
+.filter-container {
+    margin-bottom: 20px;
+}
+
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.input-with-icon {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar {
+    flex: 1;
+    padding: 10px 40px;
+    font-size: 1rem;
+    border: 2px solid #991D20;
+    border-radius: 5px;
+    height: 20px;
+    position: relative;
+    background-color: white;
+    color: #6b0000;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #991D20;
+}
+
+.calendar-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #991D20;
+    cursor: pointer;
+}
+
+.date-picker-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Clear Filters Button */
+.clear-button {
+    padding: 10px 20px;
+    background-color: #991D20;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    height: 44px;
+    transition: background-color 0.3s ease;
+}
+
+.clear-button:hover {
+    background-color: #6b0000;
+}
+
+/* Upload Button */
+.recording-links-upload-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 15px;
+}
+
+.recording-links-upload-button {
+    background-color: #991D20;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.recording-links-upload-button:hover {
+    background-color: #6b0000;
+    transform: scale(1.05);
+}
+
+/* Recording List */
+.recordings-list {
+    margin-top: 20px;
+}
+
+.recording-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.recording-info {
+    flex: 1;
+}
+
+.recording-info p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.recording-date {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.recording-topic {
+    font-weight: bold;
+    color: #991D20;
+    font-size: 1rem;
+}
+
+/* Watch Recording Button */
+.watch-recording-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #991D20;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.watch-recording-button svg {
+    font-size: 1.2rem;
+    vertical-align: middle;
+}
+
+.watch-recording-button:hover {
+    background-color: #6b0000;
+    transform: scale(1.05);
+}
+
+.watch-recording-button:active {
+    background-color: #6b0000;
+    transform: scale(0.95);
+}
+
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.2rem;
+    color: #991D20;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.dropdown-content button {
+    width: 100%;
+    padding: 8px 16px;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #991D20;
+}
+
+.dropdown-content button:hover {
+    background-color: #f5f5f5;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* No Results Message */
+.no-results {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #991D20;
+    margin-top: 20px;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 768px) {
+    .recording-links-container h1 {
+        font-size: 2rem;
+    }
+
+    .recording-links-container h3 {
+        font-size: 1rem;
+    }
+
+    .search-bar-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .clear-button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .recording-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .watch-recording-button {
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+    }
+}
+
+/* ========================
+   Recordings.css
+   ======================== */
 .recordings-container {
     text-align: center;
     margin: 20px;
     font-family: Arial, sans-serif;
-    color: #323232; /* Main text color */
+    color: #323232;
     font-weight: bold;
-  }
-  
-  .recordings-grid {
+}
+
+.recordings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-top: 20px;
     padding: 0 20px;
-  }
-  
-  .recording-card {
-    border: 2px solid #323232; /* Darker border for contrast */
+}
+
+.recording-card {
+    border: 2px solid #323232;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: left;
-    background-color: #f9f9f9; /* Light background for readability */
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Hover effect */
-  }
-  
-  .recording-card:hover {
-    transform: scale(1.02); /* Slight zoom on hover */
+    background-color: #f9f9f9;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recording-card:hover {
+    transform: scale(1.02);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-  }
-  
-  .recording-card h3 {
+}
+
+.recording-card h3 {
     font-size: 1.5em;
     margin-bottom: 10px;
-    color: #991D20; /* Primary color for titles */
-  }
-  
-  .recording-card p {
-    color: #555; /* Neutral color for text */
+    color: #991D20;
+}
+
+.recording-card p {
+    color: #555;
     margin: 5px 0;
     line-height: 1.5;
-  }
-  
-  .recording-actions {
+}
+
+.recording-actions {
     margin-top: 20px;
-  }
-  
-  button {
+    display: flex;
+    gap: 10px;
+}
+
+button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -55,57 +446,141 @@
     font-size: 1em;
     font-weight: bold;
     transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-  
-  .watch-now {
-    background-color: #991D20; /* Primary button color */
+}
+
+.watch-now {
+    background-color: #991D20;
     color: white;
-    margin-right: 10px;
-  }
-  
-  .watch-now:hover {
-    background-color: #323232; /* Hover effect */
-    transform: translateY(-2px); /* Subtle lift on hover */
-  }
-  
-  .download {
-    background-color: #323232; /* Secondary button color */
+}
+
+.watch-now:hover {
+    background-color: #323232;
+    transform: translateY(-2px);
+}
+
+.upload-material {
+    background-color: #323232;
     color: white;
-  }
-  
-  .download:hover {
-    background-color: #991D20; /* Hover effect */
-    transform: translateY(-2px); /* Subtle lift on hover */
-  }
-  
-  button:active {
-    transform: translateY(0); /* Reset lift on click */
-    opacity: 0.8; /* Slightly dim on active click */
-  }
-  button .fa-play {
-    margin-right: 8px;
-    font-size: 1em; /* Adjust size as needed */
-    vertical-align: middle;
-  }
-  .upload-material {
-  background-color: #323232; /* Secondary button color */
-  color: white;
-  padding: 10px 20px;
-  margin-left: 10px; /* Spacing between buttons */
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: bold;
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .upload-material:hover {
-  background-color: #991D20; /* Hover color matches theme */
-  transform: translateY(-2px); /* Subtle lift on hover */
+    background-color: #991D20;
+    transform: translateY(-2px);
 }
 
-.upload-material:active {
-  transform: translateY(0); /* Reset lift on click */
-  opacity: 0.8; /* Slight dim on active click */
+button:active {
+    transform: translateY(0);
+    opacity: 0.8;
+}
+
+button .fa-play {
+    margin-right: 8px;
+    font-size: 1em;
+    vertical-align: middle;
+}
+
+/* InsideRecording.css */
+.inside-recording-management {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #6b0000;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  background-color: #991D20;
+  color: white;
+}
+
+.inside-recording-management h2 {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.inside-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.inside-form-container input,
+.inside-form-container textarea {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid grey;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  color: #6b0000;
+  transition: border-color 0.3s;
+}
+
+.inside-form-container input:focus,
+.inside-form-container textarea:focus {
+  border-color: #991D20;
+  outline: none;
+  box-shadow: 0 0 5px rgba(153, 29, 32, 0.5);
+}
+
+.inside-form-container textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.inside-add-recording-btn {
+  background-color: #6b0000;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.inside-add-recording-btn:hover {
+  background-color: #991D20;
+  transform: scale(1.05);
+}
+
+.inside-no-recordings {
+  text-align: center;
+  color: white;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.inside-recording-list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.inside-recording-item {
+  border-bottom: 1px solid grey;
+  padding: 15px;
+  background-color: #2e2e2e;
+  color: white;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.inside-recording-item strong {
+  font-size: 18px;
+  color: white;
+}
+
+.inside-recording-item a {
+  color: grey;
+  text-decoration: none;
+}
+
+.inside-recording-item a:hover {
+  text-decoration: underline;
+}
+
+.inside-recording-item p {
+  margin: 5px 0 0;
+  color: lightgrey;
 }
