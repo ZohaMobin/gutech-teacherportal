@@ -19,7 +19,7 @@ const ProgressReport = () => {
     { name: "Student 8", roll: "BCS-543", attendance: "80%", gpa: 3.0, quizzes: "9/10", midExam: "19/25", finalExam: "23/30" },
     { name: "Student 9", roll: "BCS-543", attendance: "85%", gpa: 2.3, quizzes: "10/10", midExam: "20/25", finalExam: "27/30" },
   ];
-
+  
   // State to store the selected class
   const [selectedClass, setSelectedClass] = useState(""); 
 
