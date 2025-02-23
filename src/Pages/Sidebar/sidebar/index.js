@@ -209,7 +209,7 @@ const Sidebar = () => {
            </li>
          </Link>
 
-         <Link to="/recordings" className="sideBar-link">
+         <Link to="/Recordings" className="sideBar-link">
            <li>
              <img
                src="/recordings-inactive.svg"
