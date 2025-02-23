@@ -107,6 +107,16 @@ const Sidebar = () => {
          </Link>
 
    
+         <Link to="/Attendance" className="sideBar-link">
+           <li>
+             <img
+               src="/clipboard-inactive.svg"
+               alt="Resources Icon"
+               className="icon "
+             />
+             {!isCollapsed && "Attendance"}
+           </li>
+         </Link>
 
         
 
