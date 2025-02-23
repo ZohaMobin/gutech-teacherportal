@@ -183,7 +183,7 @@ const Sidebar = () => {
            </div>
            {isDropdown2Open && (
              <ul className="dropdown-menu">
-               <Link to="/discrete" className="sideBar-link">
+               <Link to="/Teacher_Gradings" className="sideBar-link">
                  <li>{!isCollapsed ? "Discrete" : "Discrete"}</li>
                </Link>
                <Link to="/web-development" className="sideBar-link">
