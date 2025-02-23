@@ -77,12 +77,6 @@ const InsideRecording = () => {
           onChange={handleInputChange}
           required
         />
-        <textarea
-          name="description"
-          placeholder="Description (optional)"
-          value={formData.description}
-          onChange={handleInputChange}
-        />
         <button type="submit" className="inside-add-recording-btn">
           {editingIndex !== null ? "Update Recording" : "Add Recording"}
         </button>
