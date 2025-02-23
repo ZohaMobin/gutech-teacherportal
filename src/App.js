@@ -13,10 +13,14 @@ import React from "react";
 import { RecordingsPage, RecordingLinksPage } from "./Pages/dashboard/Components/Recordings/Recordings"; // Import components
 import InsideRecording from "./Pages/dashboard/Components/Recordings/InsideRecording"; // If this exists
 
+import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; 
+import TeacherEventCalendar from './Pages/EventCalendar/EventCalendar'; // 
 
 function App() {
   return (
     <Router>
+
             <div className="App">
         <Sidebar />
         <div className='mainContent '>
@@ -30,6 +34,7 @@ function App() {
         <Route path="/recording-links" element={<RecordingLinksPage />} /> {/* Route for RecordingLinksPage */}
         <Route path="/inside-recording" element={<InsideRecording />} /> {/* Route for InsideRecording */}
         <Route path="/Progress Report" element={< ProgressReport/>} />
+        <Route path="/calendar" element={<TeacherEventCalendar />} />
         </Routes>
         </div>
         </div>
