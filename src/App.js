@@ -14,7 +14,6 @@ import { RecordingsPage, RecordingLinksPage } from "./Pages/dashboard/Components
 import InsideRecording from "./Pages/dashboard/Components/Recordings/InsideRecording"; // If this exists
 
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; 
 import TeacherEventCalendar from './Pages/EventCalendar/EventCalendar'; // 
 
 function App() {
