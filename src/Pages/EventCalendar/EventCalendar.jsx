@@ -1,40 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
-import axios from 'axios';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './EventCalendar.css';
 
 const localizer = momentLocalizer(moment);
 
-function TeacherEventCalendar() {
+function EventCalendar() {
   const [myEvents, setEvents] = useState([]);
-  const [error, setError] = useState(null);
-  const [currentView, setCurrentView] = useState('month'); // Track selected view
-
-  const BASE_URL = 'https://student-portal-backend-sgik.onrender.com/api/calendar';
-
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    
-    if (!token) return;
-
-    axios.get(`${BASE_URL}/admin/event`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(response => {
-      const fetchedEvents = response.data.map(event => ({
-        title: event.title,
-        start: moment(event.start).toDate(),
-        end: moment(event.end).toDate(),
-        color: event.color || '#991D20'
-      }));
-      setEvents(fetchedEvents);
-    })
-    .catch(error => setError(error.message));
-  }, []);
-
-  if (error) return <p>Error: {error}</p>;
+  const [currentView, setCurrentView] = useState('month');
 
   return (
     <div className="calendar-container">
@@ -45,13 +19,13 @@ function TeacherEventCalendar() {
         startAccessor="start"
         endAccessor="end"
         style={{ height: 600 }}
-        view={currentView} // Bind to state
-        defaultView="month" // Explicitly set default view
+        view={currentView}
+        defaultView="month"
         views={['month', 'week', 'day']}
-        onView={(view) => setCurrentView(view)} // Update state when view changes
+        onView={(view) => setCurrentView(view)}
         eventPropGetter={(event) => ({
           style: {
-            backgroundColor: event.color,
+            backgroundColor: event.color || '#991D20',
             color: 'white',
             borderRadius: '5px',
             padding: '5px',
@@ -62,4 +36,4 @@ function TeacherEventCalendar() {
   );
 }
 
-export default TeacherEventCalendar;
+export default EventCalendar;
