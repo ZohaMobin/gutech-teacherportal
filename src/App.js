@@ -1,4 +1,5 @@
 
+
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from "../src/Pages/Sidebar/sidebar/index";
@@ -6,7 +7,7 @@ import Sidebar from "../src/Pages/Sidebar/sidebar/index";
 import Dashboard from './Pages/dashboard/Dashboard';
 import { Topbar } from './Pages/topbar/topbar';
 import GradingPage from './Pages/Teacher_Grading/Teacher_Gradings';
-
+import {ProgressReport } from "./Pages/Progress Report/Progress Report" ; 
 import React from "react";
 
 import { RecordingsPage, RecordingLinksPage } from "./Pages/dashboard/Components/Recordings/Recordings"; // Import components
@@ -28,12 +29,14 @@ function App() {
       <Route path="/Recordings" element={<RecordingsPage />} /> {/* Default route */}
         <Route path="/recording-links" element={<RecordingLinksPage />} /> {/* Route for RecordingLinksPage */}
         <Route path="/inside-recording" element={<InsideRecording />} /> {/* Route for InsideRecording */}
+        <Route path="/Progress Report" element={< ProgressReport/>} />
         </Routes>
         </div>
         </div>
       </div>
     </Router>
   );}
+
 
 export default App;
 
