@@ -2,7 +2,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from "../src/Pages/Sidebar/sidebar/index";
 
-import Dashboard from './Pages/dashboard/dashboard';
+import Dashboard from './Pages/dashboard/Dashboard';
 import { Topbar } from './Pages/topbar/topbar';
 import GradingPage from './Pages/Teacher_Grading/Teacher_Gradings';
 
@@ -24,8 +24,7 @@ function App() {
         </div>
       </div>
     </Router>
-  );
-}
+  );}
 
 export default App;
 
