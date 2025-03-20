@@ -1,5 +1,5 @@
 import React from "react";
-import './Dashboard.css';
+import './dashboard.css';
 import Student_Performance from "./Components/Student Performance/Student_Performance";
 import Announcement from "./Components/Announcements/Announcements";
 import Student_Chats from "./Components/Student Chats/Student_Chats";
