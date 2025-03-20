@@ -1,76 +1,93 @@
-/* Teacher Grading Page Styles */
+/* Simplified and optimized Teacher Grading CSS */
 .teacher-marks-container {
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 20px;
     max-width: 1200px;
     border-top: 5px solid #991D20;
     background-color: #fff;
     font-family: 'Roboto', Arial, sans-serif;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-x: hidden;
   }
   
+  /* Header styles */
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    margin-top: 2.0rem;
+    margin-bottom: 20px;
   }
   
   .page-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 600;
     color: #333;
     margin: 0;
   }
   
+  /* Action buttons */
   .teacher-actions {
     display: flex;
     gap: 10px;
   }
   
-  .add-marks-btn {
+  .add-marks-btn, .submit-btn, .csv-import-btn, .csv-export-btn {
     background-color: #991D20;
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 0.5rem 1rem;
+    padding: 8px 12px;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s;
   }
   
-  .add-marks-btn:hover {
+  .add-marks-btn:hover, .submit-btn:hover, .csv-import-btn:hover, .csv-export-btn:hover {
     background-color: #7a1719;
   }
   
-  /* Course Tabs Styling */
-  .course-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    margin-bottom: 1rem;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    width: 100%;
-    max-width: 100vw;
+  .csv-import-btn, .csv-export-btn {
+    background-color: #505050;
   }
   
-  .course-tabs::-webkit-scrollbar {
+  .csv-import-btn:hover, .csv-export-btn:hover {
+    background-color: #333333;
+  }
+  
+  /* Tabs container */
+  .tabs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  /* Tabs common styling */
+  .course-tabs, .section-tabs, .assessment-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding-bottom: 6px;
+  }
+  
+  .course-tabs::-webkit-scrollbar, 
+  .section-tabs::-webkit-scrollbar,
+  .assessment-tabs::-webkit-scrollbar {
     height: 4px;
   }
   
-  .course-tabs::-webkit-scrollbar-thumb {
+  .course-tabs::-webkit-scrollbar-thumb, 
+  .section-tabs::-webkit-scrollbar-thumb,
+  .assessment-tabs::-webkit-scrollbar-thumb {
     background-color: rgba(153, 29, 32, 0.3);
     border-radius: 4px;
   }
   
-  .course-tab {
-    padding: 0.5rem 1rem;
+  /* Tab buttons */
+  .course-tab, .section-tab {
+    padding: 8px 12px;
     background-color: #e9ecef;
     border: none;
     border-radius: 4px;
@@ -78,38 +95,27 @@
     font-size: 0.875rem;
     font-weight: 500;
     color: #495057;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     white-space: nowrap;
     flex-shrink: 0;
   }
   
-  .course-tab:hover {
+  .course-tab:hover, .section-tab:hover {
     background-color: #dee2e6;
   }
   
-  .course-tab.active {
+  .course-tab.active, .section-tab.active {
     background-color: #991D20;
     color: white;
   }
   
-  /* Assessment Type Tabs */
+  /* Assessment tabs */
   .assessment-tabs {
-    display: flex;
     border-bottom: 1px solid #dee2e6;
-    margin-bottom: 1rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    width: 100%;
-    max-width: 100vw;
-  }
-  
-  .assessment-tabs::-webkit-scrollbar {
-    display: none;
   }
   
   .assessment-tab {
-    padding: 0.75rem 1.5rem;
+    padding: 8px 16px;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
@@ -117,9 +123,8 @@
     font-size: 0.875rem;
     font-weight: 500;
     color: #6c757d;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     white-space: nowrap;
-    flex-shrink: 0;
   }
   
   .assessment-tab:hover {
@@ -131,68 +136,52 @@
     border-bottom: 2px solid #991D20;
   }
   
-  /* Marks Table Styling */
+  /* Marks table */
   .marks-table-container {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
-    margin-bottom: 2rem;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-    position: relative;
-    max-width: 100vw;
-    left: 0;
+    margin-bottom: 20px;
   }
   
   .marks-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
-    min-width: 800px;
-    table-layout: fixed;
+    min-width: 600px;
   }
   
   .marks-table th,
   .marks-table td {
-    padding: 0.75rem 1rem;
+    padding: 10px;
     text-align: center;
     border-bottom: 1px solid #e9ecef;
-    min-width: 80px;
   }
   
   .marks-table th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #495057;
-    white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 10;
-  }
-  
-  .marks-table tr:last-child td {
-    border-bottom: none;
   }
   
   .marks-table tr:hover {
     background-color: #f8f9fa;
   }
   
-  .editing-row {
-    background-color: #fff8e6 !important;
-  }
-  
   .no-data {
     text-align: center;
     color: #6c757d;
-    padding: 2rem;
+    padding: 24px;
   }
   
-  /* Status and Actions Styling */
+  /* Status badge */
   .status-badge {
     display: inline-block;
-    padding: 0.25rem 0.5rem;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 500;
@@ -208,6 +197,7 @@
     color: #6c757d;
   }
   
+  /* Action buttons */
   .actions-cell {
     white-space: nowrap;
   }
@@ -215,16 +205,20 @@
   .row-actions {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 5px;
   }
   
-  .edit-btn, .publish-btn, .delete-btn, .save-btn, .cancel-btn {
-    padding: 0.25rem 0.5rem;
+  .edit-btn,
+  .publish-btn,
+  .delete-btn,
+  .view-marks-btn,
+  .cancel-btn {
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.75rem;
     border: none;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s;
   }
   
   .edit-btn {
@@ -263,13 +257,13 @@
     background-color: #f5c6cb;
   }
   
-  .save-btn {
-    background-color: #d4edda;
-    color: #155724;
+  .view-marks-btn {
+    background-color: #d1ecf1;
+    color: #0c5460;
   }
   
-  .save-btn:hover {
-    background-color: #c3e6cb;
+  .view-marks-btn:hover {
+    background-color: #bee5eb;
   }
   
   .cancel-btn {
@@ -281,69 +275,7 @@
     background-color: #e9ecef;
   }
   
-  .edit-actions {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-  }
-  
-  /* Edit Input Styling */
-  .edit-input {
-    width: 60px;
-    padding: 0.25rem;
-    font-size: 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    text-align: center;
-  }
-  
-  /* Switch Toggle Styling */
-  .switch-container {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 20px;
-  }
-  
-  .switch-container input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .switch-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .3s;
-    border-radius: 20px;
-  }
-  
-  .switch-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
-  }
-  
-  input:checked + .switch-slider {
-    background-color: #991D20;
-  }
-  
-  input:checked + .switch-slider:before {
-    transform: translateX(20px);
-  }
-  
-  /* Modal Styling */
+  /* Modal styling */
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -355,7 +287,6 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    overflow-y: auto;
     padding: 20px;
   }
   
@@ -363,7 +294,7 @@
     background-color: white;
     border-radius: 8px;
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -373,7 +304,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: 15px 20px;
     border-bottom: 1px solid #dee2e6;
   }
   
@@ -392,217 +323,119 @@
     cursor: pointer;
   }
   
-  .modal-body {
-    padding: 1.5rem;
+  /* Modal styling (continues from where it cut off) */
+.modal-body {
+    padding: 20px;
+  }
+  
+  .assessment-details {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
   }
   
   .form-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 15px;
+    margin-bottom: 15px;
   }
   
   .form-group {
     flex: 1;
-    min-width: 150px;
   }
   
   .form-group label {
     display: block;
+    margin-bottom: 5px;
     font-size: 0.875rem;
+    font-weight: 500;
     color: #495057;
-    margin-bottom: 0.5rem;
   }
   
   .form-group input {
     width: 100%;
-    padding: 0.5rem;
-    font-size: 0.875rem;
+    padding: 8px 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
+    font-size: 0.875rem;
   }
   
+  /* Student Marks Table */
   .student-marks-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
   }
   
   .student-marks-section h3 {
     font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 1rem;
+    margin-bottom: 10px;
+    color: #343a40;
   }
   
   .student-marks-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
   }
   
   .student-marks-table th,
   .student-marks-table td {
-    padding: 0.5rem;
-    border-bottom: 1px solid #e9ecef;
+    padding: 8px 10px;
+    border: 1px solid #dee2e6;
   }
   
   .student-marks-table th {
-    text-align: left;
     background-color: #f8f9fa;
     font-weight: 500;
+    text-align: left;
   }
   
   .student-marks-table input {
-    width: 80px;
-    padding: 0.25rem;
-    font-size: 0.875rem;
+    width: 100%;
+    padding: 6px 8px;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    text-align: center;
+    font-size: 0.875rem;
   }
   
+  /* Modal actions */
   .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
   }
   
-  .submit-btn {
-    background-color: #991D20;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .submit-btn:hover {
-    background-color: #7a1719;
-  }
-  
-  /* Loading State */
+  /* Loading state */
   .loading-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 50vh;
-    font-size: 1rem;
+    height: 60vh;
+    font-size: 1.25rem;
     color: #6c757d;
   }
   
-  /* Responsive Design */
+  /* Responsive adjustments */
   @media (max-width: 768px) {
-    .teacher-marks-container {
-      padding: 20px 10px;
-      width: 100%;
+    .form-row {
+      flex-direction: column;
+      gap: 10px;
     }
     
     .page-header {
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
-      padding: 0 5px;
     }
     
-    .page-header h1 {
-      font-size: 1.25rem;
-    }
-    
-    .course-tab {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
-    }
-    
-    .assessment-tab {
-      padding: 0.6rem 1rem;
-      font-size: 0.8rem;
-    }
-    
-    .marks-table-container {
-      border-radius: 4px;
-      margin-left: -10px;
-      margin-right: -10px;
-      width: calc(100% + 20px);
-    }
-    
-    .edit-btn, .publish-btn, .delete-btn {
-      padding: 0.2rem 0.4rem;
-      font-size: 0.7rem;
-    }
-    
-    .row-actions {
-      flex-direction: column;
-      gap: 5px;
+    .teacher-actions {
+      width: 100%;
     }
     
     .modal-content {
-      max-width: 95%;
-      max-height: 80vh;
+      width: 95%;
     }
+
     
-    .form-row {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    
-    .form-group {
-      min-width: 100%;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .teacher-marks-container {
-      padding: 15px 5px;
-    }
-    
-    .page-header {
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-    }
-    
-    .page-header h1 {
-      font-size: 1.1rem;
-    }
-    
-    .add-marks-btn {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
-    }
-    
-    .course-tabs, .assessment-tabs {
-      margin-left: -5px;
-      margin-right: -5px;
-      width: calc(100% + 10px);
-    }
-    
-    .modal-header h2 {
-      font-size: 1.1rem;
-    }
-    
-    .modal-body {
-      padding: 1rem;
-    }
-    
-    .student-marks-table th,
-    .student-marks-table td {
-      padding: 0.4rem;
-      font-size: 0.8rem;
-    }
-    
-    .student-marks-table input {
-      width: 60px;
-    }
-    
-    .modal-actions {
-      gap: 0.5rem;
-    }
-    
-    .submit-btn, .cancel-btn {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
-    }
   }

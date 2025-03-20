@@ -1,485 +1,535 @@
 import React, { useState, useEffect } from "react";
+import { CSVImportExport } from "./CsvImportExport";
 import "./TeacherGrading.css";
 
 const TeacherGrading = () => {
+  // Simplified state management
   const [activeTab, setActiveTab] = useState("quizzes");
   const [activeCourse, setActiveCourse] = useState("discrete");
+  const [activeSection, setActiveSection] = useState("sectionA");
   const [marksData, setMarksData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentEditing, setCurrentEditing] = useState(null);
-  const [editValues, setEditValues] = useState({});
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadType, setUploadType] = useState('');
-  const [newAssessment, setNewAssessment] = useState({
-    serial: '',
-    weightage: '',
-    totalMarks: ''
+  const [currentModal, setCurrentModal] = useState({
+    type: null, // "add", "edit", "view", null
+    data: null
   });
-  const [studentMarks, setStudentMarks] = useState([
-    { id: 1, name: "Student 1", marks: "" },
-    { id: 2, name: "Student 2", marks: "" },
-    { id: 3, name: "Student 3", marks: "" },
-    { id: 4, name: "Student 4", marks: "" },
-    { id: 5, name: "Student 5", marks: "" },
-  ]);
 
-  // Sample data structure - this would be replaced with your API data
-  const sampleData = {
-    courses: [
-      { id: "discrete", name: "Discrete Mathematics" },
-      { id: "pspf", name: "Programming Fundamentals" },
-      { id: "calculus", name: "Calculus" }
-    ],
-    quizzes: {
-      discrete: [
-        { id: 1, serial: 1, weightage: 15, totalMarks: 15, average: 12.97, stdDev: 1.1, min: 8, max: 14.5, uploadDate: "2025-02-15", published: true },
-        { id: 2, serial: 2, weightage: 15, totalMarks: 15, average: 13.4, stdDev: 1.3, min: 9, max: 15, uploadDate: "2025-03-01", published: false },
-      ],
-      pspf: [
-        { id: 3, serial: 1, weightage: 15, totalMarks: 15, average: 11.3, stdDev: 1.8, min: 7, max: 15, uploadDate: "2025-02-20", published: true },
-      ],
-      calculus: [
-        { id: 4, serial: 1, weightage: 20, totalMarks: 20, average: 16.63, stdDev: 1.4, min: 12.5, max: 19, uploadDate: "2025-03-05", published: true }
-      ]
-    },
-    assignments: {
-      discrete: [
-        { id: 5, serial: 1, weightage: 25, totalMarks: 25, average: 21.2, stdDev: 1.8, min: 17, max: 24, uploadDate: "2025-01-25", published: true },
-      ],
-      pspf: [
-        { id: 6, serial: 1, weightage: 25, totalMarks: 25, average: 18.77, stdDev: 2.1, min: 15, max: 23.5, uploadDate: "2025-02-10", published: true }
-      ],
-      calculus: []
-    },
-    midterms: {
-      discrete: [
-        { id: 7, serial: 1, weightage: 30, totalMarks: 30, average: 25.2, stdDev: 2.2, min: 19, max: 29, uploadDate: "2025-02-28", published: true }
-      ],
-      pspf: [],
-      calculus: []
-    },
-    finals: {
-      discrete: [
-        { id: 8, serial: 1, weightage: 50, totalMarks: 50, average: 41.6, stdDev: 3.4, min: 32, max: 48, uploadDate: "2025-03-15", published: false }
-      ],
-      pspf: [],
-      calculus: []
-    }
-  };
-
-  // Simulating API data fetch
+  // Fetch data on component mount
   useEffect(() => {
-    // Replace this with your actual API call
-    setTimeout(() => {
-      setMarksData(sampleData);
-      setLoading(false);
-    }, 500);
+    // Simulate API call - replace with your actual API
+    const fetchData = async () => {
+      try {
+        // Replace with your API call
+        setTimeout(() => {
+          setMarksData(sampleData);
+          setLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
-  const handleEditClick = (item) => {
-    setIsEditing(true);
-    setCurrentEditing(item.id);
-    setEditValues({
-      serial: item.serial,
-      weightage: item.weightage,
-      totalMarks: item.totalMarks,
-      published: item.published
+  // Handler for editing an item
+  const handleEdit = (item) => {
+    setCurrentModal({
+      type: "edit",
+      data: { ...item }
     });
   };
 
-  const handleSaveEdit = () => {
-    // Replace with your API call to save changes
-    setMarksData(prevData => {
-      const newData = {...prevData};
-      const itemIndex = newData[activeTab][activeCourse].findIndex(item => item.id === currentEditing);
-      
-      if (itemIndex !== -1) {
-        newData[activeTab][activeCourse][itemIndex] = {
-          ...newData[activeTab][activeCourse][itemIndex],
-          ...editValues
-        };
-      }
-      
-      return newData;
-    });
-    
-    setIsEditing(false);
-    setCurrentEditing(null);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setCurrentEditing(null);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditValues(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
+  // Handler for toggling publish status
   const handlePublishToggle = (id) => {
-    // Replace with your API call to toggle published status
     setMarksData(prevData => {
-      const newData = {...prevData};
-      const itemIndex = newData[activeTab][activeCourse].findIndex(item => item.id === id);
-      
-      if (itemIndex !== -1) {
-        newData[activeTab][activeCourse][itemIndex] = {
-          ...newData[activeTab][activeCourse][itemIndex],
-          published: !newData[activeTab][activeCourse][itemIndex].published
-        };
-      }
-      
-      return newData;
+      return {
+        ...prevData,
+        [activeTab]: {
+          ...prevData[activeTab],
+          [activeCourse]: {
+            ...prevData[activeTab][activeCourse],
+            [activeSection]: prevData[activeTab][activeCourse][activeSection].map(item =>
+              item.id === id ? { ...item, published: !item.published } : item
+            )
+          }
+        }
+      };
     });
   };
+  
 
+  // Handler for deleting an item
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this assessment? This action cannot be undone.")) {
-      // Replace with your API call to delete the assessment
       setMarksData(prevData => {
-        const newData = {...prevData};
-        newData[activeTab][activeCourse] = newData[activeTab][activeCourse].filter(item => item.id !== id);
+        const newData = { ...prevData };
+        newData[activeTab][activeCourse][activeSection] = 
+          newData[activeTab][activeCourse][activeSection].filter(item => item.id !== id);
         return newData;
       });
     }
   };
 
-  const handleUploadClick = (type) => {
-    setUploadType(type);
-    setShowUploadModal(true);
+  // Handler for viewing student marks
+  const handleViewMarks = (item) => {
+    setCurrentModal({
+      type: "view",
+      data: { ...item }
+    });
   };
 
-  const handleNewAssessmentChange = (e) => {
-    const { name, value } = e.target;
-    setNewAssessment(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Handler for saving form data (both new and edit)
+  const handleSaveForm = (formData) => {
+    if (currentModal.type === "add") {
+      // Add new assessment
+      const newItem = {
+        id: Date.now(),
+        ...formData,
+        uploadDate: new Date().toISOString().split('T')[0],
+      };
+
+      setMarksData(prevData => {
+        const newData = { ...prevData };
+        newData[activeTab][activeCourse][activeSection] = [
+          ...newData[activeTab][activeCourse][activeSection], 
+          newItem
+        ];
+        return newData;
+      });
+    } else if (currentModal.type === "edit") {
+      // Update existing assessment
+      setMarksData(prevData => {
+        const newData = { ...prevData };
+        const itemIndex = newData[activeTab][activeCourse][activeSection]
+          .findIndex(item => item.id === formData.id);
+
+        if (itemIndex !== -1) {
+          newData[activeTab][activeCourse][activeSection][itemIndex] = formData;
+        }
+
+        return newData;
+      });
+    }
+    
+    setCurrentModal({ type: null, data: null });
   };
 
-  const handleStudentMarksChange = (id, value) => {
-    setStudentMarks(prev => 
-      prev.map(student => 
-        student.id === id ? {...student, marks: value} : student
-      )
-    );
+  // Handle CSV import
+  const handleImportCSV = (parsedData) => {
+    // Integrate imported data with current data
+    if (parsedData && parsedData.length > 0) {
+      // Create a new assessment from CSV data
+      const newAssessment = {
+        id: Date.now(),
+        serial: parsedData[0].serial || 1,
+        weightage: parsedData[0].weightage || 0,
+        totalMarks: parsedData[0].totalMarks || 0,
+        uploadDate: new Date().toISOString().split('T')[0],
+        published: false,
+        studentMarks: parsedData.map((row, index) => ({
+          id: index + 1,
+          name: row.studentName || `Student ${index + 1}`,
+          marks: parseFloat(row.marks) || 0
+        }))
+      };
+
+      // Calculate statistics
+      const validMarks = newAssessment.studentMarks.map(s => s.marks).filter(m => !isNaN(m));
+      newAssessment.average = +(validMarks.reduce((sum, mark) => sum + mark, 0) / validMarks.length).toFixed(2);
+      newAssessment.min = Math.min(...validMarks);
+      newAssessment.max = Math.max(...validMarks);
+      
+      // Calculate standard deviation
+      const mean = newAssessment.average;
+      const sumSquareDiffs = validMarks.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0);
+      newAssessment.stdDev = +Math.sqrt(sumSquareDiffs / validMarks.length).toFixed(2);
+
+      // Update data
+      setMarksData(prevData => {
+        const newData = { ...prevData };
+        newData[activeTab][activeCourse][activeSection] = [
+          ...newData[activeTab][activeCourse][activeSection],
+          newAssessment
+        ];
+        return newData;
+      });
+      
+      alert("CSV data imported successfully!");
+    }
   };
 
-  const handleSubmitNewAssessment = () => {
-    // Calculate stats from student marks
-    const validMarks = studentMarks
-      .map(s => parseFloat(s.marks))
-      .filter(m => !isNaN(m));
+  // Get data for CSV export
+  const getExportData = () => {
+    const currentData = marksData?.[activeTab]?.[activeCourse]?.[activeSection] || [];
+    if (currentData.length === 0) return [];
     
-    const average = validMarks.reduce((sum, mark) => sum + mark, 0) / validMarks.length;
-    const min = Math.min(...validMarks);
-    const max = Math.max(...validMarks);
-    
-    // Calculate standard deviation
-    const mean = average;
-    const squareDiffs = validMarks.map(value => {
-      const diff = value - mean;
-      return diff * diff;
-    });
-    const avgSquareDiff = squareDiffs.reduce((sum, value) => sum + value, 0) / squareDiffs.length;
-    const stdDev = Math.sqrt(avgSquareDiff);
-    
-    // Create new assessment
-    const newItem = {
-      id: Date.now(), // Simple id generation for demo
-      serial: parseInt(newAssessment.serial),
-      weightage: parseFloat(newAssessment.weightage),
-      totalMarks: parseFloat(newAssessment.totalMarks),
-      average: parseFloat(average.toFixed(2)),
-      stdDev: parseFloat(stdDev.toFixed(2)),
-      min: parseFloat(min.toFixed(2)),
-      max: parseFloat(max.toFixed(2)),
-      uploadDate: new Date().toISOString().split('T')[0],
-      published: false
-    };
-    
-    // Update state with new assessment
-    setMarksData(prevData => {
-      const newData = {...prevData};
-      newData[activeTab][activeCourse] = [...newData[activeTab][activeCourse], newItem];
-      return newData;
+    // Flatten student marks for export
+    let exportData = [];
+    currentData.forEach(assessment => {
+      assessment.studentMarks.forEach(student => {
+        exportData.push({
+          assessmentSerial: assessment.serial,
+          assessmentType: activeTab.slice(0, -1),
+          weightage: assessment.weightage,
+          totalMarks: assessment.totalMarks,
+          studentId: student.id,
+          studentName: student.name,
+          marks: student.marks
+        });
+      });
     });
     
-    // Reset form and close modal
-    setNewAssessment({
-      serial: '',
-      weightage: '',
-      totalMarks: ''
-    });
-    
-    setStudentMarks(prev => 
-      prev.map(student => ({...student, marks: ""}))
-    );
-    
-    setShowUploadModal(false);
+    return exportData;
   };
 
   if (loading) {
     return <div className="loading-container">Loading teacher portal...</div>;
   }
 
-  const activeCategoryData = marksData[activeTab][activeCourse];
+  const activeCategoryData = marksData?.[activeTab]?.[activeCourse]?.[activeSection] || [];
 
   return (
     <div className="teacher-marks-container">
-      {/* Page Header */}
+      {/* Header with quick actions */}
       <div className="page-header">
         <h1>Teacher Marks Management</h1>
         <div className="teacher-actions">
-          <button 
-            className="add-marks-btn" 
-            onClick={() => handleUploadClick(activeTab)}
+          <CSVImportExport 
+            onImport={handleImportCSV} 
+            exportData={getExportData()}
+            filename={`${activeCourse}-${activeSection}-${activeTab}`}
+          />
+          <button
+            className="add-marks-btn"
+            onClick={() => setCurrentModal({
+              type: "add",
+              data: {
+                serial: '',
+                weightage: '',
+                totalMarks: '',
+                published: false,
+                studentMarks: Array.from({ length: 10 }, (_, i) => ({ 
+                  id: i + 1, 
+                  name: `Student ${i + 1}`, 
+                  marks: "" 
+                }))
+              }
+            })}
           >
-            + Add New {activeTab.slice(0, -1)[0].toUpperCase() + activeTab.slice(0, -1).substring(1)}
+            + Add {activeTab.slice(0, -1).replace(/^\w/, c => c.toUpperCase())}
           </button>
         </div>
       </div>
-      
-      {/* Course Tabs */}
-      <div className="course-tabs">
-        {marksData.courses.map(course => (
-          <button
-            key={course.id}
-            className={`course-tab ${activeCourse === course.id ? 'active' : ''}`}
-            onClick={() => setActiveCourse(course.id)}
-          >
-            {course.name}
-          </button>
-        ))}
+
+      {/* Navigator tabs - simplified with flex layout */}
+      <div className="tabs-container">
+        <div className="course-tabs">
+          {marksData.courses.map(course => (
+            <button
+              key={course.id}
+              className={`course-tab ${activeCourse === course.id ? 'active' : ''}`}
+              onClick={() => setActiveCourse(course.id)}
+            >
+              {course.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="section-tabs">
+          {marksData.courses.find(course => course.id === activeCourse)?.sections.map(section => (
+            <button
+              key={section}
+              className={`section-tab ${activeSection === section ? 'active' : ''}`}
+              onClick={() => setActiveSection(section)}
+            >
+              {section}
+            </button>
+          ))}
+        </div>
+
+        <div className="assessment-tabs">
+          {["quizzes", "assignments", "midterms", "finals"].map(tab => (
+            <button
+              key={tab}
+              className={`assessment-tab ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
-      
-      {/* Assessment Type Tabs */}
-      <div className="assessment-tabs">
-        <button
-          className={`assessment-tab ${activeTab === 'quizzes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('quizzes')}
-        >
-          Quizzes
-        </button>
-        <button
-          className={`assessment-tab ${activeTab === 'assignments' ? 'active' : ''}`}
-          onClick={() => setActiveTab('assignments')}
-        >
-          Assignments
-        </button>
-        <button
-          className={`assessment-tab ${activeTab === 'midterms' ? 'active' : ''}`}
-          onClick={() => setActiveTab('midterms')}
-        >
-          Midterms
-        </button>
-        <button
-          className={`assessment-tab ${activeTab === 'finals' ? 'active' : ''}`}
-          onClick={() => setActiveTab('finals')}
-        >
-          Finals
-        </button>
-      </div>
-      
-      {/* Marks Table */}
+
+      {/* Marks Table - Simplified with responsive design */}
       <div className="marks-table-container">
         <table className="marks-table">
           <thead>
             <tr>
-              <th>Serial #</th>
+              <th>#</th>
               <th>Weightage</th>
-              <th>Total Marks</th>
-              <th>Average</th>
-              <th>Min</th>
-              <th>Max</th>
-              <th>Upload Date</th>
+              <th>Total</th>
+              <th>Avg</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {activeCategoryData && activeCategoryData.length > 0 ? (
+            {activeCategoryData.length > 0 ? (
               activeCategoryData.map((item) => (
-                <tr key={item.id} className={isEditing && currentEditing === item.id ? 'editing-row' : ''}>
+                <tr key={item.id}>
+                  <td>{item.serial}</td>
+                  <td>{item.weightage}</td>
+                  <td>{item.totalMarks}</td>
+                  <td>{item.average?.toFixed(1) || "-"}</td>
                   <td>
-                    {isEditing && currentEditing === item.id ? (
-                      <input 
-                        type="number" 
-                        name="serial"
-                        value={editValues.serial} 
-                        onChange={handleInputChange}
-                        className="edit-input"
-                        min="1"
-                      />
-                    ) : item.serial}
-                  </td>
-                  <td>
-                    {isEditing && currentEditing === item.id ? (
-                      <input 
-                        type="number" 
-                        name="weightage"
-                        value={editValues.weightage} 
-                        onChange={handleInputChange}
-                        className="edit-input"
-                        min="0"
-                      />
-                    ) : item.weightage}
-                  </td>
-                  <td>
-                    {isEditing && currentEditing === item.id ? (
-                      <input 
-                        type="number" 
-                        name="totalMarks"
-                        value={editValues.totalMarks} 
-                        onChange={handleInputChange}
-                        className="edit-input"
-                        min="0"
-                      />
-                    ) : item.totalMarks}
-                  </td>
-                  <td>{item.average}</td>
-                  <td>{item.min}</td>
-                  <td>{item.max}</td>
-                  <td>{item.uploadDate}</td>
-                  <td>
-                    {isEditing && currentEditing === item.id ? (
-                      <label className="switch-container">
-                        <input
-                          type="checkbox"
-                          name="published"
-                          checked={editValues.published}
-                          onChange={handleInputChange}
-                        />
-                        <span className="switch-slider"></span>
-                      </label>
-                    ) : (
-                      <span className={`status-badge ${item.published ? 'published' : 'draft'}`}>
-                        {item.published ? 'Published' : 'Draft'}
-                      </span>
-                    )}
+                    <span className={`status-badge ${item.published ? 'published' : 'draft'}`}>
+                      {item.published ? 'Published' : 'Draft'}
+                    </span>
                   </td>
                   <td className="actions-cell">
-                    {isEditing && currentEditing === item.id ? (
-                      <div className="edit-actions">
-                        <button className="save-btn" onClick={handleSaveEdit}>Save</button>
-                        <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
-                      </div>
-                    ) : (
-                      <div className="row-actions">
-                        <button className="edit-btn" onClick={() => handleEditClick(item)}>Edit</button>
-                        <button 
-                          className={`publish-btn ${item.published ? 'unpublish' : 'publish'}`}
-                          onClick={() => handlePublishToggle(item.id)}
-                        >
-                          {item.published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <button className="delete-btn" onClick={() => handleDelete(item.id)}>Delete</button>
-                      </div>
-                    )}
+                    <div className="row-actions">
+                      <button className="edit-btn" onClick={() => handleEdit(item)}>Edit</button>
+                      <button
+                        className={`publish-btn ${item.published ? 'unpublish' : 'publish'}`}
+                        onClick={() => handlePublishToggle(item.id)}
+                      >
+                        {item.published ? 'unpublish' : 'publish'}
+                      </button>
+                      <button className="delete-btn" onClick={() => handleDelete(item.id)}>×</button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="no-data">No assessments added yet for this category</td>
+                <td colSpan={6} className="no-data">No assessments added yet</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Upload New {uploadType.slice(0, -1)[0].toUpperCase() + uploadType.slice(0, -1).substring(1)} Marks</h2>
-              <button className="close-modal" onClick={() => setShowUploadModal(false)}>×</button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Serial Number:</label>
-                  <input 
-                    type="number" 
-                    name="serial" 
-                    value={newAssessment.serial} 
-                    onChange={handleNewAssessmentChange}
-                    min="1"
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Weightage:</label>
-                  <input 
-                    type="number" 
-                    name="weightage" 
-                    value={newAssessment.weightage} 
-                    onChange={handleNewAssessmentChange}
-                    min="0"
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Total Marks:</label>
-                  <input 
-                    type="number" 
-                    name="totalMarks" 
-                    value={newAssessment.totalMarks} 
-                    onChange={handleNewAssessmentChange}
-                    min="0"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="student-marks-section">
-                <h3>Student Marks</h3>
-                <table className="student-marks-table">
-                  <thead>
-                    <tr>
-                      <th>Student Name</th>
-                      <th>Obtained Marks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentMarks.map(student => (
-                      <tr key={student.id}>
-                        <td>{student.name}</td>
-                        <td>
-                          <input 
-                            type="number" 
-                            value={student.marks} 
-                            onChange={(e) => handleStudentMarksChange(student.id, e.target.value)}
-                            min="0"
-                            max={newAssessment.totalMarks}
-                            placeholder="0"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="modal-actions">
-                <button className="cancel-btn" onClick={() => setShowUploadModal(false)}>Cancel</button>
-                <button className="submit-btn" onClick={handleSubmitNewAssessment}>Upload Marks</button>
-              </div>
-            </div>
-          </div>
-        </div>
+
+      {/* Unified Modal Component for all forms */}
+      {currentModal.type && (
+        <AssessmentModal
+          type={currentModal.type}
+          assessment={currentModal.data}
+          onClose={() => setCurrentModal({ type: null, data: null })}
+          onSave={handleSaveForm}
+          assessmentType={activeTab.slice(0, -1)}
+        />
       )}
     </div>
   );
 };
 
+// Modal Component for Assessment management
+const AssessmentModal = ({ type, assessment, onClose, onSave, assessmentType }) => {
+  const [formData, setFormData] = useState(assessment);
+  
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleStudentMarksChange = (id, value) => {
+    setFormData(prev => ({
+      ...prev,
+      studentMarks: prev.studentMarks.map(student =>
+        student.id === id ? { ...student, marks: value } : student
+      )
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Calculate statistics if this is a new or edited assessment
+    if (type === "add" || type === "edit") {
+      const validMarks = formData.studentMarks
+        .map(s => parseFloat(s.marks))
+        .filter(m => !isNaN(m));
+      
+      if (validMarks.length) {
+        const average = validMarks.reduce((sum, mark) => sum + mark, 0) / validMarks.length;
+        const min = Math.min(...validMarks);
+        const max = Math.max(...validMarks);
+        
+        // Calculate standard deviation
+        const mean = average;
+        const sumSquareDiffs = validMarks.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0);
+        const stdDev = Math.sqrt(sumSquareDiffs / validMarks.length);
+        
+        const updatedFormData = {
+          ...formData,
+          average: parseFloat(average.toFixed(2)),
+          stdDev: parseFloat(stdDev.toFixed(2)),
+          min: parseFloat(min.toFixed(2)),
+          max: parseFloat(max.toFixed(2)),
+        };
+        
+        onSave(updatedFormData);
+      } else {
+        onSave(formData);
+      }
+    } else {
+      onSave(formData);
+    }
+  };
+
+  const modalTitle = {
+    add: `Add New ${assessmentType.charAt(0).toUpperCase() + assessmentType.slice(1)}`,
+    edit: `Edit ${assessmentType.charAt(0).toUpperCase() + assessmentType.slice(1)} #${formData?.serial}`,
+    view: `Student Marks for ${assessmentType.charAt(0).toUpperCase() + assessmentType.slice(1)} #${formData?.serial}`
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target.className === "modal-overlay" && onClose()}>
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>{modalTitle[type]}</h2>
+          <button className="close-modal" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-body">
+          {/* Assessment Details - Only show in Add/Edit modes */}
+          {(type === "add" || type === "edit") && (
+            <div className="assessment-details">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Serial #:</label>
+                  <input
+                    type="number"
+                    name="serial"
+                    value={formData.serial}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Weightage:</label>
+                  <input
+                    type="number"
+                    name="weightage"
+                    value={formData.weightage}
+                    onChange={handleInputChange}
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Total Marks:</label>
+                  <input
+                    type="number"
+                    name="totalMarks"
+                    value={formData.totalMarks}
+                    onChange={handleInputChange}
+                    min="0"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Student Marks Table - Always show */}
+          <div className="student-marks-section">
+            <h3>Student Marks</h3>
+            <table className="student-marks-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Marks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {formData.studentMarks.map(student => (
+                  <tr key={student.id}>
+                    <td>{student.name}</td>
+                    <td>
+                      <input
+                        type="number"
+                        value={student.marks}
+                        onChange={(e) => handleStudentMarksChange(student.id, e.target.value)}
+                        min="0"
+                        max={formData.totalMarks}
+                        placeholder="0"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="submit-btn">
+              {type === "add" ? "Create" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default TeacherGrading;
+
+// Sample data structure - kept very minimal for demonstration
+const sampleData = {
+  courses: [
+    { id: "discrete", name: "Discrete Mathematics", sections: ["sectionA", "sectionB"] },
+    { id: "pspf", name: "Programming Fundamentals", sections: ["sectionA"] },
+    { id: "calculus", name: "Calculus", sections: ["sectionA", "sectionB", "sectionC"] }
+  ],
+  quizzes: {
+    discrete: {
+      sectionA: [
+        { 
+          id: 1, 
+          serial: 1, 
+          weightage: 15, 
+          totalMarks: 15, 
+          average: 12.9, 
+          stdDev: 1.1, 
+          min: 8, 
+          max: 14.5, 
+          uploadDate: "2025-02-15", 
+          published: true, 
+          studentMarks: Array.from({ length: 10 }, (_, i) => ({ 
+            id: i + 1, 
+            name: `Student ${i + 1}`, 
+            marks: Math.floor(Math.random() * 15) 
+          }))
+        },
+      ],
+      sectionB: []
+    },
+    pspf: { sectionA: [] },
+    calculus: { sectionA: [], sectionB: [], sectionC: [] }
+  },
+  assignments: {
+    discrete: { sectionA: [], sectionB: [] },
+    pspf: { sectionA: [] },
+    calculus: { sectionA: [], sectionB: [], sectionC: [] }
+  },
+  midterms: {
+    discrete: { sectionA: [], sectionB: [] },
+    pspf: { sectionA: [] },
+    calculus: { sectionA: [], sectionB: [], sectionC: [] }
+  },
+  finals: {
+    discrete: { sectionA: [], sectionB: [] },
+    pspf: { sectionA: [] },
+    calculus: { sectionA: [], sectionB: [], sectionC: [] }
+  }
+};
