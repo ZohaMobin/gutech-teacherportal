@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import MainLayout from './Pages/MainLayout/MainLayout'; // Fixed import path
 import Signup from './Pages/LoginSignUp/Signup';
 import ComingSoon from './Pages/ComingSoon/comingsoon'; 
+import TeacherGrading from './Pages/TeacherGrading/TeacherGrading';
 
 
 function App() {
@@ -15,7 +16,7 @@ function App() {
           
           {/* Main Layout with Nested Routes */}
           <Route path="/*" element={<MainLayout />}>
-            <Route path="marks" element={<ComingSoon />} />
+            <Route path="marks" element={<TeacherGrading />} />
          
 
    

@@ -258,3 +258,35 @@ body {
 .container.active .toggle-right {
   transform: translateX(200%);
 }
+
+/* Add this to your existing Signup.css file */
+
+.container select {
+  background-color: #f9ecee; /* Subtle red tint to match inputs */
+  border: 1px solid #991D20;
+  margin: 8px 0;
+  padding: 10px 15px;
+  font-size: 13px;
+  border-radius: 8px;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  appearance: none; /* Remove default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23991D20' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 12px;
+}
+
+.container select:focus {
+  border-color: #b52427;
+  box-shadow: 0 0 5px rgba(153, 29, 32, 0.5); /* Red focus glow */
+}
+
+.container select option {
+  background-color: #fff;
+  color: #333;
+  font-size: 13px;
+}

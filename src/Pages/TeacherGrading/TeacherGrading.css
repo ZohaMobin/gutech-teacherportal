@@ -1,0 +1,608 @@
+/* Teacher Grading Page Styles */
+.teacher-marks-container {
+    margin: 0 auto;
+    padding: 30px 20px;
+    max-width: 1200px;
+    border-top: 5px solid #991D20;
+    background-color: #fff;
+    font-family: 'Roboto', Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow-x: hidden;
+  }
+  
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    margin-top: 2.0rem;
+  }
+  
+  .page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+  
+  .teacher-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .add-marks-btn {
+    background-color: #991D20;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .add-marks-btn:hover {
+    background-color: #7a1719;
+  }
+  
+  /* Course Tabs Styling */
+  .course-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  .course-tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .course-tabs::-webkit-scrollbar-thumb {
+    background-color: rgba(153, 29, 32, 0.3);
+    border-radius: 4px;
+  }
+  
+  .course-tab {
+    padding: 0.5rem 1rem;
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  .course-tab:hover {
+    background-color: #dee2e6;
+  }
+  
+  .course-tab.active {
+    background-color: #991D20;
+    color: white;
+  }
+  
+  /* Assessment Type Tabs */
+  .assessment-tabs {
+    display: flex;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  .assessment-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .assessment-tab {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  .assessment-tab:hover {
+    color: #495057;
+  }
+  
+  .assessment-tab.active {
+    color: #991D20;
+    border-bottom: 2px solid #991D20;
+  }
+  
+  /* Marks Table Styling */
+  .marks-table-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    margin-bottom: 2rem;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    position: relative;
+    max-width: 100vw;
+    left: 0;
+  }
+  
+  .marks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 800px;
+    table-layout: fixed;
+  }
+  
+  .marks-table th,
+  .marks-table td {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+    min-width: 80px;
+  }
+  
+  .marks-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .marks-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .marks-table tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .editing-row {
+    background-color: #fff8e6 !important;
+  }
+  
+  .no-data {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+  }
+  
+  /* Status and Actions Styling */
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .status-badge.published {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .status-badge.draft {
+    background-color: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  .actions-cell {
+    white-space: nowrap;
+  }
+  
+  .row-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .edit-btn, .publish-btn, .delete-btn, .save-btn, .cancel-btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .edit-btn {
+    background-color: #e9ecef;
+    color: #495057;
+  }
+  
+  .edit-btn:hover {
+    background-color: #dee2e6;
+  }
+  
+  .publish-btn.publish {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .publish-btn.publish:hover {
+    background-color: #c3e6cb;
+  }
+  
+  .publish-btn.unpublish {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .publish-btn.unpublish:hover {
+    background-color: #f5c6cb;
+  }
+  
+  .delete-btn {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .delete-btn:hover {
+    background-color: #f5c6cb;
+  }
+  
+  .save-btn {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .save-btn:hover {
+    background-color: #c3e6cb;
+  }
+  
+  .cancel-btn {
+    background-color: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #e9ecef;
+  }
+  
+  .edit-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  /* Edit Input Styling */
+  .edit-input {
+    width: 60px;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  /* Switch Toggle Styling */
+  .switch-container {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+  }
+  
+  .switch-container input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 20px;
+  }
+  
+  .switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .switch-slider {
+    background-color: #991D20;
+  }
+  
+  input:checked + .switch-slider:before {
+    transform: translateX(20px);
+  }
+  
+  /* Modal Styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+  
+  .close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+    cursor: pointer;
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group {
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+  }
+  
+  .student-marks-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .student-marks-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  .student-marks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  
+  .student-marks-table th,
+  .student-marks-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .student-marks-table th {
+    text-align: left;
+    background-color: #f8f9fa;
+    font-weight: 500;
+  }
+  
+  .student-marks-table input {
+    width: 80px;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .submit-btn {
+    background-color: #991D20;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .submit-btn:hover {
+    background-color: #7a1719;
+  }
+  
+  /* Loading State */
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    font-size: 1rem;
+    color: #6c757d;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .teacher-marks-container {
+      padding: 20px 10px;
+      width: 100%;
+    }
+    
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+      padding: 0 5px;
+    }
+    
+    .page-header h1 {
+      font-size: 1.25rem;
+    }
+    
+    .course-tab {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    
+    .assessment-tab {
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+    }
+    
+    .marks-table-container {
+      border-radius: 4px;
+      margin-left: -10px;
+      margin-right: -10px;
+      width: calc(100% + 20px);
+    }
+    
+    .edit-btn, .publish-btn, .delete-btn {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.7rem;
+    }
+    
+    .row-actions {
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .modal-content {
+      max-width: 95%;
+      max-height: 80vh;
+    }
+    
+    .form-row {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .form-group {
+      min-width: 100%;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .teacher-marks-container {
+      padding: 15px 5px;
+    }
+    
+    .page-header {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .page-header h1 {
+      font-size: 1.1rem;
+    }
+    
+    .add-marks-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    
+    .course-tabs, .assessment-tabs {
+      margin-left: -5px;
+      margin-right: -5px;
+      width: calc(100% + 10px);
+    }
+    
+    .modal-header h2 {
+      font-size: 1.1rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+    }
+    
+    .student-marks-table th,
+    .student-marks-table td {
+      padding: 0.4rem;
+      font-size: 0.8rem;
+    }
+    
+    .student-marks-table input {
+      width: 60px;
+    }
+    
+    .modal-actions {
+      gap: 0.5rem;
+    }
+    
+    .submit-btn, .cancel-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+  }
