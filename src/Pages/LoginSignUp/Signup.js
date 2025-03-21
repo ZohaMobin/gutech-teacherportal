@@ -36,7 +36,7 @@ const Signup = () => {
         name: formData.name,
         email: formData.email,
         department: formData.department,
-        employeeID: formData.employeeID,
+        employeeId: formData.employeeID,
         password: formData.password,
         role: 'teacher',
       });
