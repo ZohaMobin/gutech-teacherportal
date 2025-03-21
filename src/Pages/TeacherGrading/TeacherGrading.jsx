@@ -155,13 +155,6 @@ const TeacherGrading = () => {
     }
   };
 
-  // Handler for viewing student marks
-  const handleViewMarks = (item) => {
-    setCurrentModal({
-      type: "view",
-      data: { ...item },
-    });
-  };
 
   // Submit data to API
   const submitGradeToAPI = async (studentData, assessment) => {
