@@ -46,6 +46,45 @@ export const handleExcelImport = (file, assessments, students, setAssessments, s
                     return;
                 }
 
+                // Check for duplicate assessment IDs within the file
+                const fileAssessmentIds = new Map();
+                const duplicateFileIds = new Set();
+
+                jsonData.forEach(row => {
+                    const assessmentId = parseInt(row["Assessment ID"]);
+                    if (!isNaN(assessmentId)) {
+                        if (fileAssessmentIds.has(assessmentId)) {
+                            duplicateFileIds.add(assessmentId);
+                        } else {
+                            fileAssessmentIds.set(assessmentId, true);
+                        }
+                    }
+                });
+
+                // Check for duplicate IDs between file and existing assessments
+                const existingAssessmentIds = new Set(assessments.map(a => a.id));
+                const duplicatesWithExisting = [...fileAssessmentIds.keys()].filter(id => existingAssessmentIds.has(id));
+
+                // If duplicates found in the file itself, show error and reject
+                if (duplicateFileIds.size > 0) {
+                    showError(
+                        `Your file contains duplicate Assessment IDs: ${[...duplicateFileIds].join(", ")}. 
+                        Please ensure each Assessment ID appears only once in your file and try again.`
+                    );
+                    reject("Duplicate Assessment IDs in file");
+                    return;
+                }
+
+                // If there are duplicates with existing assessments, ask user what to do
+                if (duplicatesWithExisting.length > 0) {
+                    showError(
+                        `Assessment IDs ${duplicatesWithExisting.join(", ")} already exist in the system. 
+                        Please either use new Assessment IDs or remove these entries from your file before importing.`
+                    );
+                    reject("Duplicate Assessment IDs with existing data");
+                    return;
+                }
+
                 // Maps for assessments and students - fixed initialization
                 const assessmentMap = {};
                 // Initialize assessment map with existing assessments
@@ -100,7 +139,7 @@ export const handleExcelImport = (file, assessments, students, setAssessments, s
                         return;
                     }
 
-                    // Add or update assessment based on Assessment ID
+                    // Add new assessment (we already verified it doesn't exist)
                     if (!assessmentMap[assessmentId]) {
                         assessmentMap[assessmentId] = {
                             id: assessmentId,
@@ -166,7 +205,6 @@ export const handleExcelImport = (file, assessments, students, setAssessments, s
         reader.readAsArrayBuffer(file);
     });
 };
-
 // Function to export data to Excel
 export const createExcelExport = (assessments, students, activeSubject, activeTab) => {
     const workbook = XLSX.utils.book_new();
