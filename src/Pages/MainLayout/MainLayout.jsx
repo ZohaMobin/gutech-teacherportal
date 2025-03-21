@@ -1,7 +1,6 @@
-// MainLayout.jsx - Updated
+// MainLayout.jsx - Using Tailwind CSS
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/sidebar/Sidebar';
-import './MainLayout.css';
 import Topbar from '../topbar/topbar';
 import { Outlet, useLocation } from 'react-router-dom';
 
@@ -34,21 +33,23 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div className="main-layout">
-      <Topbar 
-        toggleSidebar={toggleSidebar} 
-        isSidebarOpen={isSidebarOpen} 
+    <div className="min-h-screen w-full max-w-full flex flex-col bg-gray-50 overflow-x-hidden">
+      <Topbar
+        toggleSidebar={toggleSidebar}
+        isSidebarOpen={isSidebarOpen}
       />
       
-      <div className="main-container">
-        <Sidebar 
-          isOpen={isSidebarOpen} 
+      <div className="flex flex-1 w-full relative">
+        <Sidebar
+          isOpen={isSidebarOpen}
           onNavClick={handleNavClick}
-          activePage={activePage} 
+          activePage={activePage}
         />
         
-        <div className={`content-area ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-          <main className="main-content">
+        <div className={`flex-1 mt-16 min-h-[calc(100vh-4rem)] w-full transition-all duration-300 bg-white overflow-x-hidden ${
+          isSidebarOpen ? 'md:w-[calc(100%-16rem)] md:ml-64' : ''
+        }`}>
+          <main className="p-5 w-full box-border lg:p-4 md:p-3 sm:p-2">
             <Outlet />
             {React.Children.map(children, child => {
               // Clone the child element and pass the activePage prop
@@ -60,7 +61,10 @@ const MainLayout = ({ children }) => {
       
       {/* Overlay for mobile when sidebar is open */}
       {isSidebarOpen && (
-        <div className="mobile-overlay" onClick={toggleSidebar}></div>
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={toggleSidebar}
+        ></div>
       )}
     </div>
   );

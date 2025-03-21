@@ -1,7 +1,6 @@
-// Sidebar.jsx
+// Sidebar.jsx with Tailwind CSS
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './sidebar.css';
 
 const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   const navigate = useNavigate();
@@ -18,43 +17,51 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   ];
   
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    } md:translate-x-0`}>
       {/* Sidebar Header */}
-      <div className="sidebar-header">
-        <div className="logo">
-          <div className="logo-icon">P</div>
-          <span className="logo-text">Portal</span>
+      <div className="h-16 flex items-center px-5 border-b border-gray-200">
+        <div className="flex items-center">
+          <div className="w-6 h-6 bg-red-700 text-white rounded flex items-center justify-center font-bold mr-2">
+            P
+          </div>
+          <span className="font-semibold text-gray-800">Portal</span>
         </div>
       </div>
       
       {/* Navigation Links */}
-      <nav className="sidebar-nav">
+      <nav className="flex-1 py-5 overflow-y-auto">
         {navigationItems.map(item => (
           <a 
             key={item.id}
             href="#"
-            className={`sidebar-nav-item ${activePage === item.id ? 'active' : ''}`}
+            className={`flex items-center py-3 px-5 text-gray-600 transition-all duration-200 border-l-3 ${
+              activePage === item.id 
+                ? 'bg-red-50 text-red-700 font-medium border-l-red-700' 
+                : 'border-l-transparent hover:bg-gray-50 hover:text-red-700'
+            }`}
             onClick={(e) => {
               e.preventDefault();
               navigate(`/${item.id}`);
-              onNavClick(item.id); // Call the handler from parent
+              onNavClick(item.id);
             }}
           >
-            <span className="sidebar-nav-icon">{item.icon}</span>
-            <span className="sidebar-nav-text">{item.label}</span>
+            <span className="mr-3 w-5 text-center">{item.icon}</span>
+            <span>{item.label}</span>
           </a>
         ))}
       </nav>
       
       {/* User Section */}
-      <div className="sidebar-footer">
-        <div className="sidebar-footer-content">
-          <div className="user-avatar-small">
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-red-50 text-red-700 rounded-full flex items-center justify-center font-bold text-xs">
             <span>GU</span>
           </div>
-          <div className="user-info">
-            <span className="user-name-small">{user?.name}</span>
-            <a href="#" className="user-profile-link">View Profile</a>
+          <div className="ml-2.5">
+            <span className="block text-sm font-medium text-gray-800">{user?.name}</span>
+            <a href="#" className="text-xs text-red-700 no-underline">View Profile</a>
           </div>
         </div>
       </div>
