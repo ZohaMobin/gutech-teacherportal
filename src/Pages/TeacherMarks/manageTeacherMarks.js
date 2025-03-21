@@ -11,13 +11,12 @@ const TeacherMarksManagement = () => {
   const [activeSection, setActiveSection] = useState("sectionA");
   const fileInputRef = React.useRef(null);
 
-
-const handleFileInputClick = () => {
+  const handleFileInputClick = () => {
     // Reset the file input value before clicking it
     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      fileInputRef.current.value = "";
     }
-};
+  };
 
   // Updated assessments structure to include subject and section
   const [assessments, setAssessments] = useState({
@@ -221,10 +220,10 @@ const handleFileInputClick = () => {
   );
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full min-w-0">
       {isLoading && <Loader />}
-      <div className="w-full bg-white rounded-lg shadow-sm">
-        <div className="p-3 md:p-4">
+      <div className="w-full bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-3 md:p-4 max-w-full">
           {/* Header with Add Button */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teacher Marks Management</h1>
@@ -236,33 +235,44 @@ const handleFileInputClick = () => {
             </button>
           </div>
 
-          {/* Subject and Section Filters - Responsive */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <div className="flex flex-wrap gap-2">
-              {subjects.map((subject) => (
-                <button
-                  key={subject}
-                  className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
-                    activeSubject === subject ? "bg-red-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  onClick={() => setActiveSubject(subject)}
-                >
-                  {subject}
-                </button>
-              ))}
+          {/* Subject and Section Filters - Updated to separate lines */}
+          <div className="flex flex-col gap-3 mb-4">
+            {/* Subject selection */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Subject</label>
+              <div className="flex flex-wrap gap-2">
+                {subjects.map((subject) => (
+                  <button
+                    key={subject}
+                    className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${
+                      activeSubject === subject ? "bg-red-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setActiveSubject(subject)}
+                  >
+                    {subject}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {sections.map((section) => (
-                <button
-                  key={section}
-                  className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
-                    activeSection === section ? "bg-red-700 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                  onClick={() => setActiveSection(section)}
-                >
-                  {section}
-                </button>
-              ))}
+            
+            {/* Section selection - now on a new line */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Section</label>
+              <div className="flex flex-wrap gap-2">
+                {sections.map((section) => (
+                  <button
+                    key={section}
+                    className={`px-4 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${
+                      activeSection === section 
+                        ? "bg-red-700 text-white shadow-sm" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                    }`}
+                    onClick={() => setActiveSection(section)}
+                  >
+                    {section.replace(/section([A-Z])/, 'Section $1')}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -386,7 +396,7 @@ const handleFileInputClick = () => {
 
           {/* Assessment list or Student marks view - Responsive */}
           {!showStudentMarks ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -468,15 +478,17 @@ const handleFileInputClick = () => {
               </table>
             </div>
           ) : (
-            <StudentMarksView
-              assessment={selectedAssessment}
-              students={students}
-              activeTab={activeTab}
-              onBack={() => setShowStudentMarks(false)}
-              onUpdate={(updatedAssessment) => updateAssessment(updatedAssessment)}
-              onUpdateStudents={setStudents}
-              onToggleStatus={toggleStatus}
-            />
+            <div className="w-full overflow-x-auto">
+              <StudentMarksView
+                assessment={selectedAssessment}
+                students={students}
+                activeTab={activeTab}
+                onBack={() => setShowStudentMarks(false)}
+                onUpdate={(updatedAssessment) => updateAssessment(updatedAssessment)}
+                onUpdateStudents={setStudents}
+                onToggleStatus={toggleStatus}
+              />
+            </div>
           )}
         </div>
       </div>

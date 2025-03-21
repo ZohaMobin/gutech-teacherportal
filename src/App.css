@@ -1,37 +1,46 @@
-
 .App {
   text-align: center;
-  justify-items: center;
-
-
   display: flex;
-
+  min-height: 100vh;
+  width: 100%;
 }
 
-
-
+/* Remove the fixed width constraint for mainContent */
 .mainContent {
-  width: 80%;
+  flex: 1; /* Use flex-grow instead of fixed width */
+  width: 100%; /* Allow full width */
+  max-width: 100%; /* Ensure it doesn't overflow */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
-.routes-content{
 
+.routes-content {
   padding: 2%;
+  width: 100%; /* Ensure routes content uses full width */
+  max-width: 100%;
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 @media (max-width: 900px) {
   .mainContent {
-    width: 75%;
+    /* No fixed width constraint */
+    width: 100%;
   }
-
- 
 }
-.content{
-  padding :2% ; 
 
+.content {
+  padding: 2%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: left; /* Align text to left by default for content */
+}
+
+/* Font faces remain unchanged */
 @font-face {
   font-family: 'Poppins-Regular';
   src: url('./Fonts/Poppins/Poppins-Regular.ttf') format('truetype');
 }
+
 @font-face {
   font-family: 'Poppins-Medium';
   src: url('./Fonts/Poppins/Poppins-Medium.ttf') format('truetype');
@@ -45,5 +54,14 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add specific override for tables to ensure they use full width */
+table {
+  width: 100%;
+  max-width: 100%;
 }
 
+/* Ensure components centered by default don't affect data tables */
+.text-left {
+  text-align: left !important;
+}
