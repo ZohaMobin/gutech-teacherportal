@@ -221,123 +221,124 @@ const handleFileInputClick = () => {
   );
 
   return (
-    <div className="flex flex-col items-center py-6 px-4">
+    <div className="w-full h-full">
       {isLoading && <Loader />}
-      <div className="w-full max-w-5xl bg-white rounded-lg shadow-md">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Teacher Marks Management</h1>
-            <button className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors flex items-center gap-2" onClick={handleAddClick}>
+      <div className="w-full bg-white rounded-lg shadow-sm">
+        <div className="p-3 md:p-4">
+          {/* Header with Add Button */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teacher Marks Management</h1>
+            <button 
+              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-700 text-white text-sm rounded hover:bg-red-800 transition-colors flex items-center gap-2" 
+              onClick={handleAddClick}
+            >
               + Add {activeTab.slice(0, -1)}
             </button>
           </div>
 
-          {/* Subject filters */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {subjects.map((subject) => (
-              <button
-                key={subject}
-                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  activeSubject === subject ? "bg-red-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setActiveSubject(subject)}
-              >
-                {subject}
-              </button>
-            ))}
+          {/* Subject and Section Filters - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div className="flex flex-wrap gap-2">
+              {subjects.map((subject) => (
+                <button
+                  key={subject}
+                  className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
+                    activeSubject === subject ? "bg-red-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  onClick={() => setActiveSubject(subject)}
+                >
+                  {subject}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {sections.map((section) => (
+                <button
+                  key={section}
+                  className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
+                    activeSection === section ? "bg-red-700 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  onClick={() => setActiveSection(section)}
+                >
+                  {section}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Section filters */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {sections.map((section) => (
-              <button
-                key={section}
-                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  activeSection === section ? "bg-red-700 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-                onClick={() => setActiveSection(section)}
-              >
-                {section}
-              </button>
-            ))}
-          </div>
-
-          {/* Import/Export buttons */}
-          <div className="flex justify-end gap-3 mb-2">
-            <div className="relative flex items-center gap-2">
+          {/* Import/Export buttons - Responsive */}
+          <div className="flex justify-end gap-2 mb-2">
+            <div className="relative flex items-center gap-1">
               <label
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 cursor-pointer text-sm"
+                className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs sm:text-sm hover:bg-gray-200 transition-colors flex items-center gap-1 cursor-pointer"
                 onClick={handleFileInputClick}
               >
-                <Upload size={16} />
+                <Upload size={14} />
                 Import
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
               </label>
               <button className="text-gray-500 hover:text-blue-600" onClick={toggleImportHelp} title="Import Format Help">
-                <Info size={16} />
+                <Info size={14} />
               </button>
             </div>
-            <button className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors flex items-center gap-2 text-sm" onClick={handleExport}>
-              <Download size={16} />
+            <button className="px-2 py-1 bg-blue-50 text-blue-600 text-xs sm:text-sm rounded hover:bg-blue-100 transition-colors flex items-center gap-1" onClick={handleExport}>
+              <Download size={14} />
               Export
             </button>
           </div>
 
-          {/* Import Format Help Panel */}
+          {/* Import Format Help Panel - Responsive */}
           {showImportHelp && (
-            <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+            <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200 text-xs sm:text-sm">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium text-blue-800">Excel Import Format</h3>
                 <button className="text-gray-500 hover:text-gray-700" onClick={toggleImportHelp}>
                   <X size={16} />
                 </button>
               </div>
-              <p className="text-sm text-gray-700 mb-3">Your Excel file must include the following columns with the exact names:</p>
+              <p className="text-gray-700 mb-2">Your Excel file must include the following columns:</p>
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-blue-200 text-sm">
+                <table className="min-w-full bg-white border border-blue-200 text-xs">
                   <thead>
                     <tr className="bg-blue-100">
-                      <th className="px-3 py-2 text-left border-b border-blue-200">Column Name</th>
-                      <th className="px-3 py-2 text-left border-b border-blue-200">Data Type</th>
-                      <th className="px-3 py-2 text-left border-b border-blue-200">Description</th>
+                      <th className="px-2 py-1 text-left border-b border-blue-200">Column Name</th>
+                      <th className="px-2 py-1 text-left border-b border-blue-200">Data Type</th>
+                      <th className="px-2 py-1 text-left border-b border-blue-200">Description</th>
                     </tr>
                   </thead>
                   <tbody>
                     {requiredColumns.map((column, index) => (
                       <tr key={index} className="border-b border-blue-100">
-                        <td className="px-3 py-2 font-medium">{column.name}</td>
-                        <td className="px-3 py-2">{column.type}</td>
-                        <td className="px-3 py-2">{column.description}</td>
+                        <td className="px-2 py-1 font-medium">{column.name}</td>
+                        <td className="px-2 py-1">{column.type}</td>
+                        <td className="px-2 py-1">{column.description}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="mt-3 text-sm text-gray-600">
-                <p>
+              <div className="mt-2 text-gray-600">
+                <p className="text-xs">
                   Example row: <span className="font-mono bg-blue-100 px-1 rounded">1, 15, 20, 101, "John Doe", 18</span>
                 </p>
-                <p className="mt-2 text-xs italic">All column names are case-sensitive. Make sure the first row of your Excel file contains these exact column names.</p>
               </div>
-              <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle size={16} className="mt-0.5" />
-                  <div>
-                    <p className="font-medium">Important Note</p>
-                    <p>Imported assessments will be associated with the currently active tab. Make sure you have the correct tab selected before importing.</p>
-                  </div>
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 flex items-start gap-1">
+                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Important</p>
+                  <p>Imported assessments will be added to the current tab.</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Assessment type tabs */}
-          <div className="border-b border-gray-200 mb-4">
-            <div className="flex flex-wrap">
+          {/* Assessment type tabs - Responsive */}
+          <div className="border-b border-gray-200 mb-3 overflow-x-auto">
+            <div className="flex whitespace-nowrap">
               {tabs.map((tab) => (
                 <button
                   key={tab}
-                  className={`py-2 px-4 text-sm transition-colors ${
+                  className={`py-1.5 px-3 text-xs sm:text-sm transition-colors ${
                     activeTab === tab ? "text-red-700 border-b-2 border-red-700 font-medium" : "text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => handleTabChange(tab)}
@@ -348,72 +349,72 @@ const handleFileInputClick = () => {
             </div>
           </div>
 
-          {/* Add Assessment Form */}
+          {/* Add Assessment Form - Responsive */}
           {showAddForm && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h3 className="font-medium mb-3">Add New {activeTab.slice(0, -1)}</h3>
-              <div className="flex flex-wrap gap-4 mb-4">
+            <div className="bg-gray-50 p-3 rounded-lg mb-4">
+              <h3 className="font-medium mb-3 text-sm">Add New {activeTab.slice(0, -1)}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Weightage (%)</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Weightage (%)</label>
                   <input
                     type="number"
                     value={newAssessment.weightage}
                     onChange={(e) => setNewAssessment({ ...newAssessment, weightage: e.target.value })}
-                    className="w-32 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Marks</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Total Marks</label>
                   <input
                     type="number"
                     value={newAssessment.total}
                     onChange={(e) => setNewAssessment({ ...newAssessment, total: e.target.value })}
-                    className="w-32 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors" onClick={addAssessment}>
+              <div className="flex gap-2">
+                <button className="px-3 py-1.5 bg-red-700 text-xs text-white rounded hover:bg-red-800 transition-colors" onClick={addAssessment}>
                   Add {activeTab.slice(0, -1)}
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors" onClick={() => setShowAddForm(false)}>
+                <button className="px-3 py-1.5 bg-gray-200 text-xs text-gray-700 rounded hover:bg-gray-300 transition-colors" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
               </div>
             </div>
           )}
 
-          {/* Assessment list or Student marks view */}
+          {/* Assessment list or Student marks view - Responsive */}
           {!showStudentMarks ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weightage</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">#</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Weightage</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Avg</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {getCurrentAssessments().length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                        No {activeTab.toLowerCase()} found for {activeSubject} ({activeSection}). Click the "+ Add {activeTab.slice(0, -1)}" button to add one.
+                      <td colSpan="6" className="px-3 py-3 text-center text-gray-500">
+                        No {activeTab.toLowerCase()} found for {activeSubject} ({activeSection}).
                       </td>
                     </tr>
                   ) : (
                     getCurrentAssessments().map((assessment) => (
                       <tr key={assessment.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => handleAssessmentClick(assessment)}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{assessment.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{assessment.weightage}%</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{assessment.total}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{assessment.avg}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.id}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.weightage}%</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.total}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.avg}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               assessment.status === "Published"
                                 ? "bg-green-100 text-green-800"
                                 : assessment.status === "Modified"
@@ -424,39 +425,41 @@ const handleFileInputClick = () => {
                             }`}
                           >
                             {assessment.status}
-                            {assessment.modified && <AlertTriangle size={12} className="ml-1 text-yellow-600" />}
+                            {assessment.modified && <AlertTriangle size={10} className="ml-1 text-yellow-600" />}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button
-                            className="text-gray-600 hover:text-gray-900 bg-gray-100 px-3 py-1 rounded flex items-center gap-1 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAssessmentClick(assessment);
-                            }}
-                          >
-                            <Edit size={14} /> Edit
-                          </button>
-                          <button
-                            className={`${
-                              assessment.status === "Published" ? "text-red-600 bg-red-50" : "text-green-600 bg-green-50"
-                            } hover:bg-opacity-80 px-3 py-1 rounded transition-colors`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleStatus(assessment.id);
-                            }}
-                          >
-                            {assessment.status === "Published" ? "Unpublish" : "Publish"}
-                          </button>
-                          <button
-                            className="text-gray-500 hover:text-red-500 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteAssessment(assessment.id);
-                            }}
-                          >
-                            <X size={16} />
-                          </button>
+                        <td className="px-3 py-2 whitespace-nowrap font-medium space-x-1">
+                          <div className="flex gap-1 flex-wrap">
+                            <button
+                              className="text-gray-600 hover:text-gray-900 bg-gray-100 px-2 py-0.5 text-xs rounded flex items-center gap-1 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAssessmentClick(assessment);
+                              }}
+                            >
+                              <Edit size={12} /> Edit
+                            </button>
+                            <button
+                              className={`${
+                                assessment.status === "Published" ? "text-red-600 bg-red-50" : "text-green-600 bg-green-50"
+                              } hover:bg-opacity-80 px-2 py-0.5 text-xs rounded transition-colors`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStatus(assessment.id);
+                              }}
+                            >
+                              {assessment.status === "Published" ? "Unpublish" : "Publish"}
+                            </button>
+                            <button
+                              className="text-gray-500 hover:text-red-500 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteAssessment(assessment.id);
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
