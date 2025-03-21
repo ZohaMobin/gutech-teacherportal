@@ -17,9 +17,8 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   ];
   
   return (
-    <aside className={`fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ${
-      isOpen ? 'translate-x-0' : '-translate-x-full'
-    } md:translate-x-0`}>
+    <aside className={`fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 
+      transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Sidebar Header */}
       <div className="h-16 flex items-center px-5 border-b border-gray-200">
         <div className="flex items-center">
