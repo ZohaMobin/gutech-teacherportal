@@ -194,9 +194,11 @@ export const handleExcelImport = (file, assessments, students, setAssessments, s
                 });
 
                 // Update the state with new data
-                setAssessments(newAssessments);
                 setStudents(Object.values(studentMap));
-
+                
+                // Always call setAssessments callback with the complete array of new assessments
+                setAssessments(newAssessments);
+                
                 resolve(newAssessments); // Return the new assessments for further processing
             } catch (error) {
                 console.error("Excel import error:", error);
