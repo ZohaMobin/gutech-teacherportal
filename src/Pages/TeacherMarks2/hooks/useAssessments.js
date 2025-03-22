@@ -10,6 +10,28 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
   
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   
+  // Load assessments from local storage when component mounts or when dependencies change
+  useEffect(() => {
+    const loadStoredAssessments = () => {
+      try {
+        // Look for saved assessments in localStorage
+        const storedAssessments = localStorage.getItem('assessments');
+        if (storedAssessments) {
+          setAssessments(JSON.parse(storedAssessments));
+        }
+      } catch (error) {
+        console.error("Error loading assessments from localStorage", error);
+      }
+    };
+    
+    loadStoredAssessments();
+  }, []);
+  
+  // Save assessments to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('assessments', JSON.stringify(assessments));
+  }, [assessments]);
+  
   // Get current assessments based on active tab, section, and subject
   const getCurrentAssessments = () => {
     if (!activeSection || !activeSubject) return [];
@@ -25,12 +47,10 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
   const addNewAssessment = (assessmentData) => {
     if (!activeTab) return;
     
-    setAssessments({
-      ...assessments,
-      [activeTab]: [
-        ...assessments[activeTab],
-        assessmentData
-      ],
+    setAssessments(prev => {
+      const newState = {...prev};
+      newState[activeTab] = [...prev[activeTab], assessmentData];
+      return newState;
     });
   };
   
@@ -38,11 +58,12 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
   const updateAssessmentInState = (updatedAssessment) => {
     if (!activeTab) return;
     
-    setAssessments({
-      ...assessments,
-      [activeTab]: assessments[activeTab].map((assessment) => 
-        (assessment.id === updatedAssessment.id ? updatedAssessment : assessment)
-      ),
+    setAssessments(prev => {
+      const newState = {...prev};
+      newState[activeTab] = prev[activeTab].map(assessment => 
+        assessment.id === updatedAssessment.id ? updatedAssessment : assessment
+      );
+      return newState;
     });
     
     if (selectedAssessment && selectedAssessment.id === updatedAssessment.id) {
@@ -54,9 +75,10 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
   const deleteAssessmentFromState = (id) => {
     if (!activeTab) return;
     
-    setAssessments({
-      ...assessments,
-      [activeTab]: assessments[activeTab].filter((assessment) => assessment.id !== id),
+    setAssessments(prev => {
+      const newState = {...prev};
+      newState[activeTab] = prev[activeTab].filter(assessment => assessment.id !== id);
+      return newState;
     });
     
     if (selectedAssessment && selectedAssessment.id === id) {
@@ -68,9 +90,9 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
   const toggleAssessmentStatus = (id, newStatus) => {
     if (!activeTab) return;
     
-    setAssessments({
-      ...assessments,
-      [activeTab]: assessments[activeTab].map((a) => {
+    setAssessments(prev => {
+      const newState = {...prev};
+      newState[activeTab] = prev[activeTab].map(a => {
         if (a.id === id) {
           return {
             ...a,
@@ -79,7 +101,8 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
           };
         }
         return a;
-      }),
+      });
+      return newState;
     });
     
     if (selectedAssessment && selectedAssessment.id === id) {
@@ -89,6 +112,27 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
         modified: false
       });
     }
+  };
+  
+  // Add multiple assessments at once (for import)
+  const addMultipleAssessments = (newAssessments, tabName) => {
+    if (!tabName) tabName = activeTab;
+    
+    setAssessments(prev => {
+      // Create a copy of current assessments
+      const newState = {...prev};
+      
+      // Get existing IDs to avoid duplicates
+      const existingIds = new Set(prev[tabName].map(a => a.id));
+      
+      // Add only assessments that don't already exist
+      newState[tabName] = [
+        ...prev[tabName],
+        ...newAssessments.filter(a => !existingIds.has(a.id))
+      ];
+      
+      return newState;
+    });
   };
   
   // Return all the functions and state
@@ -101,6 +145,7 @@ export const useAssessments = (activeTab, activeSection, activeSubject) => {
     addNewAssessment,
     updateAssessmentInState,
     deleteAssessmentFromState,
-    toggleAssessmentStatus
+    toggleAssessmentStatus,
+    addMultipleAssessments
   };
 };

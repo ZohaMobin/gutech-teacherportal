@@ -72,11 +72,49 @@ export const TeacherMarksProvider = ({ children }) => {
   }, [teacherId]);
   
   // Fetch students when active section changes
-  useEffect(() => {
+ // Modify the useEffect for loading student data in TeacherMarksContext.jsx
+
+// Fetch students when active section changes
+useEffect(() => {
     if (activeSection) {
       loadStudents(activeSection._id);
     }
   }, [activeSection]);
+  
+  // Also add this effect to restore marks from localStorage
+  useEffect(() => {
+    if (students.length > 0 && activeSection && activeSubject) {
+      // Restore student marks from unpublished marks in localStorage
+      const updatedStudents = [...students];
+      let hasUpdates = false;
+      
+      // Get all assessment IDs for the current section/subject
+      const currentAssessments = getCurrentAssessments();
+      
+      currentAssessments.forEach(assessment => {
+        const localMarks = getLocalMarks(
+          assessment.id, 
+          activeSection._id, 
+          activeSubject.id
+        );
+        
+        if (Object.keys(localMarks).length > 0) {
+          // Update each student with their marks
+          updatedStudents.forEach(student => {
+            if (localMarks[student.id] !== undefined) {
+              if (!student.marks) student.marks = {};
+              student.marks[assessment.id] = localMarks[student.id];
+              hasUpdates = true;
+            }
+          });
+        }
+      });
+      
+      if (hasUpdates) {
+        setStudents(updatedStudents);
+      }
+    }
+  }, [students, activeSection, activeSubject, assessments]);
   
   // Load teacher data (sections and subjects)
   const loadTeacherData = async (teacherId) => {

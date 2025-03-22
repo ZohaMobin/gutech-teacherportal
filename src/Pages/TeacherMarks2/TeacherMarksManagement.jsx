@@ -133,32 +133,48 @@ const TeacherMarksManagementContent = () => {
     }
   };
   
-  // Handle import of Excel file
-  const handleImport = (e) => {
+ // Handle import of Excel file
+const handleImport = (e) => {
     const file = e.target.files[0];
     if (!file || !activeSection || !activeSubject) return;
     
     setIsLoading(true);
-
+  
     handleExcelImport(
       file,
       getCurrentAssessments(),
       students,
       (updatedAssessments) => {
-        // Add active section and subject to imported assessments
+        // First, add all assessments to state at once
         const assessmentsWithContext = updatedAssessments.map((assessment) => ({
           ...assessment,
           sectionId: activeSection._id,
           courseId: activeSubject.id,
           type: activeTab,
         }));
-
-        // Add each assessment to the state
-        assessmentsWithContext.forEach(assessment => {
-          addNewAssessmentToState(assessment);
+  
+        // Update assessments state with all new assessments
+        setAssessments(prev => {
+          // Create a copy of the current state
+          const newState = {...prev};
           
-          // Save marks data to local storage
+          // Add all new assessments to the appropriate tab
+          newState[activeTab] = [
+            ...prev[activeTab].filter(a => 
+              // Filter out any existing assessments with the same ID
+              !assessmentsWithContext.some(newA => newA.id === a.id)
+            ),
+            ...assessmentsWithContext
+          ];
+          
+          return newState;
+        });
+        
+        // Now save marks for each assessment to local storage
+        assessmentsWithContext.forEach(assessment => {
           const studentMarks = {};
+          
+          // For each student, get their marks for this assessment
           students.forEach(student => {
             if (student.marks && student.marks[assessment.id] !== undefined) {
               studentMarks[student.id] = student.marks[assessment.id];
@@ -167,7 +183,7 @@ const TeacherMarksManagementContent = () => {
             }
           });
           
-          // Save to local storage
+          // Save marks to local storage
           saveMarksLocally(
             assessment.id, 
             studentMarks, 
@@ -191,7 +207,6 @@ const TeacherMarksManagementContent = () => {
         setIsLoading(false);
       });
   };
-  
   // Handle export of Excel file
   const handleExport = () => {
     if (!activeSection || !activeSubject) return;
@@ -236,7 +251,7 @@ const TeacherMarksManagementContent = () => {
     );
     
     // Add to state
-    addNewAssessmentToState(newAssessmentObj);
+addMultipleAssessments(assessmentsWithContext, activeTab);(newAssessmentObj);
 
     // Reset form
     setNewAssessment({ weightage: 15, total: 15 });
