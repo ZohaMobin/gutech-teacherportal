@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Download, Upload, Info } from "lucide-react";
-import { handleExcelImport, createExcelExport } from "../utils/csvUtils";
+import { handleExcelImport, createExcelExport } from "../../utils/csvUtils";
 import { TeacherMarksProvider, useTeacherMarks } from "./TeacherMarksContext";
 import AssessmentTable from "./AssessmentTable";
 import StudentMarksView from "./StudentMarksView";

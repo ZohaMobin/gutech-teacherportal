@@ -86,7 +86,7 @@ const StudentMarksView = ({ onBack, onUpdate, onToggleStatus }) => {
   // Toggle publish status
   const toggleStatus = () => {
     if (isDirty) {
-      if (confirm("You have unsaved changes. Save now before changing status?")) {
+      if (window.confirm("You have unsaved changes. Save now before changing status?")) {
         saveChanges().then(() => {
           onToggleStatus(selectedAssessment.id);
         });
