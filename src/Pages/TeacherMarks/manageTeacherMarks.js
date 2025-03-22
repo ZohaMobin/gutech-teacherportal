@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Download, Upload, Edit, AlertTriangle, Info } from "lucide-react";
 import StudentMarksView from "./StudentMarksView";
 import { handleExcelImport, createExcelExport } from "./csvUtils";
@@ -13,7 +13,8 @@ const TeacherMarksManagement = () => {
   const [activeSection, setActiveSection] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [activeSubject, setActiveSubject] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const [unpublishedMarks, setUnpublishedMarks] = useState({});
+  const fileInputRef = useRef(null);
 
   // Assessment states
   const [assessments, setAssessments] = useState({
@@ -48,9 +49,28 @@ const TeacherMarksManagement = () => {
     { name: "Student Name", type: "Text", description: "Full name of the student" },
     { name: "Obtained Marks", type: "Number", description: "Marks scored by the student" },
   ];
-  const teacherId="67dde7b0cadf2777c7a12567";
+  
+  const teacherId = "67dde7b0cadf2777c7a12567";
+  
+  // Load unpublished marks from localStorage on component mount
+  useEffect(() => {
+    const savedMarks = localStorage.getItem('unpublishedMarks');
+    if (savedMarks) {
+      try {
+        setUnpublishedMarks(JSON.parse(savedMarks));
+      } catch (e) {
+        console.error('Error loading unpublished marks', e);
+      }
+    }
+  }, []);
+
+  // Save unpublished marks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('unpublishedMarks', JSON.stringify(unpublishedMarks));
+  }, [unpublishedMarks]);
+
   // Fetch sections and courses when component mounts
- useEffect(() => {
+  useEffect(() => {
     if (teacherId) {
       fetchTeacherSections(teacherId);
     }
@@ -62,6 +82,31 @@ const TeacherMarksManagement = () => {
       fetchStudents(activeSection._id);
     }
   }, [activeSection]);
+
+  // Helper functions for mark management
+  const getMarksKey = (assessmentId) => `marks_${activeSection?._id}_${activeSubject?.id}_${assessmentId}`;
+
+  const saveMarksLocally = (assessmentId, studentMarks) => {
+    const key = getMarksKey(assessmentId);
+    setUnpublishedMarks(prev => ({
+      ...prev,
+      [key]: studentMarks
+    }));
+  };
+
+  const getLocalMarks = (assessmentId) => {
+    const key = getMarksKey(assessmentId);
+    return unpublishedMarks[key] || {};
+  };
+
+  const clearLocalMarks = (assessmentId) => {
+    const key = getMarksKey(assessmentId);
+    setUnpublishedMarks(prev => {
+      const newState = {...prev};
+      delete newState[key];
+      return newState;
+    });
+  };
 
   // Fetch teacher sections based on teacher ID
   const fetchTeacherSections = async (teacherId) => {
@@ -124,7 +169,6 @@ const TeacherMarksManagement = () => {
       
       if (response.data) {
         // Format students data to match the component's expected structure
-        // We'll need to fetch more user details to get the full name
         const formattedStudents = response.data.map(student => ({
           id: student._id,
           userId: student.userId,
@@ -142,36 +186,47 @@ const TeacherMarksManagement = () => {
     }
   };
 
-  // Save assessment marks to the API
-  const saveAssessmentMarks = async (assessment, studentMarks) => {
+  // Save assessment marks to the API or locally
+  const saveAssessmentMarks = async (assessment, studentMarks, isPublishing = false) => {
+    // If not publishing and assessment isn't already published, just save locally and return
+    if (!isPublishing && assessment.status !== "Published") {
+      saveMarksLocally(assessment.id, studentMarks);
+      return true;
+    }
+    
     setIsLoading(true);
     try {
       const date = new Date().toISOString();
       const type = tabToApiTypeMap[activeTab];
-      const enrollmentId="67de03190ad325dc130689b6";
+      const enrollmentId = "67de03190ad325dc130689b6";
       
       // Prepare grades data for each student
       const grades = students.map(student => {
         if (!student || !student.id) {
-            console.error("Error: Invalid student object", student);
-            return null; // Skip invalid entries
+          console.error("Error: Invalid student object", student);
+          return null;
         }
         return {
-            enrollmentId: enrollmentId, // Ensuring it is always sent
-            studentId: student.id, // Keeping student ID if needed
-            type: type,
-            title: assessment.id?.toString() || "Unknown",
-            maxMarks: assessment.total || 0,
-            obtainedMarks: studentMarks?.[student.id] ?? 0,
-            date: date,
-            feedback: "",
-            weightage: assessment.weightage || 0
+          enrollmentId: enrollmentId,
+          studentId: student.id,
+          type: type,
+          title: assessment.id?.toString() || "Unknown",
+          maxMarks: assessment.total || 0,
+          obtainedMarks: studentMarks?.[student.id] ?? 0,
+          date: date,
+          feedback: "",
+          weightage: assessment.weightage || 0
         };
-    }).filter(grade => grade !== null); // Remove any invalid entries
+      }).filter(grade => grade !== null);
       
       // Post grades to API
       for (const grade of grades) {
         await axios.post("http://localhost:5000/api/grade/", grade);
+      }
+      
+      // Clear local marks after successful publishing
+      if (isPublishing) {
+        clearLocalMarks(assessment.id);
       }
       
       return true;
@@ -203,23 +258,47 @@ const TeacherMarksManagement = () => {
 
   // Handle assessment selection to show student marks
   const handleAssessmentClick = (assessment) => {
+    // If we have locally stored marks, load them into the students state
+    const localMarks = getLocalMarks(assessment.id);
+    
+    if (Object.keys(localMarks).length > 0) {
+      const updatedStudents = students.map(student => ({
+        ...student,
+        marks: {
+          ...student.marks,
+          [assessment.id]: localMarks[student.id] || 0
+        }
+      }));
+      setStudents(updatedStudents);
+    }
+    
     setSelectedAssessment(assessment);
     setShowStudentMarks(true);
   };
 
   // Update assessment after student marks have been edited
   const updateAssessment = async (updatedAssessment, studentMarks) => {
-    // Save to API
-    const success = await saveAssessmentMarks(updatedAssessment, studentMarks);
+    // Save to API only if the assessment is published
+    const success = await saveAssessmentMarks(
+      updatedAssessment, 
+      studentMarks,
+      updatedAssessment.status === "Published"
+    );
     
     if (success) {
+      // If the assessment is published, mark it as modified if changes were made
+      const isModified = updatedAssessment.status === "Published" && 
+                         JSON.stringify(getLocalMarks(updatedAssessment.id)) !== JSON.stringify(studentMarks);
+      
       setAssessments({
         ...assessments,
         [activeTab]: assessments[activeTab].map((assessment) => 
-          (assessment.id === updatedAssessment.id ? updatedAssessment : assessment)
+          (assessment.id === updatedAssessment.id ? 
+            {...updatedAssessment, modified: isModified} 
+            : assessment)
         ),
       });
-      setSelectedAssessment(updatedAssessment);
+      setSelectedAssessment({...updatedAssessment, modified: isModified});
     } else {
       alert("Failed to save assessment marks. Please try again.");
     }
@@ -309,62 +388,85 @@ const TeacherMarksManagement = () => {
       studentMarks[student.id] = 0;
     });
 
-    // Save to API first
-    const success = await saveAssessmentMarks(newAssessmentObj, studentMarks);
+    // Don't send to API yet, just store locally
+    saveMarksLocally(newId, studentMarks);
     
-    if (success) {
-      setAssessments({
-        ...assessments,
-        [activeTab]: [
-          ...assessments[activeTab],
-          newAssessmentObj
-        ],
-      });
+    setAssessments({
+      ...assessments,
+      [activeTab]: [
+        ...assessments[activeTab],
+        newAssessmentObj
+      ],
+    });
 
-      // Reset form
-      setNewAssessment({ weightage: 15, total: 15 });
-      setShowAddForm(false);
-    } else {
-      alert("Failed to create assessment. Please try again.");
-    }
+    // Reset form
+    setNewAssessment({ weightage: 15, total: 15 });
+    setShowAddForm(false);
   };
 
   // Delete an assessment
   const deleteAssessment = (id) => {
-    // Note: Should ideally implement API call to delete the assessment
+    // Clear any local marks for this assessment
+    clearLocalMarks(id);
+    
+    // Remove the assessment from the state
     setAssessments({
       ...assessments,
       [activeTab]: assessments[activeTab].filter((assessment) => assessment.id !== id),
     });
 
+    // If currently viewing this assessment, go back to list view
     if (showStudentMarks && selectedAssessment && selectedAssessment.id === id) {
       setShowStudentMarks(false);
     }
+    
+    // Note: Should ideally implement API call to delete the assessment if published
   };
 
   // Toggle assessment status
-  const toggleStatus = (id) => {
-    // Note: Should ideally implement API call to update the assessment status
+  const toggleStatus = async (id) => {
+    const assessment = assessments[activeTab].find(a => a.id === id);
+    if (!assessment) return;
+    
+    let newStatus;
+    if (assessment.status === "Published") {
+      // When unpublishing, just change the status
+      newStatus = "Unpublished";
+    } else if (assessment.status === "Modified" || assessment.status === "Draft" || assessment.status === "Unpublished") {
+      // When publishing, send marks to the API
+      newStatus = "Published";
+      
+      const studentMarks = getLocalMarks(id);
+      const success = await saveAssessmentMarks(assessment, studentMarks, true);
+      
+      if (!success) {
+        alert("Failed to publish assessment. Please try again.");
+        return;
+      }
+    }
+
     setAssessments({
       ...assessments,
-      [activeTab]: assessments[activeTab].map((assessment) => {
-        if (assessment.id === id) {
-          let newStatus;
-          if (assessment.status === "Published") {
-            newStatus = "Unpublished";
-          } else if (assessment.status === "Modified" || assessment.status === "Draft" || assessment.status === "Unpublished") {
-            newStatus = "Published";
-          }
-
+      [activeTab]: assessments[activeTab].map((a) => {
+        if (a.id === id) {
           return {
-            ...assessment,
+            ...a,
             status: newStatus,
             modified: false,
           };
         }
-        return assessment;
+        return a;
       }),
     });
+    
+    // Update selected assessment if it's the one being toggled
+    if (selectedAssessment && selectedAssessment.id === id) {
+      setSelectedAssessment({
+        ...selectedAssessment,
+        status: newStatus,
+        modified: false
+      });
+    }
   };
 
   // Handle showing the add assessment form
@@ -412,6 +514,11 @@ const TeacherMarksManagement = () => {
   const handleSectionChange = (section) => {
     setActiveSection(section);
     setShowStudentMarks(false);
+  };
+
+  // Check if assessment has unpublished changes
+  const hasUnpublishedChanges = (assessmentId) => {
+    return Object.keys(getLocalMarks(assessmentId)).length > 0;
   };
 
   // Loader component
@@ -643,7 +750,7 @@ const TeacherMarksManagement = () => {
                         <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.avg}</td>
                         <td className="px-3 py-2 whitespace-nowrap">
                           <span
-                            className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full items-center ${
                               assessment.status === "Published"
                                 ? "bg-green-100 text-green-800"
                                 : assessment.status === "Modified"
@@ -654,7 +761,8 @@ const TeacherMarksManagement = () => {
                             }`}
                           >
                             {assessment.status}
-                            {assessment.modified && <AlertTriangle size={10} className="ml-1 text-yellow-600" />}
+                            {(assessment.modified || hasUnpublishedChanges(assessment.id)) && 
+                              <AlertTriangle size={10} className="ml-1 text-yellow-600" />}
                           </span>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap font-medium space-x-1">
@@ -702,6 +810,7 @@ const TeacherMarksManagement = () => {
                 assessment={selectedAssessment}
                 students={students}
                 activeTab={activeTab}
+                hasLocalChanges={hasUnpublishedChanges(selectedAssessment?.id)}
                 onBack={() => setShowStudentMarks(false)}
                 onUpdate={(updatedAssessment, studentMarks) => updateAssessment(updatedAssessment, studentMarks)}
                 onUpdateStudents={setStudents}
