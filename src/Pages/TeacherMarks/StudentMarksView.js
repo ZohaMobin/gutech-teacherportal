@@ -97,7 +97,7 @@ const StudentMarksView = ({
             {students.map((student) => (
               <tr key={student.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {student.id}
+                  {student.rollNumber}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {student.name}
