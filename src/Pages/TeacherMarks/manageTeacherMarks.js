@@ -14,6 +14,8 @@ const TeacherMarksManagement = () => {
   const [subjects, setSubjects] = useState([]);
   const [activeSubject, setActiveSubject] = useState(null);
   const [unpublishedMarks, setUnpublishedMarks] = useState({});
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const fileInputRef = useRef(null);
 
   // Assessment states
@@ -51,23 +53,49 @@ const TeacherMarksManagement = () => {
   ];
   
   const teacherId = "67dde7b0cadf2777c7a12567";
-  
-  // Load unpublished marks from localStorage on component mount
+
+  // Load data from localStorage when component mounts - ONCE only
   useEffect(() => {
-    const savedMarks = localStorage.getItem('unpublishedMarks');
-    if (savedMarks) {
-      try {
+    // Load saved assessments
+    try {
+      const savedAssessments = localStorage.getItem('savedAssessments');
+      if (savedAssessments) {
+        setAssessments(JSON.parse(savedAssessments));
+      }
+      
+      // Load unpublished marks
+      const savedMarks = localStorage.getItem('unpublishedMarks');
+      if (savedMarks) {
         setUnpublishedMarks(JSON.parse(savedMarks));
-      } catch (e) {
-        console.error('Error loading unpublished marks', e);
+      }
+      
+      setDataLoaded(true);
+    } catch (e) {
+      console.error('Error loading data from localStorage', e);
+    }
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // Save assessments to localStorage whenever they change
+  useEffect(() => {
+    if (dataLoaded && initialLoadComplete) {
+      try {
+        localStorage.setItem('savedAssessments', JSON.stringify(assessments));
+      } catch (err) {
+        console.error('Error saving assessments to localStorage:', err);
       }
     }
-  }, []);
+  }, [assessments, dataLoaded, initialLoadComplete]);
 
   // Save unpublished marks to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('unpublishedMarks', JSON.stringify(unpublishedMarks));
-  }, [unpublishedMarks]);
+    if (dataLoaded && initialLoadComplete) {
+      try {
+        localStorage.setItem('unpublishedMarks', JSON.stringify(unpublishedMarks));
+      } catch (err) {
+        console.error('Error saving unpublished marks to localStorage:', err);
+      }
+    }
+  }, [unpublishedMarks, dataLoaded, initialLoadComplete]);
 
   // Fetch sections and courses when component mounts
   useEffect(() => {
@@ -83,6 +111,54 @@ const TeacherMarksManagement = () => {
     }
   }, [activeSection]);
 
+  // Apply stored marks to students when contextual data changes
+  useEffect(() => {
+    if (students.length > 0 && Object.keys(unpublishedMarks).length > 0 && activeSection && activeSubject) {
+      applyStoredMarksToStudents();
+    }
+    
+    // Mark initial load as complete after everything is set up
+    if (!initialLoadComplete && activeSection && activeSubject && students.length > 0) {
+      setInitialLoadComplete(true);
+    }
+  }, [unpublishedMarks, activeSection, activeSubject, students.length]); 
+
+  // Helper function to apply stored marks to students - fixed to avoid unnecessary state updates
+  const applyStoredMarksToStudents = () => {
+    const currentAssessments = getCurrentAssessments();
+    
+    // Create a copy of students to update
+    const updatedStudents = [...students];
+    let hasChanges = false;
+    
+    // For each assessment in current section/subject, restore marks to students
+    currentAssessments.forEach(assessment => {
+      const key = getMarksKey(assessment.id);
+      const marksData = unpublishedMarks[key];
+      
+      if (marksData) {
+        // Update students with saved marks
+        updatedStudents.forEach(student => {
+          if (student.marks === undefined) {
+            student.marks = {};
+            hasChanges = true;
+          }
+          
+          // Only update if the mark is different or doesn't exist
+          if (student.marks[assessment.id] !== marksData[student.id]) {
+            student.marks[assessment.id] = marksData[student.id] || 0;
+            hasChanges = true;
+          }
+        });
+      }
+    });
+    
+    // Only update students state if there were actual changes
+    if (hasChanges) {
+      setStudents(updatedStudents);
+    }
+  };
+
   // Helper functions for mark management
   const getMarksKey = (assessmentId) => `marks_${activeSection?._id}_${activeSubject?.id}_${assessmentId}`;
 
@@ -92,6 +168,15 @@ const TeacherMarksManagement = () => {
       ...prev,
       [key]: studentMarks
     }));
+    
+    // Direct update of students state without going through the useEffect
+    setStudents(prevStudents => prevStudents.map(student => ({
+      ...student,
+      marks: {
+        ...student.marks,
+        [assessmentId]: studentMarks[student.id] || 0
+      }
+    })));
   };
 
   const getLocalMarks = (assessmentId) => {
@@ -178,6 +263,7 @@ const TeacherMarksManagement = () => {
         }));
         
         setStudents(formattedStudents);
+        // The applyStoredMarksToStudents will happen via the useEffect
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -261,17 +347,15 @@ const TeacherMarksManagement = () => {
     // If we have locally stored marks, load them into the students state
     const localMarks = getLocalMarks(assessment.id);
     
-    if (Object.keys(localMarks).length > 0) {
-      const updatedStudents = students.map(student => ({
-        ...student,
-        marks: {
-          ...student.marks,
-          [assessment.id]: localMarks[student.id] || 0
-        }
-      }));
-      setStudents(updatedStudents);
-    }
+    const updatedStudents = students.map(student => ({
+      ...student,
+      marks: {
+        ...student.marks,
+        [assessment.id]: localMarks[student.id] || 0
+      }
+    }));
     
+    setStudents(updatedStudents);
     setSelectedAssessment(assessment);
     setShowStudentMarks(true);
   };

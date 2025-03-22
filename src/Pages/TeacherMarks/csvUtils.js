@@ -189,6 +189,36 @@ export const handleExcelImport = (file, assessments, students, setAssessments, s
                 setAssessments(newAssessments);
                 setStudents(Object.values(studentMap));
 
+                // In csvUtils.js - Add this at the end of handleExcelImport before resolve():
+// Save imported marks to localStorage
+Object.entries(assessmentMap).forEach(([assessmentId, assessment]) => {
+    const marksKey = `marks_${activeSection}_${activeSubject}_${assessmentId}`;
+    const studentMarksObj = {};
+    
+    Object.values(studentMap).forEach(student => {
+      if (student.marks[assessmentId] !== undefined) {
+        studentMarksObj[student.id] = student.marks[assessmentId];
+      }
+    });
+    
+    // Get existing unpublished marks from localStorage
+    let unpublishedMarks = {};
+    try {
+      const saved = localStorage.getItem('unpublishedMarks');
+      if (saved) {
+        unpublishedMarks = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Error loading unpublished marks', e);
+    }
+    
+    // Update with new marks
+    unpublishedMarks[marksKey] = studentMarksObj;
+    
+    // Save back to localStorage
+    localStorage.setItem('unpublishedMarks', JSON.stringify(unpublishedMarks));
+  });
+
                 resolve(); // Resolve the promise after successful processing
             } catch (error) {
                 console.error("Excel import error:", error);
