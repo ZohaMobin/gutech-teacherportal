@@ -42,6 +42,7 @@ const Signup = () => {
       });
       console.log('Signup successful:', response.data);
       alert('Signup successful! Please log in.');
+      setIsActive(false); // Switch to login form
     } catch (error) {
       console.error('Signup error:', error.response?.data?.message || error.message);
       alert('Signup failed: ' + (error.response?.data?.message || error.message));
@@ -55,10 +56,12 @@ const Signup = () => {
         email: loginData.emailOrEmployeeID,
         password: loginData.password,
       });
-      console.log('Login successful:', response.data);
-      alert('Login successful!');
+      
+      // Store token and user info in session storage
       sessionStorage.setItem('token', response.data.token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Navigate to dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error.response?.data?.message || error.message);
@@ -111,7 +114,7 @@ const Signup = () => {
           <div className="toggle-panel toggle-right">
             <h1>Welcome Back!</h1>
             <p>Enter your personal details to use all of the site's features</p>
-            <p className="back">Don't Have an Account Yet?<br /> Let’s Get You Started!</p>
+            <p className="back">Don't Have an Account Yet?<br /> Let's Get You Started!</p>
             <button className="hidden" onClick={() => setIsActive(true)}>Sign Up</button>
           </div>
         </div>
