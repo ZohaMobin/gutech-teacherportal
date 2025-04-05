@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Load user from sessionStorage on mount
   useEffect(() => {
@@ -24,18 +25,21 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(storedUser);
           setToken(storedToken);
           setCurrentUser(parsedUser);
+          setIsAuthenticated(true); // Set authenticated state
         } catch (err) {
           console.error("Error parsing stored user:", err);
           sessionStorage.removeItem('token');
           sessionStorage.removeItem('user');
         }
+      } else {
+        setIsAuthenticated(false); // Ensure we mark as not authenticated if no token
       }
       setLoading(false);
     };
 
     loadAuthState();
 
-    // Add event listener for storage changes
+    // Add event listener for storage changes (optional)
     window.addEventListener('storage', loadAuthState);
     return () => window.removeEventListener('storage', loadAuthState);
   }, []);
@@ -46,12 +50,13 @@ export const AuthProvider = ({ children }) => {
       console.error('Invalid login data');
       return;
     }
-    
+
     try {
       sessionStorage.setItem('token', authToken);
       sessionStorage.setItem('user', JSON.stringify(user));
       setCurrentUser(user);
       setToken(authToken);
+      setIsAuthenticated(true); // Mark as authenticated
     } catch (err) {
       console.error('Error storing auth data:', err);
     }
@@ -64,16 +69,10 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.removeItem('user');
       setCurrentUser(null);
       setToken(null);
+      setIsAuthenticated(false); // Mark as not authenticated
     } catch (err) {
       console.error('Error during logout:', err);
     }
-  };
-
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    const storedToken = sessionStorage.getItem('token');
-    const storedUser = sessionStorage.getItem('user');
-    return !!(storedToken && storedUser);
   };
 
   // Context value
@@ -82,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     token,
     login,
     logout,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated,
   };
 
   // Render only when not loading

@@ -1,121 +1,284 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useAuth } from './Authorisation';
 import { Link, useNavigate } from 'react-router-dom';
 import './Signup.css';
 
 const Signup = () => {
-  const [isActive, setIsActive] = useState(false);
+  const [isSignupActive, setIsSignupActive] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Signup form state
+  const [signupForm, setSignupForm] = useState({
     name: '',
     email: '',
-    department: '',
-    employeeID: '',
+    employId: '',
     password: '',
   });
-  const [loginData, setLoginData] = useState({
-    emailOrEmployeeID: '',
+  
+  // Login form state
+  const [loginForm, setLoginForm] = useState({
+    identifier: '', // Can be email or roll number
     password: '',
   });
+  
   const navigate = useNavigate();
-
-  const departments = ['Computer Science', 'Mathematics', 'Physics', 'Chemistry', 'Biology'];
-
+  
+  // Handle signup form input changes
   const handleSignupChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setSignupForm({ ...signupForm, [name]: value });
+    setError(''); // Clear any previous errors when user makes changes
   };
 
+  // Handle login form input changes
   const handleLoginChange = (e) => {
-    setLoginData({ ...loginData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setLoginForm({ ...loginForm, [name]: value });
+    setError(''); // Clear any previous errors when user makes changes
   };
 
-  const handleSignup = async () => {
+  // Validate signup form
+  const validateSignupForm = () => {
+    if (!signupForm.name || !signupForm.email || !signupForm.employId || !signupForm.password) {
+      setError('All fields are required');
+      return false;
+    }
+    
+    if (!signupForm.email.includes('@') || !signupForm.email.includes('.')) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
+    if (signupForm.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Validate login form
+  const validateLoginForm = () => {
+    if (!loginForm.identifier || !loginForm.password) {
+      setError('All fields are required');
+      return false;
+    }
+    return true;
+  };
+
+  // Handle signup submission
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    
+    if (!validateSignupForm()) return;
+    
     try {
+      setIsSubmitting(true);
+      setError('');
+      
       const apiUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await axios.post(`${apiUrl}/api/auth/register`, {
-        name: formData.name,
-        email: formData.email,
-        department: formData.department,
-        employeeId: formData.employeeID,
-        password: formData.password,
+        name: signupForm.name,
+        employId: signupForm.employId,
+        email: signupForm.email,
+        password: signupForm.password,
         role: 'teacher',
       });
-      console.log('Signup successful:', response.data);
-      alert('Signup successful! Please log in.');
-      setIsActive(false); // Switch to login form
+      
+      console.log('Registration successful:', response.data);
+      
+      // Reset form after successful registration
+      setSignupForm({
+        name: '',
+        email: '',
+        employId: '',
+        password: '',
+      });
+      
+      // Switch to login tab
+      setIsSignupActive(false);
+      
+      // Show success message
+      alert('Registration successful! Please log in with your credentials.');
     } catch (error) {
-      console.error('Signup error:', error.response?.data?.message || error.message);
-      alert('Signup failed: ' + (error.response?.data?.message || error.message));
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      console.error('Registration error:', errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleLogin = async () => {
-    try {
-      const apiUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await axios.post(`${apiUrl}/api/auth/login`, {
-        email: loginData.emailOrEmployeeID,
-        password: loginData.password,
-      });
-      
-      // Store token and user info in session storage
-      sessionStorage.setItem('token', response.data.token);
-      sessionStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error.response?.data?.message || error.message);
-      alert('Login failed: ' + (error.response?.data?.message || error.message));
-    }
+ // Handle login submission
+ const { login } = useAuth(); // ⬅️ make sure this is at the top
+
+ const handleLogin = async (e) => {
+   e.preventDefault();
+ 
+   if (!validateLoginForm()) return;
+ 
+   try {
+     setIsSubmitting(true);
+     setError('');
+ 
+     const apiUrl = process.env.REACT_APP_BACKEND_URL;
+     const response = await axios.post(`${apiUrl}/api/auth/login`, {
+       email: loginForm.identifier,
+       password: loginForm.password,
+     });
+ 
+     const { user, token } = response.data;
+     login(user, token); // 🔑 Save user and token in context + sessionStorage
+     navigate("/main/dashboard");  // 🚀 Redirect to dashboard
+ 
+   } catch (error) {
+     setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
+   } finally {
+     setIsSubmitting(false);
+   }
+ };
+ 
+
+ 
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
-    <div className={`container ${isActive ? 'active' : ''}`} id="container">
-      <div className="form-container sign-up">
-        <form onSubmit={(e) => e.preventDefault()}>
-          <h1 className="ss">Create Account</h1>
-          <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleSignupChange} />
-          <input type="email" name="email" placeholder="GU-Tech E-mail" value={formData.email} onChange={handleSignupChange} />
-          <select name="department" value={formData.department} onChange={handleSignupChange}>
-            <option value="">Select Department</option>
-            {departments.map((dept, index) => (
-              <option key={index} value={dept}>{dept}</option>
-            ))}
-          </select>
-          <input type="text" name="employeeID" placeholder="Employee ID" value={formData.employeeID} onChange={handleSignupChange} />
-          <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleSignupChange} />
-          <button type="button" onClick={handleSignup}>Sign Up</button>
-        </form>
-      </div>
-
-      <div className="form-container sign-in">
-        <form onSubmit={(e) => e.preventDefault()}>
-          <h1 className="ss">Sign In</h1>
-          <input type="text" name="emailOrEmployeeID" placeholder="Email or Employee ID" value={loginData.emailOrEmployeeID} onChange={handleLoginChange} />
-          <div className="password-container">
-            <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={loginData.password} onChange={handleLoginChange} />
-            <div className="eye-icon" onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
+    <div className="auth-page">
+      <div className={`auth-container ${isSignupActive ? 'active' : ''}`}>
+        {/* Sign Up Form */}
+        <div className="form-container sign-up">
+          <form onSubmit={handleSignup}>
+            <h1 className="form-title">Create Account</h1>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={signupForm.name}
+              onChange={handleSignupChange}
+              disabled={isSubmitting}
+            />
+            
+            <input
+              type="email"
+              name="email"
+              placeholder="Institutional Email"
+              value={signupForm.email}
+              onChange={handleSignupChange}
+              disabled={isSubmitting}
+            />
+            
+            <input
+              type="text"
+              name="employId"
+              placeholder="Roll Number"
+              value={signupForm.employId}
+              onChange={handleSignupChange}
+              disabled={isSubmitting}
+            />
+            
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                value={signupForm.password}
+                onChange={handleSignupChange}
+                disabled={isSubmitting}
+              />
+              <div
+                className="password-toggle"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <i className="fas fa-eye-slash"></i>
+                ) : (
+                  <i className="fas fa-eye"></i>
+                )}
+              </div>
             </div>
-          </div>
-          <Link to="/forgot-password">Forgot Your Password?</Link>
-          <button type="button" onClick={handleLogin}>Sign In</button>
-        </form>
-      </div>
+            
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Processing...' : 'Register'}
+            </button>
+          </form>
+        </div>
 
-      <div className="toggle-container">
-        <div className="toggle">
-          <div className="toggle-panel toggle-left">
-            <h1>Hello, Friend</h1>
-            <p>Register with your personal details to use all of the site's features</p>
-            <p className="back">Already Have an Account?<br /> Sign In to Continue!</p>
-            <button className="hidden" onClick={() => setIsActive(false)}>Sign In</button>
-          </div>
-          <div className="toggle-panel toggle-right">
-            <h1>Welcome Back!</h1>
-            <p>Enter your personal details to use all of the site's features</p>
-            <p className="back">Don't Have an Account Yet?<br /> Let's Get You Started!</p>
-            <button className="hidden" onClick={() => setIsActive(true)}>Sign Up</button>
+        {/* Sign In Form */}
+        <div className="form-container sign-in">
+          <form onSubmit={handleLogin}>
+            <h1 className="form-title">Sign In</h1>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <input
+              type="text"
+              name="identifier"
+              placeholder="Email or Roll Number"
+              value={loginForm.identifier}
+              onChange={handleLoginChange}
+              disabled={isSubmitting}
+            />
+            
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                value={loginForm.password}
+                onChange={handleLoginChange}
+                disabled={isSubmitting}
+              />
+              <div
+                className="password-toggle"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <i className="fas fa-eye-slash"></i>
+                ) : (
+                  <i className="fas fa-eye"></i>
+                )}
+              </div>
+            </div>
+            
+            <Link to="/forgot-password" className="forgot-password">Forgot Your Password?</Link>
+            
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+        </div>
+
+        {/* Toggle Container */}
+        <div className="toggle-container">
+          <div className="toggle">
+            <div className="toggle-panel toggle-left">
+              <h1>Welcome</h1>
+              <p>Create an account to access all features and services</p>
+              <p className="toggle-message">Already have an account?<br />Sign in to continue.</p>
+              <button className="toggle-button" onClick={() => setIsSignupActive(false)}>
+                Sign In
+              </button>
+            </div>
+            
+            <div className="toggle-panel toggle-right">
+              <h1>Welcome Back</h1>
+              <p>Access your account to use all features and services</p>
+              <p className="toggle-message">Don't have an account?<br />Register to get started.</p>
+              <button className="toggle-button" onClick={() => setIsSignupActive(true)}>
+                Register
+              </button>
+            </div>
           </div>
         </div>
       </div>
