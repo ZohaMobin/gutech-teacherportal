@@ -146,6 +146,12 @@ const Signup = () => {
         password: loginForm.password,
       });
       
+      // Check if the user is a teacher
+      if (response.data.user.role !== 'teacher') {
+        setError('Access denied. This portal is for teachers only.');
+        return;
+      }
+      
       // Save user data securely
       sessionStorage.setItem('token', response.data.token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
