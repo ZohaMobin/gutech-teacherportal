@@ -1,59 +1,94 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext(null);
+// Create the authentication context
+const AuthContext = createContext();
 
+// Custom hook to use the auth context
+export const useAuth = () => useContext(AuthContext);
+
+// Provider component
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Load user from sessionStorage on mount
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const storedUser = sessionStorage.getItem('user');
-    
-    if (token && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        // Clear invalid storage
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        setIsAuthenticated(false);
+    const loadAuthState = () => {
+      const storedToken = sessionStorage.getItem('token');
+      const storedUser = sessionStorage.getItem('user');
+      console.log("Checking session storage: ", storedToken, storedUser);
+
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setToken(storedToken);
+          setCurrentUser(parsedUser);
+        } catch (err) {
+          console.error("Error parsing stored user:", err);
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+        }
       }
-    }
+      setLoading(false);
+    };
+
+    loadAuthState();
+
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadAuthState);
+    return () => window.removeEventListener('storage', loadAuthState);
   }, []);
 
-  const login = (userData, token) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    sessionStorage.setItem('token', token);
-    sessionStorage.setItem('user', JSON.stringify(userData));
-    navigate('/dashboard');
+  // Login function
+  const login = (user, authToken) => {
+    if (!user || !authToken) {
+      console.error('Invalid login data');
+      return;
+    }
+    
+    try {
+      sessionStorage.setItem('token', authToken);
+      sessionStorage.setItem('user', JSON.stringify(user));
+      setCurrentUser(user);
+      setToken(authToken);
+    } catch (err) {
+      console.error('Error storing auth data:', err);
+    }
   };
 
+  // Logout function
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    navigate('/');
+    try {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      setCurrentUser(null);
+      setToken(null);
+    } catch (err) {
+      console.error('Error during logout:', err);
+    }
   };
 
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    const storedToken = sessionStorage.getItem('token');
+    const storedUser = sessionStorage.getItem('user');
+    return !!(storedToken && storedUser);
+  };
+
+  // Context value
+  const value = {
+    currentUser,
+    token,
+    login,
+    logout,
+    isAuthenticated: isAuthenticated(),
+  };
+
+  // Render only when not loading
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading ? children : <div>Loading...</div>}
     </AuthContext.Provider>
   );
-};
-
-// Custom hook for using auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

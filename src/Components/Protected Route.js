@@ -2,16 +2,17 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-const ProtectedRoute = () => {
+const PrivateRoute = () => {
   const { isAuthenticated } = useAuth();
 
+  // Check authentication status
   if (!isAuthenticated) {
-    // Redirect to login if not authenticated
+    // Redirect to login page if not authenticated
     return <Navigate to="/" replace />;
   }
 
-  // Render the child routes
+  // Render the protected route
   return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default PrivateRoute;
