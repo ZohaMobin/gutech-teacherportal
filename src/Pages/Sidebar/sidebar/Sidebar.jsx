@@ -10,6 +10,7 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     { id: 'marks', label: 'Marks', icon: '📄' },
+    { id: 'marks2', label: 'Marks 2.0', icon: '📝' },
     { id: 'transcript', label: 'Transcript', icon: '📜' },
     { id: 'timetable', label: 'Timetable', icon: '📆' },
     { id: 'fees', label: 'Fees', icon: '💵' },
@@ -52,15 +53,15 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
         ))}
       </nav>
       
-      {/* User Section */}
-      <div className="border-t border-gray-200 p-4">
+      {/* User Profile */}
+      <div className="p-5 border-t border-gray-200">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-red-50 text-red-700 rounded-full flex items-center justify-center font-bold text-xs">
-            <span>GU</span>
+          <div className="w-8 h-8 bg-red-700 text-white rounded-full flex items-center justify-center font-bold mr-3">
+            {user?.firstName?.charAt(0) || 'U'}
           </div>
-          <div className="ml-2.5">
-            <span className="block text-sm font-medium text-gray-800">{user?.name}</span>
-            <a href="#" className="text-xs text-red-700 no-underline">View Profile</a>
+          <div>
+            <div className="font-medium text-gray-800">{user?.firstName} {user?.lastName}</div>
+            <div className="text-xs text-gray-500">Teacher</div>
           </div>
         </div>
       </div>

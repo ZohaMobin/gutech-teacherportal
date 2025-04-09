@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Save, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, Eye, EyeOff, AlertTriangle, CheckCircle, XCircle, Edit } from "lucide-react";
+import axios from "axios";
 
 const StudentMarksView = ({ 
   assessment, 
@@ -14,10 +15,45 @@ const StudentMarksView = ({
   const [studentMarks, setStudentMarks] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [isModified, setIsModified] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null, 'saving', 'success', 'error'
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Get auth token from session storage
+  const getAuthToken = () => {
+    return sessionStorage.getItem('token');
+  };
+
+  // Fetch latest marks from API
+  const fetchLatestMarks = async () => {
+    if (!assessment || !students) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/teacher-marks/assessment/${assessment.id}/marks`, {
+        headers: {
+          'x-auth-token': getAuthToken()
+        }
+      });
+
+      if (response.data && response.data.marks) {
+        setStudentMarks(response.data.marks);
+        setIsModified(false);
+      }
+    } catch (error) {
+      console.error('Error fetching latest marks:', error);
+      setErrorMessage("Failed to fetch latest marks. Using cached data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Initialize student marks
   useEffect(() => {
     if (assessment && students) {
+      // First set initial marks from props
       const initialMarks = {};
       students.forEach((student) => {
         initialMarks[student.id] = student.marks?.[assessment.id] || 0;
@@ -25,6 +61,12 @@ const StudentMarksView = ({
       
       setStudentMarks(initialMarks);
       setIsModified(assessment.modified || hasLocalChanges);
+      setSaveStatus(null);
+      setErrorMessage("");
+      setIsPublished(assessment.status === "Published");
+
+      // Then fetch latest marks from API
+      fetchLatestMarks();
     }
   }, [assessment, students, hasLocalChanges]);
 
@@ -47,248 +89,241 @@ const StudentMarksView = ({
     });
     
     setIsModified(true);
+    setSaveStatus(null);
   };
 
-  // Save changes
-  const saveChanges = () => {
-    // Update the average in the assessment
-    const updatedAssessment = {
-      ...assessment,
-      avg: calculateAverage(),
-      modified: true,
-    };
+  // Save marks
+  const handleSave = async (saveAsDraft = false) => {
+    setSaveStatus('saving');
     
-    // Update the marks in the students state
-    const updatedStudents = students.map((student) => ({
-      ...student,
-      marks: {
-        ...student.marks,
-        [assessment.id]: studentMarks[student.id] || 0,
-      },
-    }));
-    
-    onUpdateStudents(updatedStudents);
-    onUpdate(updatedAssessment, studentMarks);
-    setIsEditing(false);
-  };
-
-  // Toggle publishing status
-  const handleToggleStatus = () => {
-    if (isModified && assessment.status !== "Published") {
-      saveChanges();
+    try {
+      // Create a copy of the assessment with the appropriate status
+      const updatedAssessment = {
+        ...assessment,
+        status: saveAsDraft ? "Draft" : assessment.status
+      };
+      
+      // Update the assessment with the new marks
+      await onUpdate(updatedAssessment, studentMarks);
+      
+      // Update the students state with the new marks
+      const updatedStudents = students.map(student => ({
+        ...student,
+        marks: {
+          ...student.marks,
+          [assessment.id]: studentMarks[student.id] || 0
+        }
+      }));
+      
+      onUpdateStudents(updatedStudents);
+      
+      setIsModified(false);
+      setSaveStatus('success');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSaveStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving marks:', error);
+      setSaveStatus('error');
+      setErrorMessage("Failed to save marks. Please try again.");
     }
+  };
+
+  // Toggle assessment status
+  const handleToggleStatus = () => {
+    if (isPublished) {
+      setShowUnpublishConfirm(true);
+    } else {
+      onToggleStatus(assessment.id);
+    }
+  };
+  
+  // Confirm unpublishing
+  const confirmUnpublish = () => {
+    setShowUnpublishConfirm(false);
     onToggleStatus(assessment.id);
   };
 
-  // Get class statistics
-  const getClassStats = () => {
-    if (!studentMarks || Object.keys(studentMarks).length === 0) {
-      return { min: 0, max: 0, median: 0, mode: 0 };
-    }
-    
-    const marks = Object.values(studentMarks).map(m => parseFloat(m || 0));
-    marks.sort((a, b) => a - b);
-    
-    const min = marks[0];
-    const max = marks[marks.length - 1];
-    
-    // Calculate median
-    let median;
-    const mid = Math.floor(marks.length / 2);
-    if (marks.length % 2 === 0) {
-      median = (marks[mid - 1] + marks[mid]) / 2;
-    } else {
-      median = marks[mid];
-    }
-    
-    // Calculate mode
-    const counts = {};
-    let mode = 0;
-    let maxCount = 0;
-    
-    marks.forEach(mark => {
-      counts[mark] = (counts[mark] || 0) + 1;
-      if (counts[mark] > maxCount) {
-        maxCount = counts[mark];
-        mode = mark;
-      }
-    });
-    
-    return { min, max, median, mode };
+  // Format student name
+  const formatStudentName = (student) => {
+    return `${student.name} (${student.rollNumber})`;
   };
 
-  const stats = getClassStats();
-  
   return (
-    <div className="bg-white rounded-lg">
-      {/* Header with back button */}
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={onBack} className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm">
-          <ArrowLeft size={16} /> Back to {activeTab}
-        </button>
-        <div className="flex gap-2">
-          {isEditing ? (
-            <button
-              onClick={saveChanges}
-              className="px-3 py-1.5 bg-green-600 text-white text-xs sm:text-sm rounded hover:bg-green-700 transition-colors flex items-center gap-1"
-            >
-              <Save size={14} /> Save Changes
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs sm:text-sm rounded hover:bg-blue-700 transition-colors"
-            >
-              Edit Marks
-            </button>
-          )}
-          <button
-            onClick={handleToggleStatus}
-            className={`px-3 py-1.5 text-xs sm:text-sm rounded transition-colors flex items-center gap-1 ${
-              assessment.status === "Published"
-                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                : "bg-green-50 text-green-600 hover:bg-green-100"
-            }`}
+    <div className="w-full">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <button 
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors" 
+            onClick={onBack}
+            title="Back to assessments"
           >
-            {assessment.status === "Published" ? (
-              <>
-                <EyeOff size={14} /> Unpublish
-              </>
-            ) : (
-              <>
-                <Eye size={14} /> Publish
-              </>
-            )}
+            <ArrowLeft size={20} />
           </button>
-        </div>
-      </div>
-
-      {/* Assessment details */}
-      <div className="bg-gray-50 p-3 rounded-lg mb-4">
-        <div className="flex flex-wrap justify-between gap-2">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-1">
+            <h2 className="text-lg font-semibold text-gray-800">
               {activeTab.slice(0, -1)} #{assessment.id}
-              {(isModified || hasLocalChanges) && (
-                <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs rounded-full flex items-center gap-1">
-                  <AlertTriangle size={12} /> {assessment.status === "Published" ? "Modified" : "Unpublished Changes"}
-                </span>
-              )}
             </h2>
-            <p className="text-sm text-gray-600">
-              Weightage: <span className="font-medium">{assessment.weightage}%</span> • 
-              Total Marks: <span className="font-medium">{assessment.total}</span>
+            <p className="text-sm text-gray-500">
+              {assessment.weightage}% weightage, {assessment.total} total marks
             </p>
-          </div>
-          
-          <div className="text-right">
-            <div className="text-sm text-gray-600">
-              Status: 
-              <span className={`ml-1 font-medium ${
-                assessment.status === "Published" ? "text-green-600" : 
-                assessment.status === "Draft" ? "text-blue-600" : "text-gray-600"
-              }`}>
-                {assessment.status}
-              </span>
-            </div>
-            <div className="text-sm text-gray-600">
-              Class Average: <span className="font-medium">{calculateAverage()} / {assessment.total}</span>
-            </div>
           </div>
         </div>
         
-        {/* Statistics */}
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="bg-white p-2 rounded border border-gray-200">
-            <div className="text-gray-500">Minimum</div>
-            <div className="font-medium">{stats.min} / {assessment.total}</div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-200">
-            <div className="text-gray-500">Maximum</div>
-            <div className="font-medium">{stats.max} / {assessment.total}</div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-200">
-            <div className="text-gray-500">Median</div>
-            <div className="font-medium">{stats.median.toFixed(1)} / {assessment.total}</div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-200">
-            <div className="text-gray-500">Mode</div>
-            <div className="font-medium">{stats.mode} / {assessment.total}</div>
-          </div>
+        <div className="flex items-center gap-2">
+          {isLoading && (
+            <span className="text-sm text-gray-500">Loading latest marks...</span>
+          )}
+          
+          {saveStatus === 'saving' && (
+            <span className="text-sm text-gray-500">Saving...</span>
+          )}
+          
+          {saveStatus === 'success' && (
+            <div className="flex items-center gap-1 text-green-600">
+              <CheckCircle size={16} />
+              <span className="text-sm">Saved successfully</span>
+            </div>
+          )}
+          
+          {saveStatus === 'error' && (
+            <div className="flex items-center gap-1 text-red-600">
+              <XCircle size={16} />
+              <span className="text-sm">{errorMessage}</span>
+            </div>
+          )}
+          
+          {isPublished ? (
+            <>
+              <button
+                className="px-3 py-1.5 bg-yellow-100 text-yellow-800 text-sm rounded hover:bg-yellow-200 transition-colors flex items-center gap-1"
+                onClick={handleToggleStatus}
+              >
+                <EyeOff size={14} />
+                Unpublish
+              </button>
+              <button
+                className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                onClick={() => handleSave(true)}
+                disabled={!isModified || saveStatus === 'saving' || isLoading}
+              >
+                <Save size={14} />
+                Save as Draft
+              </button>
+            </>
+          ) : (
+            <button
+              className="px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded hover:bg-green-200 transition-colors flex items-center gap-1"
+              onClick={handleToggleStatus}
+            >
+              <Eye size={14} />
+              Publish
+            </button>
+          )}
+          
+          <button
+            className="px-3 py-1.5 bg-red-700 text-white text-sm rounded hover:bg-red-800 transition-colors flex items-center gap-1"
+            onClick={() => handleSave(false)}
+            disabled={!isModified || saveStatus === 'saving' || isLoading}
+          >
+            <Save size={14} />
+            Save
+          </button>
         </div>
       </div>
-
+      
+      {/* Published status banner */}
+      {isPublished && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                This assessment is published and visible to students. Any changes will be saved as a draft until you publish again.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Unpublish confirmation dialog */}
+      {showUnpublishConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Unpublish Assessment</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Are you sure you want to unpublish this assessment? This will hide it from students and allow you to make changes without affecting their view.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button 
+                className="px-3 py-1.5 bg-gray-200 text-gray-800 text-sm rounded hover:bg-gray-300 transition-colors"
+                onClick={() => setShowUnpublishConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+                onClick={confirmUnpublish}
+              >
+                Unpublish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Class average */}
+      <div className="bg-blue-50 p-3 rounded-lg mb-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium text-sm text-blue-800">Class Average</h3>
+          <span className="text-lg font-semibold text-blue-800">{calculateAverage()} / {assessment.total}</span>
+        </div>
+      </div>
+      
       {/* Student marks table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-2 text-left font-medium text-gray-500 tracking-wider">Student ID</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-500 tracking-wider">Name</th>
-              <th className="px-3 py-2 text-right font-medium text-gray-500 tracking-wider">Marks</th>
-              <th className="px-3 py-2 text-right font-medium text-gray-500 tracking-wider">Percentage</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll Number</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {students.map((student) => (
               <tr key={student.id} className="hover:bg-gray-50">
-                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{student.rollNumber}</td>
-                <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{student.name}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-right">
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      value={studentMarks[student.id] || 0}
-                      onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                      min="0"
-                      max={assessment.total}
-                      className="w-16 px-2 py-1 text-right border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <span className="font-medium">
-                      {studentMarks[student.id] || 0} / {assessment.total}
-                    </span>
-                  )}
+                <td className="px-3 py-2 whitespace-nowrap text-gray-500">{student.rollNumber}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-gray-900">{student.name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={studentMarks[student.id] || 0}
+                    onChange={(e) => handleMarkChange(student.id, e.target.value)}
+                    className={`w-20 px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                      isPublished && isModified ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
+                    }`}
+                    min="0"
+                    max={assessment.total}
+                  />
+                  <span className="ml-1 text-gray-500">/ {assessment.total}</span>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-right">
-                  <span className={`font-medium ${getScoreColor(studentMarks[student.id], assessment.total)}`}>
-                    {calculatePercentage(studentMarks[student.id], assessment.total)}%
-                  </span>
+                <td className="px-3 py-2 whitespace-nowrap text-gray-500">
+                  {((studentMarks[student.id] || 0) / assessment.total * 100).toFixed(1)}%
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      
-      {/* Note about unpublished changes */}
-      {(isModified || hasLocalChanges) && assessment.status !== "Published" && (
-        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-xs flex items-start gap-1">
-          <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium">Changes Not Published</p>
-            <p>These marks are saved locally but not yet visible to students. Click "Publish" to make them available.</p>
-          </div>
-        </div>
-      )}
     </div>
   );
-};
-
-// Helper function to calculate percentage
-const calculatePercentage = (marks, total) => {
-  if (!total) return 0;
-  return Math.round((marks / total) * 100);
-};
-
-// Helper function to get color based on score
-const getScoreColor = (marks, total) => {
-  const percentage = calculatePercentage(marks, total);
-  
-  if (percentage >= 85) return "text-green-600";
-  if (percentage >= 70) return "text-blue-600";
-  if (percentage >= 50) return "text-yellow-600";
-  return "text-red-600";
 };
 
 export default StudentMarksView;

@@ -3,8 +3,62 @@ import { X, Download, Upload, Edit, AlertTriangle, Info } from "lucide-react";
 import StudentMarksView from "./StudentMarksView";
 import { handleExcelImport, createExcelExport } from "./csvUtils";
 import axios from "axios";
+import { toast } from "react-hot-toast";
+
+// Assessment status constants
+const ASSESSMENT_STATUS = {
+  DRAFT: 'draft',
+  PUBLISHED: 'published',
+  MODIFIED: 'modified'
+};
+
+// Error handling utility
+const handleApiError = (error, setError) => {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 404) {
+      setError("Section or students not found. Please refresh the page.");
+    } else if (error.response?.status === 403) {
+      setError("You don't have permission to perform this action.");
+    } else if (error.response?.status === 400) {
+      setError(error.response.data.message || "Invalid request. Please check your input.");
+    } else {
+      setError("Network error. Please check your connection.");
+    }
+  } else {
+    setError("An unexpected error occurred. Please try again.");
+  }
+  console.error("API Error:", error);
+};
 
 const TeacherMarksManagement = () => {
+  // API URL from environment variable
+  const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  
+  // Get auth token from session storage
+  const getAuthToken = () => {
+    return sessionStorage.getItem('token');
+  };
+
+  // Get teacher ID from session storage
+  const getTeacherId = () => {
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        return user.teacherId;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+    return null;
+  };
+
+  // Get storage key with teacher ID
+  const getStorageKey = (key) => {
+    const teacherId = getTeacherId();
+    return teacherId ? `${teacherId}_${key}` : key;
+  };
+  
   // State management
   const [activeTab, setActiveTab] = useState("Quizzes");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +71,7 @@ const TeacherMarksManagement = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const fileInputRef = useRef(null);
+  const [error, setError] = useState(null);
 
   // Assessment states
   const [assessments, setAssessments] = useState({
@@ -35,8 +90,8 @@ const TeacherMarksManagement = () => {
   const tabToApiTypeMap = {
     Quizzes: "quiz",
     Assignments: "assignment",
-    Midterms: "midterm",
-    Finals: "final",
+    Midterms: "exam",
+    Finals: "exam"
   };
 
   // Tabs for assessment categories
@@ -52,19 +107,23 @@ const TeacherMarksManagement = () => {
     { name: "Obtained Marks", type: "Number", description: "Marks scored by the student" },
   ];
   
-  const teacherId = "67dde7b0cadf2777c7a12567";
-
   // Load data from localStorage when component mounts - ONCE only
   useEffect(() => {
+    const teacherId = getTeacherId();
+    if (!teacherId) {
+      setError("Teacher ID not found. Please log in again.");
+      return;
+    }
+
     // Load saved assessments
     try {
-      const savedAssessments = localStorage.getItem('savedAssessments');
+      const savedAssessments = localStorage.getItem(getStorageKey('savedAssessments'));
       if (savedAssessments) {
         setAssessments(JSON.parse(savedAssessments));
       }
       
       // Load unpublished marks
-      const savedMarks = localStorage.getItem('unpublishedMarks');
+      const savedMarks = localStorage.getItem(getStorageKey('unpublishedMarks'));
       if (savedMarks) {
         setUnpublishedMarks(JSON.parse(savedMarks));
       }
@@ -72,14 +131,25 @@ const TeacherMarksManagement = () => {
       setDataLoaded(true);
     } catch (e) {
       console.error('Error loading data from localStorage', e);
+      setError("Failed to load saved data. Starting fresh.");
     }
+
+    // Cleanup function
+    return () => {
+      // Only clear data if teacher ID is different
+      const currentTeacherId = getTeacherId();
+      if (currentTeacherId !== teacherId) {
+        localStorage.removeItem(getStorageKey('savedAssessments'));
+        localStorage.removeItem(getStorageKey('unpublishedMarks'));
+      }
+    };
   }, []); // Empty dependency array ensures this runs once on mount
 
   // Save assessments to localStorage whenever they change
   useEffect(() => {
     if (dataLoaded && initialLoadComplete) {
       try {
-        localStorage.setItem('savedAssessments', JSON.stringify(assessments));
+        localStorage.setItem(getStorageKey('savedAssessments'), JSON.stringify(assessments));
       } catch (err) {
         console.error('Error saving assessments to localStorage:', err);
       }
@@ -90,7 +160,7 @@ const TeacherMarksManagement = () => {
   useEffect(() => {
     if (dataLoaded && initialLoadComplete) {
       try {
-        localStorage.setItem('unpublishedMarks', JSON.stringify(unpublishedMarks));
+        localStorage.setItem(getStorageKey('unpublishedMarks'), JSON.stringify(unpublishedMarks));
       } catch (err) {
         console.error('Error saving unpublished marks to localStorage:', err);
       }
@@ -99,10 +169,13 @@ const TeacherMarksManagement = () => {
 
   // Fetch sections and courses when component mounts
   useEffect(() => {
+    const teacherId = getTeacherId();
     if (teacherId) {
       fetchTeacherSections(teacherId);
+    } else {
+      setError("Teacher ID not found. Please log in again.");
     }
-  }, [teacherId]);
+  }, []);
 
   // Fetch students when active section changes
   useEffect(() => {
@@ -121,7 +194,7 @@ const TeacherMarksManagement = () => {
     if (!initialLoadComplete && activeSection && activeSubject && students.length > 0) {
       setInitialLoadComplete(true);
     }
-  }, [unpublishedMarks, activeSection, activeSubject, students.length]); 
+  }, [unpublishedMarks, activeSection, activeSubject, students.length]);
 
   // Helper function to apply stored marks to students - fixed to avoid unnecessary state updates
   const applyStoredMarksToStudents = () => {
@@ -196,8 +269,13 @@ const TeacherMarksManagement = () => {
   // Fetch teacher sections based on teacher ID
   const fetchTeacherSections = async (teacherId) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await axios.get(`http://localhost:5000/api/section/getSections/${teacherId}`);
+      const response = await axios.get(`${apiUrl}/api/section/getSections/${teacherId}`, {
+        headers: {
+          'x-auth-token': getAuthToken()
+        }
+      });
       
       if (response.data && response.data.length > 0) {
         // Format sections and extract unique subjects
@@ -238,9 +316,12 @@ const TeacherMarksManagement = () => {
             setActiveSection(filteredSections[0]);
           }
         }
+      } else {
+        setError("No sections found for this teacher. Please contact the administrator.");
       }
     } catch (error) {
       console.error("Error fetching sections:", error);
+      setError("Failed to load sections. Please try again or contact support.");
     } finally {
       setIsLoading(false);
     }
@@ -248,43 +329,29 @@ const TeacherMarksManagement = () => {
 
   // Fetch students based on section ID
   const fetchStudents = async (sectionId) => {
-    setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/enrollment/getStudents/${sectionId}`);
-      
-      if (response.data) {
-        // Format students data to match the component's expected structure
-        const formattedStudents = response.data.map(student => ({
-          id: student._id,
-          userId: student.userId,
-          rollNumber: student.rollNumber,
-          name: student.rollNumber, // Placeholder, ideally would fetch student name
-          marks: {}
-        }));
-        
-        setStudents(formattedStudents);
-        // The applyStoredMarksToStudents will happen via the useEffect
-      }
+      const controller = new AbortController();
+      const response = await axios.get(`${apiUrl}/api/course-registration/getStudents/${sectionId}`, {
+        headers: {
+          'x-auth-token': getAuthToken()
+        },
+        signal: controller.signal
+      });
+      setStudents(response.data);
+      return () => controller.abort();
     } catch (error) {
-      console.error("Error fetching students:", error);
-    } finally {
-      setIsLoading(false);
+      if (error.name !== 'AbortError') {
+        handleApiError(error, setError);
+      }
     }
   };
 
   // Save assessment marks to the API or locally
   const saveAssessmentMarks = async (assessment, studentMarks, isPublishing = false) => {
-    // If not publishing and assessment isn't already published, just save locally and return
-    if (!isPublishing && assessment.status !== "Published") {
-      saveMarksLocally(assessment.id, studentMarks);
-      return true;
-    }
-    
     setIsLoading(true);
+    setError(null);
     try {
-      const date = new Date().toISOString();
       const type = tabToApiTypeMap[activeTab];
-      const enrollmentId = "67de03190ad325dc130689b6";
       
       // Prepare grades data for each student
       const grades = students.map(student => {
@@ -292,23 +359,43 @@ const TeacherMarksManagement = () => {
           console.error("Error: Invalid student object", student);
           return null;
         }
+        
+        // Find the registration for this student in this section
+        const registration = student.registrationId || null;
+        
+        if (!registration) {
+          console.error(`No registration found for student ${student.id} in section ${activeSection._id}`);
+          return null;
+        }
+        
         return {
-          enrollmentId: enrollmentId,
-          studentId: student.id,
+          registrationId: registration,
           type: type,
-          title: assessment.id?.toString() || "Unknown",
+          title: `${assessment.title || activeTab} #${assessment.id}`,
+          description: `${activeTab} Assessment for ${activeSubject?.name}`,
           maxMarks: assessment.total || 0,
           obtainedMarks: studentMarks?.[student.id] ?? 0,
-          date: date,
           feedback: "",
-          weightage: assessment.weightage || 0
+          weightage: assessment.weightage || 0,
+          gradedBy: getTeacherId(),
+          status: isPublishing ? 'published' : 'draft'
         };
       }).filter(grade => grade !== null);
       
-      // Post grades to API
-      for (const grade of grades) {
-        await axios.post("http://localhost:5000/api/grade/", grade);
+      if (grades.length === 0) {
+        setError("No valid grades to save. Please check student registrations.");
+        return false;
       }
+      
+      // Post grades to API using the teacher-marks endpoint
+      const response = await axios.post(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/grades`, { 
+        grades,
+        isPublishing
+      }, {
+        headers: {
+          'x-auth-token': getAuthToken()
+        }
+      });
       
       // Clear local marks after successful publishing
       if (isPublishing) {
@@ -317,7 +404,7 @@ const TeacherMarksManagement = () => {
       
       return true;
     } catch (error) {
-      console.error("Error saving grades:", error);
+      handleApiError(error, setError);
       return false;
     } finally {
       setIsLoading(false);
@@ -394,6 +481,7 @@ const TeacherMarksManagement = () => {
     if (!file || !activeSection || !activeSubject) return;
     
     setIsLoading(true);
+    setError(null);
 
     handleExcelImport(
       file,
@@ -423,6 +511,7 @@ const TeacherMarksManagement = () => {
       })
       .catch((error) => {
         console.error("Error during import:", error);
+        setError("Failed to import data. Please check the file format and try again.");
       })
       .finally(() => {
         setIsLoading(false);
@@ -438,6 +527,40 @@ const TeacherMarksManagement = () => {
     setIsLoading(false);
   };
 
+  // Download template for marks import
+  const downloadTemplate = () => {
+    if (!activeSection || !activeSubject) {
+      alert("Please select a subject and section first");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    // Create a sample template with required columns
+    const sampleAssessment = {
+      id: 1,
+      weightage: 15,
+      total: 20
+    };
+    
+    const sampleStudent = {
+      id: "SAMPLE_ID",
+      name: "Sample Student",
+      marks: { 1: 18 }
+    };
+    
+    // Use the export function with sample data
+    createExcelExport(
+      [sampleAssessment], 
+      [sampleStudent], 
+      activeSubject.name, 
+      activeTab,
+      "marks_template.xlsx"
+    );
+    
+    setIsLoading(false);
+  };
+
   // Toggle import help panel
   const toggleImportHelp = () => {
     setShowImportHelp(!showImportHelp);
@@ -446,24 +569,52 @@ const TeacherMarksManagement = () => {
   // Add a new assessment
   const addAssessment = async () => {
     if (!newAssessment.weightage || !newAssessment.total || !activeSection || !activeSubject) {
-      alert("Weightage, Total Marks, and active selections are required");
+      setError("Weightage, Total Marks, and active selections are required");
       return;
     }
 
+    // Validate weightage
+    if (newAssessment.weightage <= 0 || newAssessment.weightage > 100) {
+      setError("Weightage must be between 1 and 100");
+      return;
+    }
+
+    // Validate total marks
+    if (newAssessment.total <= 0) {
+      setError("Total marks must be greater than 0");
+      return;
+    }
+
+    // Validate total weightage for the assessment type
     const currentAssessments = getCurrentAssessments();
-    const newId = currentAssessments.length > 0 
-      ? Math.max(...currentAssessments.map((a) => a.id)) + 1 
-      : 1;
+    const totalWeightage = currentAssessments.reduce((sum, a) => sum + a.weightage, 0);
+    if (totalWeightage + newAssessment.weightage > 100) {
+      setError(`Total weightage for ${activeTab} cannot exceed 100%. Current total: ${totalWeightage}%`);
+      return;
+    }
+
+    // Generate a unique title by finding the highest existing number and incrementing it
+    const existingNumbers = currentAssessments
+      .map(a => {
+        const match = a.title.match(/#(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+    
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const uniqueTitle = `${activeTab.slice(0, -1)} #${nextNumber}`;
 
     const newAssessmentObj = {
-      id: newId,
+      id: nextNumber,
+      title: uniqueTitle,
       weightage: parseInt(newAssessment.weightage),
       total: parseInt(newAssessment.total),
       avg: 0,
-      status: "Draft",
+      status: ASSESSMENT_STATUS.DRAFT,
       modified: false,
       sectionId: activeSection._id,
       courseId: activeSubject.id,
+      type: tabToApiTypeMap[activeTab]
     };
 
     // Create empty marks for all students
@@ -473,7 +624,7 @@ const TeacherMarksManagement = () => {
     });
 
     // Don't send to API yet, just store locally
-    saveMarksLocally(newId, studentMarks);
+    saveMarksLocally(nextNumber, studentMarks);
     
     setAssessments({
       ...assessments,
@@ -513,18 +664,24 @@ const TeacherMarksManagement = () => {
     if (!assessment) return;
     
     let newStatus;
-    if (assessment.status === "Published") {
+    if (assessment.status === ASSESSMENT_STATUS.PUBLISHED) {
       // When unpublishing, just change the status
-      newStatus = "Unpublished";
-    } else if (assessment.status === "Modified" || assessment.status === "Draft" || assessment.status === "Unpublished") {
+      newStatus = ASSESSMENT_STATUS.MODIFIED;
+    } else if (assessment.status === ASSESSMENT_STATUS.MODIFIED || 
+               assessment.status === ASSESSMENT_STATUS.DRAFT) {
+      // When publishing, ask for confirmation
+      if (!window.confirm('Are you sure you want to publish this assessment? Once published, it will be visible to students.')) {
+        return;
+      }
+      
       // When publishing, send marks to the API
-      newStatus = "Published";
+      newStatus = ASSESSMENT_STATUS.PUBLISHED;
       
       const studentMarks = getLocalMarks(id);
       const success = await saveAssessmentMarks(assessment, studentMarks, true);
       
       if (!success) {
-        alert("Failed to publish assessment. Please try again.");
+        setError("Failed to publish assessment. Please try again.");
         return;
       }
     }
@@ -615,6 +772,22 @@ const TeacherMarksManagement = () => {
     </div>
   );
 
+  // Error message component
+  const ErrorMessage = () => (
+    error ? (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </div>
+    ) : null
+  );
+
   // Get filtered sections based on active subject
   const getFilteredSections = () => {
     if (!activeSubject) return [];
@@ -622,6 +795,46 @@ const TeacherMarksManagement = () => {
     return sections.filter(
       section => section.courseId === activeSubject.id
     );
+  };
+
+  const handlePublish = async () => {
+    if (!selectedAssessment) return;
+    
+    // Get the current marks for the selected assessment
+    const currentMarks = getLocalMarks(selectedAssessment.id);
+    
+    // Save to API as published
+    const success = await saveAssessmentMarks(selectedAssessment, currentMarks, true);
+    
+    if (success) {
+      // Update local state
+      setAssessments({
+        ...assessments,
+        [activeTab]: assessments[activeTab].map((a) => {
+          if (a.id === selectedAssessment.id) {
+            return {
+              ...a,
+              modified: false,
+              status: ASSESSMENT_STATUS.PUBLISHED
+            };
+          }
+          return a;
+        }),
+      });
+      
+      // Update selected assessment
+      setSelectedAssessment({
+        ...selectedAssessment,
+        modified: false,
+        status: ASSESSMENT_STATUS.PUBLISHED
+      });
+      
+      // Clear local marks since they're now saved in the API
+      clearLocalMarks(selectedAssessment.id);
+      
+      // Show success message
+      toast.success('Assessment published successfully');
+    }
   };
 
   return (
@@ -639,6 +852,9 @@ const TeacherMarksManagement = () => {
               + Add {activeTab.slice(0, -1)}
             </button>
           </div>
+
+          {/* Error message */}
+          <ErrorMessage />
 
           {/* Subject and Section Filters */}
           <div className="flex flex-col gap-3 mb-4">
@@ -698,75 +914,63 @@ const TeacherMarksManagement = () => {
                 <Info size={14} />
               </button>
             </div>
+            <button 
+              className="px-2 py-1 bg-green-50 text-green-600 text-xs sm:text-sm rounded hover:bg-green-100 transition-colors flex items-center gap-1" 
+              onClick={downloadTemplate}
+              title="Download import template"
+            >
+              <Download size={14} />
+              Template
+            </button>
             <button className="px-2 py-1 bg-blue-50 text-blue-600 text-xs sm:text-sm rounded hover:bg-blue-100 transition-colors flex items-center gap-1" onClick={handleExport}>
               <Download size={14} />
               Export
             </button>
           </div>
 
-          {/* Import Format Help Panel */}
+          {/* Import help panel */}
           {showImportHelp && (
-            <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200 text-xs sm:text-sm">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-medium text-blue-800">Excel Import Format</h3>
-                <button className="text-gray-500 hover:text-gray-700" onClick={toggleImportHelp}>
+            <div className="bg-blue-50 p-3 rounded-lg mb-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-sm text-blue-800">Import Format Help</h3>
+                <button onClick={toggleImportHelp} className="text-blue-500 hover:text-blue-700">
                   <X size={16} />
                 </button>
               </div>
-              <p className="text-gray-700 mb-2">Your Excel file must include the following columns:</p>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-blue-200 text-xs">
-                  <thead>
-                    <tr className="bg-blue-100">
-                      <th className="px-2 py-1 text-left border-b border-blue-200">Column Name</th>
-                      <th className="px-2 py-1 text-left border-b border-blue-200">Data Type</th>
-                      <th className="px-2 py-1 text-left border-b border-blue-200">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requiredColumns.map((column, index) => (
-                      <tr key={index} className="border-b border-blue-100">
-                        <td className="px-2 py-1 font-medium">{column.name}</td>
-                        <td className="px-2 py-1">{column.type}</td>
-                        <td className="px-2 py-1">{column.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-2 text-gray-600">
-                <p className="text-xs">
-                  Example row: <span className="font-mono bg-blue-100 px-1 rounded">1, 15, 20, 101, "John Doe", 18</span>
-                </p>
-              </div>
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 flex items-start gap-1">
-                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">Important</p>
-                  <p>Imported assessments will be added to the current tab.</p>
-                </div>
-              </div>
+              <p className="text-xs text-blue-700 mb-2">
+                Your Excel file should contain the following columns:
+              </p>
+              <ul className="text-xs text-blue-700 list-disc pl-5 space-y-1">
+                {requiredColumns.map((col, index) => (
+                  <li key={index}>
+                    <span className="font-medium">{col.name}</span> ({col.type}): {col.description}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-blue-700 mt-2">
+                Download the template for the correct format.
+              </p>
             </div>
           )}
 
-          {/* Assessment type tabs */}
-          <div className="border-b border-gray-200 mb-3 overflow-x-auto">
-            <div className="flex whitespace-nowrap">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={`py-1.5 px-3 text-xs sm:text-sm transition-colors ${
-                    activeTab === tab ? "text-red-700 border-b-2 border-red-700 font-medium" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => handleTabChange(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          {/* Assessment tabs */}
+          <div className="flex border-b border-gray-200 mb-4 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                className={`px-4 py-2 text-xs sm:text-sm font-medium whitespace-nowrap ${
+                  activeTab === tab
+                    ? "border-b-2 border-red-700 text-red-700"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+                onClick={() => handleTabChange(tab)}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
 
-          {/* Add Assessment Form */}
+          {/* Add assessment form */}
           {showAddForm && (
             <div className="bg-gray-50 p-3 rounded-lg mb-4">
               <h3 className="font-medium mb-3 text-sm">Add New {activeTab.slice(0, -1)}</h3>
@@ -778,6 +982,8 @@ const TeacherMarksManagement = () => {
                     value={newAssessment.weightage}
                     onChange={(e) => setNewAssessment({ ...newAssessment, weightage: e.target.value })}
                     className="w-full px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    min="1"
+                    max="100"
                   />
                 </div>
                 <div>
@@ -787,6 +993,7 @@ const TeacherMarksManagement = () => {
                     value={newAssessment.total}
                     onChange={(e) => setNewAssessment({ ...newAssessment, total: e.target.value })}
                     className="w-full px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    min="1"
                   />
                 </div>
               </div>
@@ -833,37 +1040,20 @@ const TeacherMarksManagement = () => {
                         <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.total}</td>
                         <td className="px-3 py-2 whitespace-nowrap text-gray-500">{assessment.avg}</td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span
-                            className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full items-center ${
-                              assessment.status === "Published"
-                                ? "bg-green-100 text-green-800"
-                                : assessment.status === "Modified"
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            assessment.status === "Published" 
+                              ? "bg-green-100 text-green-800" 
+                              : assessment.status === "Modified"
                                 ? "bg-yellow-100 text-yellow-800"
-                                : assessment.status === "Draft"
-                                ? "bg-blue-100 text-blue-800"
                                 : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
+                          }`}>
                             {assessment.status}
-                            {(assessment.modified || hasUnpublishedChanges(assessment.id)) && 
-                              <AlertTriangle size={10} className="ml-1 text-yellow-600" />}
                           </span>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap font-medium space-x-1">
-                          <div className="flex gap-1 flex-wrap">
-                            <button
-                              className="text-gray-600 hover:text-gray-900 bg-gray-100 px-2 py-0.5 text-xs rounded flex items-center gap-1 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAssessmentClick(assessment);
-                              }}
-                            >
-                              <Edit size={12} /> Edit
-                            </button>
-                            <button
-                              className={`${
-                                assessment.status === "Published" ? "text-red-600 bg-red-50" : "text-green-600 bg-green-50"
-                              } hover:bg-opacity-80 px-2 py-0.5 text-xs rounded transition-colors`}
+                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end gap-2">
+                            <button 
+                              className="text-blue-600 hover:text-blue-900"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleStatus(assessment.id);
@@ -871,14 +1061,14 @@ const TeacherMarksManagement = () => {
                             >
                               {assessment.status === "Published" ? "Unpublish" : "Publish"}
                             </button>
-                            <button
-                              className="text-gray-500 hover:text-red-500 transition-colors"
+                            <button 
+                              className="text-red-600 hover:text-red-900"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteAssessment(assessment.id);
                               }}
                             >
-                              <X size={14} />
+                              Delete
                             </button>
                           </div>
                         </td>

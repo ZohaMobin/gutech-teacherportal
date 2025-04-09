@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 
 const showError = (message) => {
     alert(message);
@@ -235,26 +236,75 @@ Object.entries(assessmentMap).forEach(([assessmentId, assessment]) => {
         reader.readAsArrayBuffer(file);
     });
 };
-// Function to export data to Excel
-export const createExcelExport = (assessments, students, activeSubject, activeTab) => {
-    const workbook = XLSX.utils.book_new();
 
-    // Create Assessments Sheet
-    const assessmentHeaders = ['Assessment ID', 'Weightage', 'Total Marks', 'Average', 'Status'];
-    const assessmentData = assessments.map(a => [a.id, a.weightage, a.total, a.avg, a.status]);
-    const assessmentSheet = XLSX.utils.aoa_to_sheet([assessmentHeaders, ...assessmentData]);
-    XLSX.utils.book_append_sheet(workbook, assessmentSheet, 'Assessments');
+export const createExcelExport = (assessments, students, subjectName, assessmentType, filename = null) => {
+  // Create a new workbook
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'GUTech LMS';
+  workbook.lastModifiedBy = 'GUTech LMS';
+  workbook.created = new Date();
+  workbook.modified = new Date();
 
-    // Create Students Sheet
-    const studentHeaders = ['Student ID', 'Student Name', ...assessments.map(a => `Marks for ${a.id}`)];
-    const studentData = students.map(s => [
-        s.id,
-        s.name,
-        ...assessments.map(a => (s.marks[a.id] !== undefined ? s.marks[a.id] : 'N/A'))
-    ]);
-    const studentSheet = XLSX.utils.aoa_to_sheet([studentHeaders, ...studentData]);
-    XLSX.utils.book_append_sheet(workbook, studentSheet, 'Students');
+  // Add a worksheet
+  const worksheet = workbook.addWorksheet(`${assessmentType} - ${subjectName}`);
 
-    // Export the Excel file
-    XLSX.writeFile(workbook, `${activeSubject}_${activeTab}.xlsx`);
+  // Define columns
+  worksheet.columns = [
+    { header: 'Assessment ID', key: 'assessmentId', width: 15 },
+    { header: 'Weightage', key: 'weightage', width: 10 },
+    { header: 'Total Marks', key: 'totalMarks', width: 15 },
+    { header: 'Student ID', key: 'studentId', width: 15 },
+    { header: 'Student Name', key: 'studentName', width: 20 },
+    { header: 'Obtained Marks', key: 'obtainedMarks', width: 15 }
+  ];
+
+  // Style the header row
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE0E0E0' }
+  };
+
+  // Add data rows
+  assessments.forEach(assessment => {
+    students.forEach(student => {
+      worksheet.addRow({
+        assessmentId: assessment.id,
+        weightage: assessment.weightage,
+        totalMarks: assessment.total,
+        studentId: student.id,
+        studentName: student.name,
+        obtainedMarks: student.marks?.[assessment.id] || 0
+      });
+    });
+  });
+
+  // Generate the Excel file
+  workbook.xlsx.writeBuffer().then(buffer => {
+    // Create a Blob from the buffer
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    // Create a URL for the Blob
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a link element
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Set the filename
+    link.download = filename || `${assessmentType}_${subjectName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Append the link to the body
+    document.body.appendChild(link);
+    
+    // Click the link to trigger the download
+    link.click();
+    
+    // Remove the link from the body
+    document.body.removeChild(link);
+    
+    // Revoke the URL to free up memory
+    window.URL.revokeObjectURL(url);
+  });
 };
