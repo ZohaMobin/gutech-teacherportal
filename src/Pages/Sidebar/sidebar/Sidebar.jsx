@@ -6,14 +6,20 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   const navigate = useNavigate();
   const user = JSON.parse(sessionStorage.getItem('user'));
   
+  // Extract first letter of name for avatar
+  const getInitial = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'GU';
+  };
+  
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     { id: 'marks', label: 'Marks', icon: '📄' },
     { id: 'marks2', label: 'Marks 2.0', icon: '📝' },
-    { id: 'transcript', label: 'Transcript', icon: '📜' },
     { id: 'timetable', label: 'Timetable', icon: '📆' },
-    { id: 'fees', label: 'Fees', icon: '💵' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
   
@@ -57,10 +63,10 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
       <div className="p-5 border-t border-gray-200">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-red-700 text-white rounded-full flex items-center justify-center font-bold mr-3">
-            {user?.firstName?.charAt(0) || 'U'}
+            {getInitial()}
           </div>
           <div>
-            <div className="font-medium text-gray-800">{user?.firstName} {user?.lastName}</div>
+            <div className="font-medium text-gray-800">{user?.name || 'User'}</div>
             <div className="text-xs text-gray-500">Teacher</div>
           </div>
         </div>

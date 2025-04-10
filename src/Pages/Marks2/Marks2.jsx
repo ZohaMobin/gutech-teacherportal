@@ -28,6 +28,12 @@ const Marks2 = () => {
   });
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [minMarks, setMinMarks] = useState('');
+  const [maxMarks, setMaxMarks] = useState('');
+  const [filteredStudents, setFilteredStudents] = useState([]);
 
   // API URL from environment variable
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -218,6 +224,9 @@ const Marks2 = () => {
     setActiveAssessment(null);
     setStudentMarks({});
     setAssessments([]);
+    setSearchTerm('');
+    setMinMarks('');
+    setMaxMarks('');
     
     // Fetch new data for the selected section
     fetchStudents(section._id);
@@ -229,6 +238,29 @@ const Marks2 = () => {
     setActiveAssessment(assessment);
     fetchAssessmentMarks(assessment._id);
   };
+
+  // Filter students based on search term and marks range
+  useEffect(() => {
+    if (!students.length || !activeAssessment) {
+      setFilteredStudents(students);
+      return;
+    }
+
+    const filtered = students.filter(student => {
+      // Filter by name search term
+      const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Filter by marks range
+      const studentMark = studentMarks[student.id]?.[activeAssessment._id] || 0;
+      const minMatch = minMarks === '' || studentMark >= parseFloat(minMarks);
+      const maxMatch = maxMarks === '' || studentMark <= parseFloat(maxMarks);
+      
+      return nameMatch && minMatch && maxMatch;
+    });
+    
+    setFilteredStudents(filtered);
+  }, [students, searchTerm, minMarks, maxMarks, activeAssessment, studentMarks]);
 
   // Handle mark change
   const handleMarkChange = (studentId, value) => {
@@ -695,8 +727,9 @@ const Marks2 = () => {
                         e.stopPropagation();
                         handleEditAssessment(assessment);
                       }}
+                      data-tooltip="Edit Assessment"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={14} data-icon="edit" />
                     </button>
                     <button 
                       className="btn-icon"
@@ -704,8 +737,9 @@ const Marks2 = () => {
                         e.stopPropagation();
                         deleteAssessment(assessment._id);
                       }}
+                      data-tooltip="Delete Assessment"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={14} data-icon="trash" />
                     </button>
                   </div>
                 </div>
@@ -742,6 +776,55 @@ const Marks2 = () => {
                 </button>
               </div>
 
+              {/* Search and Filter Section */}
+              <div className="search-filter-container">
+                <div className="search-box">
+                  <input
+                    type="text"
+                    placeholder="Search by name or roll number..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+                <div className="filter-box">
+                  <div className="filter-group">
+                    <label>Min Marks:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={activeAssessment.maxMarks}
+                      value={minMarks}
+                      onChange={(e) => setMinMarks(e.target.value)}
+                      placeholder="Min"
+                      className="filter-input"
+                    />
+                  </div>
+                  <div className="filter-group">
+                    <label>Max Marks:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={activeAssessment.maxMarks}
+                      value={maxMarks}
+                      onChange={(e) => setMaxMarks(e.target.value)}
+                      placeholder="Max"
+                      className="filter-input"
+                    />
+                  </div>
+                  <button 
+                    className="btn btn-secondary clear-filters"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setMinMarks('');
+                      setMaxMarks('');
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+
               <div className="marks-table-container">
                 <table className="marks-table">
                   <thead>
@@ -752,22 +835,30 @@ const Marks2 = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {students.map(student => (
-                      <tr key={student.id}>
-                        <td>{student.rollNumber}</td>
-                        <td>{student.name}</td>
-                        <td>
-                          <input 
-                            type="number" 
-                            min="0" 
-                            max={activeAssessment.maxMarks}
-                            value={studentMarks[student.id]?.[activeAssessment._id] || ''}
-                            onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                            placeholder="Enter marks"
-                          />
+                    {filteredStudents.length > 0 ? (
+                      filteredStudents.map(student => (
+                        <tr key={student.id}>
+                          <td>{student.rollNumber}</td>
+                          <td>{student.name}</td>
+                          <td>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max={activeAssessment.maxMarks}
+                              value={studentMarks[student.id]?.[activeAssessment._id] || ''}
+                              onChange={(e) => handleMarkChange(student.id, e.target.value)}
+                              placeholder="Enter marks"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="no-results">
+                          No students match your search criteria
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

@@ -7,6 +7,14 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
   
   const user = JSON.parse(sessionStorage.getItem('user'));
+  
+  // Extract first letter of name for avatar
+  const getInitial = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'GU';
+  };
 
   const toggleProfileMenu = () => {
     setIsProfileMenuOpen(!isProfileMenuOpen);
@@ -47,7 +55,7 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
           {/* User profile */}
           <div className="user-profile">
             <div className="user-avatar" onClick={toggleProfileMenu}>
-              <span>JD</span>
+              <span>{getInitial()}</span>
             </div>
             
             {/* Profile dropdown menu */}
@@ -57,16 +65,10 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
                   <span className="profile-name">{user?.name}</span>
                   <span className="profile-email">{user?.email}</span>
                 </div>
-                <div className="profile-menu">
-                  <a href="#" className="profile-menu-item">My Profile</a>
-                  <a href="#" className="profile-menu-item">Account Settings</a>
-                  <a href="#" className="profile-menu-item">Preferences</a>
-                  <div className="profile-divider"></div>
                   <a href="#" className="profile-menu-item logout" onClick={handleLogout}>
                     Logout
                   </a>
                 </div>
-              </div>
             )}
           </div>
         </nav>
