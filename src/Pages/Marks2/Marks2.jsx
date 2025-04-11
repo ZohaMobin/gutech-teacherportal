@@ -97,7 +97,7 @@ const Marks2 = () => {
         return;
       }
 
-      const response = await axios.get(`${apiUrl}/api/section/getSections/${teacherId}`, {
+      const response = await axios.get(`${apiUrl}/api/sections/getSections/${teacherId}`, {
         headers: {
           Authorization: `Bearer ${getAuthToken()}`
         }
