@@ -36,7 +36,7 @@ const Marks2 = () => {
   const [filteredStudents, setFilteredStudents] = useState([]);
 
   // API URL from environment variable
-  const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
   
   // Get auth token from session storage
   const getAuthToken = () => {
@@ -334,9 +334,8 @@ const Marks2 = () => {
         return;
       }
 
-      // Save the grades
-      const response = await axios.post(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/grades`, {
-        assessmentId: activeAssessment._id,
+      // Use PUT method to update existing grades or create new ones
+      const response = await axios.put(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/assessment/${activeAssessment._id}/grades`, {
         grades: grades
       }, {
         headers: {
@@ -346,6 +345,13 @@ const Marks2 = () => {
 
       if (response.data) {
         toast.success('Marks saved successfully');
+        
+        // Clear localStorage after successful save
+        const storageKey = `marks_${activeSection.name}_${activeAssessment._id}`;
+        localStorage.removeItem(storageKey);
+
+        // Refresh the marks display
+        fetchAssessmentMarks(activeAssessment._id);
       }
     } catch (error) {
       console.error('Error saving marks:', error.response?.data || error.message);
@@ -490,12 +496,15 @@ const Marks2 = () => {
         const updatedMarks = { ...prevMarks };
         
         importPreview.forEach(row => {
-          const studentId = row['Student ID'];
+          const rollNumber = row['Roll Number'];
           const mark = row['Obtained Marks'];
           
-          if (studentId && mark !== undefined) {
-            if (!updatedMarks[studentId]) {
-              updatedMarks[studentId] = {};
+          // Find student by roll number
+          const student = students.find(s => s.rollNumber === rollNumber);
+          
+          if (student && mark !== undefined) {
+            if (!updatedMarks[student.id]) {
+              updatedMarks[student.id] = {};
             }
             
             // Convert to number and validate
@@ -503,16 +512,22 @@ const Marks2 = () => {
             
             // Validate against max marks
             if (numValue !== '' && (isNaN(numValue) || numValue < 0 || numValue > activeAssessment.maxMarks)) {
-              toast.error(`Invalid mark for student ${studentId}: ${mark}`);
+              toast.error(`Invalid mark for student ${student.name} (${rollNumber}): ${mark}`);
               return prevMarks;
             }
             
-            updatedMarks[studentId][activeAssessment._id] = numValue;
+            updatedMarks[student.id][activeAssessment._id] = numValue;
+          } else {
+            toast.error(`Student with Roll Number ${rollNumber} not found`);
           }
         });
         
         return updatedMarks;
       });
+      
+      // Save marks to localStorage for persistence
+      const storageKey = `marks_${activeSection.name}_${activeAssessment._id}`;
+      localStorage.setItem(storageKey, JSON.stringify(studentMarks));
       
       setShowImportModal(false);
       setImportFile(null);
@@ -534,9 +549,8 @@ const Marks2 = () => {
         const mark = studentMarks[student.id]?.[activeAssessment._id] || '';
         
         return {
-          'Student ID': student.id,
-          'Student Name': student.name,
           'Roll Number': student.rollNumber,
+          'Student Name': student.name,
           'Assessment': activeAssessment.title,
           'Max Marks': activeAssessment.maxMarks,
           'Obtained Marks': mark
@@ -566,9 +580,8 @@ const Marks2 = () => {
     try {
       // Create template data
       const templateData = students.map(student => ({
-        'Student ID': student.id,
-        'Student Name': student.name,
         'Roll Number': student.rollNumber,
+        'Student Name': student.name,
         'Assessment': activeAssessment ? activeAssessment.title : 'Assessment Title',
         'Max Marks': activeAssessment ? activeAssessment.maxMarks : 100,
         'Obtained Marks': ''
