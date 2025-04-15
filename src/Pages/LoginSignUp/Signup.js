@@ -116,7 +116,7 @@ const Signup = () => {
       // Save to session + update context
       sessionStorage.setItem('token', response.data.token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
-      login(response.data.user); // ✅ Update context
+      login(response.data.user, response.data.token); // Pass both user data and token
 
       navigate("/dashboard");
     } catch (error) {
