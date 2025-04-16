@@ -5,10 +5,8 @@ import PrivateRoute from './Components/PrivateRoute';
 
 import MainLayout from './Pages/MainLayout/MainLayout';
 import Signup from './Pages/LoginSignUp/Signup';
-import TeacherMarksManagement from './Pages/TeacherMarks/manageTeacherMarks';
 import Marks2 from './Pages/Marks2/Marks2';
 import ClassSchedule from './Pages/ClassSchedule/ClassSchedule';
-import Dashboard from './Pages/Dashboard/Dashboard';
 import './styles/global.css';
 
 function App() {
@@ -23,9 +21,7 @@ function App() {
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="marks" element={<TeacherMarksManagement />} />
-                <Route path="marks2" element={<Marks2 />} />
+                <Route path="marks" element={<Marks2 />} />
                 <Route path="timetable" element={<ClassSchedule />} />
                 {/* Add more protected routes here */}
               </Route>
