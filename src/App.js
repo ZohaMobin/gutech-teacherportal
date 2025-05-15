@@ -7,6 +7,7 @@ import MainLayout from './Pages/MainLayout/MainLayout';
 import Signup from './Pages/LoginSignUp/Signup';
 import Marks2 from './Pages/Marks2/Marks2';
 import ClassSchedule from './Pages/ClassSchedule/ClassSchedule';
+import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
 import './styles/global.css';
 
 function App() {
@@ -15,8 +16,9 @@ function App() {
       <Router>
         <div className="app">
           <Routes>
-            {/* Public Route */}
+            {/* Public Routes */}
             <Route path="/" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
