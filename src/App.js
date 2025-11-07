@@ -7,6 +7,7 @@ import MainLayout from './Pages/MainLayout/MainLayout';
 import Signup from './Pages/LoginSignUp/Signup';
 import Marks2 from './Pages/Marks2/Marks2';
 import ClassSchedule from './Pages/ClassSchedule/ClassSchedule';
+import Attendance from './Pages/Attendance/Attendance';
 import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
 import './styles/global.css';
 
@@ -24,6 +25,7 @@ function App() {
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>
                 <Route path="marks" element={<Marks2 />} />
+                <Route path="attendance" element={<Attendance />} />
                 <Route path="timetable" element={<ClassSchedule />} />
                 {/* Add more protected routes here */}
               </Route>
