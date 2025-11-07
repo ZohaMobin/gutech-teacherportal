@@ -313,14 +313,30 @@ const Attendance = () => {
     setError(null);
 
     try {
-      const attendanceDataArray = students.map((student) => {
-        // Normalize student ID to string for consistent comparison
-        const studentId = student.id?.toString() || student.id;
-        return {
-          studentId: studentId,
-          status: attendanceData[studentId] || attendanceData[student.id] || "absent",
-        };
-      });
+      // Only include students that have been explicitly marked
+      const attendanceDataArray = students
+        .map((student) => {
+          // Normalize student ID to string for consistent comparison
+          const studentId = student.id?.toString() || student.id;
+          const status = attendanceData[studentId] || attendanceData[student.id];
+
+          // Only include if student has been marked (has a status)
+          if (status) {
+            return {
+              studentId: studentId,
+              status: status,
+            };
+          }
+          return null;
+        })
+        .filter((item) => item !== null); // Remove null entries (unmarked students)
+
+      // Check if at least one student is marked
+      if (attendanceDataArray.length === 0) {
+        toast.error("Please mark at least one student before saving");
+        setSaving(false);
+        return;
+      }
 
       const dateStr = selectedDate.toISOString().split("T")[0];
       const sectionId = activeSection._id || activeSection.id;
