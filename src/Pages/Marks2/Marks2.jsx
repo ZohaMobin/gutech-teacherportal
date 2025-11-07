@@ -317,11 +317,6 @@ const Marks2 = () => {
             grades.push({
               registrationId: student.registrationId,
               obtainedMarks: Number(mark),
-              maxMarks: activeAssessment.maxMarks,
-              title: activeAssessment.title,
-              type: activeAssessment.type,
-              weightage: activeAssessment.weightage,
-              description: activeAssessment.description || `${activeAssessment.type} Assessment`,
               feedback: ''
             });
           }
