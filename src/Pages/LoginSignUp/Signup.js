@@ -81,7 +81,6 @@ const Signup = () => {
       };
 
       const response = await axios.post(`${apiUrl}/api/auth/register`, userData);
-      console.log('Registration successful:', response.data);
 
       setSignupForm({ name: '', email: '', employeeId: '', department: '', password: '' });
       setIsSignupActive(false);

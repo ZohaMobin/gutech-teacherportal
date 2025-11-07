@@ -192,7 +192,6 @@ const Attendance = () => {
         // Dates are already in YYYY-MM-DD format from the API
         const datesArray = Array.from(dates).sort();
         setMarkedDates(datesArray);
-        console.log("Marked dates set:", datesArray); // Debug log
       } else {
         setMarkedDates([]);
       }
