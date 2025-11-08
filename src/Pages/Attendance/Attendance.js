@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import "./Attendance.css";
 
 const Attendance = () => {
-  const apiUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:5001";
+  const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
   // State management
   const [sections, setSections] = useState([]);

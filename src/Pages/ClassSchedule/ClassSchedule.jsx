@@ -12,7 +12,7 @@ const ClassSchedule = () => {
   const [sectionColors, setSectionColors] = useState({});
   const MAX_RETRIES = 3;
 
-  const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+  const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
   // Generate a consistent color for each section
   const generateSectionColor = (sectionId) => {
