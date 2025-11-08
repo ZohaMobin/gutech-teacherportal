@@ -181,15 +181,23 @@ const Attendance = () => {
         response.data.attendance.forEach((sectionData) => {
           if (sectionData.dates) {
             Object.keys(sectionData.dates).forEach((dateStr) => {
+              // Handle both YYYY-MM-DD format and ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+              let formattedDate = dateStr;
+              
+              // If date is in ISO format, extract just the date part
+              if (dateStr && dateStr.includes('T')) {
+                formattedDate = dateStr.split('T')[0];
+              }
+              
               // Ensure date is in YYYY-MM-DD format
-              if (dateStr && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                dates.add(dateStr);
+              if (formattedDate && formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                dates.add(formattedDate);
               }
             });
           }
         });
 
-        // Dates are already in YYYY-MM-DD format from the API
+        // Dates are now in YYYY-MM-DD format
         const datesArray = Array.from(dates).sort();
         setMarkedDates(datesArray);
       } else {
@@ -208,7 +216,12 @@ const Attendance = () => {
     }
 
     try {
-      const dateStr = date.toISOString().split("T")[0];
+      // Format date using local time to avoid timezone issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
       const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}&date=${dateStr}`, {
         headers: {
           Authorization: `Bearer ${getAuthToken()}`,
@@ -337,7 +350,11 @@ const Attendance = () => {
         return;
       }
 
-      const dateStr = selectedDate.toISOString().split("T")[0];
+      // Format date using local time to avoid timezone issues
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       const sectionId = activeSection._id || activeSection.id;
       const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
 

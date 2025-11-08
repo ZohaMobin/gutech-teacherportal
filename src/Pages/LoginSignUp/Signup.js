@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Components/AuthContext'; // ✅ Import the auth context
@@ -9,11 +9,8 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  
-  const departments = [
-    'Computer Science', 'Mathematics', 'Physics', 'Chemistry', 'Biology',
-    'English', 'History', 'Economics', 'Engineering', 'Other'
-  ];
+  const [departments, setDepartments] = useState([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
   
   const [signupForm, setSignupForm] = useState({
     name: '',
@@ -30,6 +27,34 @@ const Signup = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth(); // ✅ Use auth context login function
+
+  // Fetch departments from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setDepartmentsLoading(true);
+        const apiUrl = process.env.REACT_APP_BACKEND_URL;
+        const response = await axios.get(`${apiUrl}/api/departments`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        // Filter only active departments and sort by name
+        const activeDepartments = (response.data || [])
+          .filter(dept => dept.isActive !== false)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setDepartments(activeDepartments);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        // Fallback to empty array if API fails
+        setDepartments([]);
+      } finally {
+        setDepartmentsLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
@@ -75,8 +100,17 @@ const Signup = () => {
       setIsSubmitting(true);
       setError('');
       const apiUrl = process.env.REACT_APP_BACKEND_URL;
+      
+      // Find the department ID from the selected department name
+      const selectedDepartment = departments.find(dept => dept.name === signupForm.department);
+      const departmentId = selectedDepartment ? (selectedDepartment._id || selectedDepartment.id) : null;
+      
       const userData = {
-        ...signupForm,
+        name: signupForm.name,
+        email: signupForm.email,
+        employeeId: signupForm.employeeId,
+        department: departmentId, // Send department ID instead of name
+        password: signupForm.password,
         role: 'teacher',
       };
 
@@ -143,9 +177,16 @@ const Signup = () => {
             <input type="text" name="name" placeholder="Full Name" value={signupForm.name} onChange={handleSignupChange} disabled={isSubmitting} />
             <input type="email" name="email" placeholder="Institutional Email" value={signupForm.email} onChange={handleSignupChange} disabled={isSubmitting} />
             <input type="text" name="employeeId" placeholder="Employee ID" value={signupForm.employeeId} onChange={handleSignupChange} disabled={isSubmitting} />
-            <select name="department" value={signupForm.department} onChange={handleSignupChange} disabled={isSubmitting}>
-              <option value="">Select Department</option>
-              {departments.map((dept, index) => <option key={index} value={dept}>{dept}</option>)}
+            <select name="department" value={signupForm.department} onChange={handleSignupChange} disabled={isSubmitting || departmentsLoading}>
+              <option value="">{departmentsLoading ? 'Loading departments...' : 'Select Department'}</option>
+              {departments.length === 0 && !departmentsLoading && (
+                <option value="" disabled>No departments available</option>
+              )}
+              {departments.map((dept) => (
+                <option key={dept._id || dept.id} value={dept.name}>
+                  {dept.name}
+                </option>
+              ))}
             </select>
             <div className="password-field">
               <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={signupForm.password} onChange={handleSignupChange} disabled={isSubmitting} />
