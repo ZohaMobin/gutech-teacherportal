@@ -16,6 +16,10 @@ const Attendance = () => {
   const [students, setStudents] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedSlotNumber, setSelectedSlotNumber] = useState(1);
+  const [slotDurationMinutes, setSlotDurationMinutes] = useState(75);
+  const [slotsForSelectedDate, setSlotsForSelectedDate] = useState([]);
+  const [localSlotNumbers, setLocalSlotNumbers] = useState([]);
   const [markedDates, setMarkedDates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -65,6 +69,13 @@ const Attendance = () => {
       setError("An unexpected error occurred. Please try again.");
     }
     console.error("API Error:", error);
+  };
+
+  const getDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   // Fetch sections for the teacher
@@ -143,8 +154,8 @@ const Attendance = () => {
             if (sectionId) {
               // Fetch marked dates first
               fetchMarkedDates(sectionId);
-              // Then fetch attendance for the selected date
-              fetchExistingAttendance(sectionId, selectedDate);
+              // Then fetch attendance for the selected date and slot
+              loadDateAttendance(sectionId, selectedDate, selectedSlotNumber);
             }
           }
         }
@@ -208,20 +219,16 @@ const Attendance = () => {
     }
   };
 
-  // Fetch existing attendance for a specific date
-  const fetchExistingAttendance = async (sectionId, date) => {
+  // Fetch all slots for a specific date and prefill the selected slot
+  const loadDateAttendance = async (sectionId, date, preferredSlot = selectedSlotNumber) => {
     if (!sectionId || !date) {
       setAttendanceData({});
+      setSlotsForSelectedDate([]);
       return;
     }
 
     try {
-      // Format date using local time to avoid timezone issues
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-      
+      const dateStr = getDateKey(date);
       const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}&date=${dateStr}`, {
         headers: {
           Authorization: `Bearer ${getAuthToken()}`,
@@ -229,38 +236,57 @@ const Attendance = () => {
       });
 
       if (response.data && response.data.attendance && Array.isArray(response.data.attendance)) {
-        const attendanceMap = {};
-
-        // Find the section data for this sectionId
         const sectionData = response.data.attendance.find((item) => {
           const itemSectionId = item.sectionId?.toString() || item.sectionId;
           const searchSectionId = sectionId?.toString() || sectionId;
           return itemSectionId === searchSectionId;
         });
 
-        if (sectionData && sectionData.dates && sectionData.dates[dateStr]) {
-          // Map student attendance from the students array
-          sectionData.dates[dateStr].students.forEach((record) => {
-            // studentId is already a string/ObjectId from the API
-            const studentId = record.studentId?.toString() || record.studentId;
-            if (studentId) {
-              // Normalize to string for consistent comparison
-              attendanceMap[studentId.toString()] = record.status;
-            }
-          });
-        }
+        const dateEntry = sectionData?.dates?.[dateStr];
+        const availableSlots = dateEntry?.slots || [];
+        setSlotsForSelectedDate(availableSlots);
+        setLocalSlotNumbers(availableSlots.map((slot) => slot.slotNumber));
 
-        setAttendanceData(attendanceMap);
+        if (availableSlots.length > 0) {
+          const normalizedPreferred = Number(preferredSlot) || 1;
+          const activeSlot = availableSlots.find((slot) => slot.slotNumber === normalizedPreferred) || availableSlots[0];
+          const attendanceMap = {};
+          activeSlot.students.forEach((record) => {
+            const studentId = record.studentId?.toString() || record.studentId;
+            if (studentId) attendanceMap[studentId.toString()] = record.status;
+          });
+          setSelectedSlotNumber(activeSlot.slotNumber);
+          setSlotDurationMinutes(activeSlot.durationMinutes || 75);
+          setAttendanceData(attendanceMap);
+        } else if (dateEntry?.students) {
+          // Backward compatibility for old API payload
+          const attendanceMap = {};
+          dateEntry.students.forEach((record) => {
+            const studentId = record.studentId?.toString() || record.studentId;
+            if (studentId) attendanceMap[studentId.toString()] = record.status;
+          });
+          setSelectedSlotNumber(Number(preferredSlot) || 1);
+          setSlotDurationMinutes(75);
+          setAttendanceData(attendanceMap);
+          setLocalSlotNumbers([1]);
+        } else {
+          setAttendanceData({});
+          setSlotDurationMinutes(75);
+          setLocalSlotNumbers([]);
+        }
         setHasUnsavedChanges(false);
       } else {
-        // If no attendance found for this date, clear the attendance data
         setAttendanceData({});
+        setSlotsForSelectedDate([]);
+        setSlotDurationMinutes(75);
+        setLocalSlotNumbers([]);
         setHasUnsavedChanges(false);
       }
     } catch (error) {
       console.error("Error fetching existing attendance:", error);
-      // Clear attendance data on error to show fresh state
       setAttendanceData({});
+      setSlotsForSelectedDate([]);
+      setLocalSlotNumbers([]);
       setHasUnsavedChanges(false);
     }
   };
@@ -273,6 +299,10 @@ const Attendance = () => {
     setAttendanceData({}); // Clear attendance data
     setHasUnsavedChanges(false);
     setMarkedDates([]); // Clear marked dates when switching sections
+    setSelectedSlotNumber(1);
+    setSlotDurationMinutes(75);
+    setSlotsForSelectedDate([]);
+    setLocalSlotNumbers([]);
     setError(null); // Clear any errors
     // Pass the section directly to fetchStudents to avoid stale state issue
     fetchStudents(section._id, section);
@@ -283,12 +313,90 @@ const Attendance = () => {
     setSelectedDate(date);
     setAttendanceData({});
     setHasUnsavedChanges(false);
+    setSelectedSlotNumber(1);
+    setSlotDurationMinutes(75);
+    setSlotsForSelectedDate([]);
+    setLocalSlotNumbers([]);
 
     if (activeSection) {
       const sectionId = activeSection._id || activeSection.id;
       if (sectionId) {
-        fetchExistingAttendance(sectionId, date);
+        loadDateAttendance(sectionId, date, 1);
       }
+    }
+  };
+
+  const handleSlotChange = (slotNumber) => {
+    const targetSlot = slotsForSelectedDate.find((slot) => slot.slotNumber === slotNumber);
+    const attendanceMap = {};
+    if (targetSlot) {
+      targetSlot.students.forEach((record) => {
+        const studentId = record.studentId?.toString() || record.studentId;
+        if (studentId) attendanceMap[studentId.toString()] = record.status;
+      });
+      setSlotDurationMinutes(targetSlot.durationMinutes || 75);
+    } else {
+      setSlotDurationMinutes(75);
+    }
+    setSelectedSlotNumber(slotNumber);
+    setAttendanceData(attendanceMap);
+    setHasUnsavedChanges(false);
+  };
+
+  const addNewSlot = () => {
+    const allKnownSlots = [
+      ...slotsForSelectedDate.map((slot) => slot.slotNumber),
+      ...localSlotNumbers,
+      selectedSlotNumber,
+    ];
+    const nextSlot = allKnownSlots.length > 0 ? Math.max(...allKnownSlots) + 1 : 1;
+    setSelectedSlotNumber(nextSlot);
+    setSlotDurationMinutes(75);
+    setAttendanceData({});
+    setHasUnsavedChanges(false);
+    setLocalSlotNumbers((prev) => (prev.includes(nextSlot) ? prev : [...prev, nextSlot]));
+  };
+
+  const deleteSelectedSlot = async () => {
+    if (!activeSection) return;
+    const sectionId = activeSection._id || activeSection.id;
+    const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
+    const dateStr = getDateKey(selectedDate);
+
+    const isSavedSlot = slotsForSelectedDate.some((s) => s.slotNumber === selectedSlotNumber);
+    const confirmText = isSavedSlot
+      ? `Delete Slot ${selectedSlotNumber} for ${dateStr}? This will remove saved attendance records for this slot.`
+      : `Remove Slot ${selectedSlotNumber}? (Not saved yet)`;
+
+    // eslint-disable-next-line no-restricted-globals
+    const ok = window.confirm(confirmText);
+    if (!ok) return;
+
+    // Unsaved: just remove locally
+    if (!isSavedSlot) {
+      setLocalSlotNumbers((prev) => prev.filter((n) => n !== selectedSlotNumber));
+      const remaining = slotNumbersForDisplay.filter((n) => n !== selectedSlotNumber);
+      const next = remaining.length > 0 ? remaining[0] : 1;
+      setSelectedSlotNumber(next);
+      setSlotDurationMinutes(75);
+      setAttendanceData({});
+      setHasUnsavedChanges(false);
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${apiUrl}/api/teachers/attendance?sectionId=${sectionId}&courseId=${courseId}&date=${dateStr}&slotNumber=${selectedSlotNumber}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+          },
+        }
+      );
+      toast.success(`Slot ${selectedSlotNumber} deleted`);
+      loadDateAttendance(sectionId, selectedDate, 1);
+    } catch (error) {
+      handleApiError(error);
     }
   };
 
@@ -350,11 +458,7 @@ const Attendance = () => {
         return;
       }
 
-      // Format date using local time to avoid timezone issues
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const day = String(selectedDate.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
+      const dateStr = getDateKey(selectedDate);
       const sectionId = activeSection._id || activeSection.id;
       const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
 
@@ -364,6 +468,8 @@ const Attendance = () => {
           sectionId: sectionId,
           courseId: courseId,
           date: dateStr,
+          slotNumber: selectedSlotNumber,
+          durationMinutes: slotDurationMinutes,
           attendanceData: attendanceDataArray,
         },
         {
@@ -379,10 +485,7 @@ const Attendance = () => {
         setHasUnsavedChanges(false);
 
         // Add the current date to marked dates if not already there
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-        const day = String(selectedDate.getDate()).padStart(2, "0");
-        const formattedDate = `${year}-${month}-${day}`;
+        const formattedDate = getDateKey(selectedDate);
 
         if (!markedDates.includes(formattedDate)) {
           setMarkedDates((prev) => [...prev, formattedDate]);
@@ -392,8 +495,7 @@ const Attendance = () => {
         const sectionId = activeSection._id || activeSection.id;
         if (sectionId) {
           fetchMarkedDates(sectionId);
-          // Re-fetch attendance for the current date to ensure it's displayed
-          fetchExistingAttendance(sectionId, selectedDate);
+          loadDateAttendance(sectionId, selectedDate, selectedSlotNumber);
         }
       }
     } catch (error) {
@@ -459,14 +561,39 @@ const Attendance = () => {
         return;
       }
 
-      // Get all dates
-      const allDates = Object.keys(sectionData.dates).sort();
+      // Get all date-slot keys
+      const allDateSlots = [];
+      Object.keys(sectionData.dates)
+        .sort()
+        .forEach((dateKey) => {
+          const dateEntry = sectionData.dates[dateKey];
+          if (dateEntry?.slots && Array.isArray(dateEntry.slots)) {
+            dateEntry.slots
+              .slice()
+              .sort((a, b) => a.slotNumber - b.slotNumber)
+              .forEach((slot) => {
+                allDateSlots.push({
+                  key: `${dateKey}__slot-${slot.slotNumber}`,
+                  date: dateKey,
+                  slotNumber: slot.slotNumber,
+                  students: slot.students || [],
+                });
+              });
+          } else if (dateEntry?.students) {
+            allDateSlots.push({
+              key: `${dateKey}__slot-1`,
+              date: dateKey,
+              slotNumber: 1,
+              students: dateEntry.students || [],
+            });
+          }
+        });
 
       // Prepare data for CSV
       const csvData = [];
 
-      // Header row: Student Info + Dates
-      const header = ["Roll Number", "Name", ...allDates];
+      // Header row: Student Info + Date/Slot columns
+      const header = ["Roll Number", "Name", ...allDateSlots.map((entry) => `${entry.date} (S${entry.slotNumber})`)];
       csvData.push(header);
 
       // Data rows: Student info + attendance for each date
@@ -475,9 +602,8 @@ const Attendance = () => {
         const row = [
           student.rollNumber || "",
           student.name || "",
-          ...allDates.map((date) => {
-            // Find attendance record for this student and date
-            const dateRecords = sectionData.dates[date]?.students || [];
+          ...allDateSlots.map((dateSlot) => {
+            const dateRecords = dateSlot.students || [];
             const record = dateRecords.find((r) => {
               const rStudentId = r.studentId?.toString() || r.studentId;
               return rStudentId === studentId;
@@ -502,7 +628,7 @@ const Attendance = () => {
       const colWidths = [
         { wch: 15 }, // Roll Number
         { wch: 30 }, // Name
-        ...allDates.map(() => ({ wch: 8 })), // Date columns
+        ...allDateSlots.map(() => ({ wch: 14 })), // Date/Slot columns
       ];
       ws["!cols"] = colWidths;
 
@@ -575,9 +701,8 @@ const Attendance = () => {
     if (activeSection && students.length > 0) {
       const sectionId = activeSection._id || activeSection.id;
       if (sectionId) {
-        // Clear attendance data first to show loading state, then fetch new data
         setAttendanceData({});
-        fetchExistingAttendance(sectionId, selectedDate);
+        loadDateAttendance(sectionId, selectedDate, selectedSlotNumber);
       }
     } else if (activeSection && students.length === 0) {
       // If no students, clear attendance data
@@ -586,6 +711,13 @@ const Attendance = () => {
   }, [activeSection?._id, activeSection?.id, selectedDate, students.length]);
 
   const stats = getAttendanceStats();
+  const slotNumbersForDisplay = Array.from(
+    new Set([
+      ...slotsForSelectedDate.map((slot) => slot.slotNumber),
+      ...localSlotNumbers,
+      selectedSlotNumber,
+    ])
+  ).sort((a, b) => a - b);
 
   return (
     <div className="attendance-container">
@@ -674,6 +806,37 @@ const Attendance = () => {
                   <button className="btn-quick clear" onClick={clearAll}>
                     Clear All
                   </button>
+                </div>
+              </div>
+              <div className="attendance-controls">
+                <div className="quick-actions">
+                  <span className="quick-actions-label">Session Slot:</span>
+                  {slotNumbersForDisplay.map((slotNumber) => (
+                    <button
+                      key={slotNumber}
+                      className={`btn-quick ${selectedSlotNumber === slotNumber ? "present" : "clear"}`}
+                      onClick={() => handleSlotChange(slotNumber)}
+                    >
+                      Slot {slotNumber}
+                    </button>
+                  ))}
+                  <button className="btn-quick clear" onClick={addNewSlot}>
+                    + Add Slot
+                  </button>
+                  <button className="btn-quick absent" onClick={deleteSelectedSlot}>
+                    Delete Slot
+                  </button>
+                </div>
+                <div className="date-selector">
+                  <label htmlFor="slot-duration">Duration (minutes)</label>
+                  <input
+                    id="slot-duration"
+                    type="number"
+                    min="1"
+                    className="date-input"
+                    value={slotDurationMinutes}
+                    onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)}
+                  />
                 </div>
               </div>
 
