@@ -20,6 +20,7 @@ const Attendance = () => {
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(75);
   const [slotsForSelectedDate, setSlotsForSelectedDate] = useState([]);
   const [localSlotNumbers, setLocalSlotNumbers] = useState([]);
+  const [copyFromSlotNumber, setCopyFromSlotNumber] = useState("");
   const [markedDates, setMarkedDates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -354,7 +355,9 @@ const Attendance = () => {
     setSlotDurationMinutes(75);
     setAttendanceData({});
     setHasUnsavedChanges(false);
-    setLocalSlotNumbers((prev) => (prev.includes(nextSlot) ? prev : [...prev, nextSlot]));
+    setLocalSlotNumbers((prev) =>
+      Array.from(new Set([...prev, selectedSlotNumber, nextSlot])).sort((a, b) => a - b)
+    );
   };
 
   const deleteSelectedSlot = async () => {
@@ -395,6 +398,56 @@ const Attendance = () => {
       );
       toast.success(`Slot ${selectedSlotNumber} deleted`);
       loadDateAttendance(sectionId, selectedDate, 1);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const copyAttendanceFromSlot = async () => {
+    if (!activeSection || !copyFromSlotNumber) return;
+
+    const sourceSlot = Number(copyFromSlotNumber);
+    if (sourceSlot === selectedSlotNumber) {
+      toast.error("Source and destination slot cannot be the same");
+      return;
+    }
+
+    const destinationSavedSlot = slotsForSelectedDate.find((slot) => slot.slotNumber === selectedSlotNumber);
+    const destinationHasMarks = Boolean(destinationSavedSlot && destinationSavedSlot.students?.length > 0) || Object.keys(attendanceData).length > 0;
+
+    if (destinationHasMarks) {
+      // eslint-disable-next-line no-restricted-globals
+      const ok = window.confirm(
+        `Slot ${selectedSlotNumber} already has attendance. Copying will replace it. Continue?`
+      );
+      if (!ok) return;
+    }
+
+    try {
+      const sectionId = activeSection._id || activeSection.id;
+      const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
+
+      await axios.post(
+        `${apiUrl}/api/teachers/attendance/copy-slot`,
+        {
+          sectionId,
+          courseId,
+          date: getDateKey(selectedDate),
+          sourceSlotNumber: sourceSlot,
+          destinationSlotNumber: selectedSlotNumber,
+          durationMinutes: slotDurationMinutes,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      toast.success(`Copied Slot ${sourceSlot} to Slot ${selectedSlotNumber}`);
+      await loadDateAttendance(sectionId, selectedDate, selectedSlotNumber);
+      setHasUnsavedChanges(false);
     } catch (error) {
       handleApiError(error);
     }
@@ -718,6 +771,19 @@ const Attendance = () => {
       selectedSlotNumber,
     ])
   ).sort((a, b) => a - b);
+  const availableSourceSlots = slotNumbersForDisplay.filter((slotNumber) => slotNumber !== selectedSlotNumber);
+  const slotNumbersKey = slotNumbersForDisplay.join(",");
+
+  useEffect(() => {
+    if (availableSourceSlots.length === 0) {
+      if (copyFromSlotNumber !== "") setCopyFromSlotNumber("");
+      return;
+    }
+    const current = Number(copyFromSlotNumber);
+    if (!current || !availableSourceSlots.includes(current)) {
+      setCopyFromSlotNumber(String(availableSourceSlots[0]));
+    }
+  }, [selectedSlotNumber, slotNumbersKey, copyFromSlotNumber]);
 
   return (
     <div className="attendance-container">
@@ -772,71 +838,132 @@ const Attendance = () => {
             <>
               {/* Attendance Controls */}
               <div className="attendance-controls">
-                <div className="date-selector">
-                  <label htmlFor="attendance-date">Select Date</label>
-                  <DatePicker
-                    id="attendance-date"
-                    selected={selectedDate}
-                    onChange={handleDateChange}
-                    onSelect={handleDateChange}
-                    dateFormat="yyyy-MM-dd"
-                    className="date-input"
-                    dayClassName={dayClassName}
-                    highlightDates={markedDates.map((dateStr) => {
-                      const [year, month, day] = dateStr.split("-");
-                      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    })}
-                    maxDate={new Date()}
-                    filterDate={(date) => date <= new Date()}
-                  />
-                  <div className="date-legend">
-                    <span className="legend-dot"></span>
-                    <span className="legend-text">Dates with marked attendance</span>
+                <div className="attendance-controls-top">
+                  <div className="date-selector">
+                    <label htmlFor="attendance-date">Select Date</label>
+                    <DatePicker
+                      id="attendance-date"
+                      selected={selectedDate}
+                      onChange={handleDateChange}
+                      onSelect={handleDateChange}
+                      dateFormat="yyyy-MM-dd"
+                      className="date-input"
+                      dayClassName={dayClassName}
+                      highlightDates={markedDates.map((dateStr) => {
+                        const [year, month, day] = dateStr.split("-");
+                        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                      })}
+                      maxDate={new Date()}
+                      filterDate={(date) => date <= new Date()}
+                    />
+                    <div className="date-legend">
+                      <span className="legend-dot"></span>
+                      <span className="legend-text">Dates with marked attendance</span>
+                    </div>
+                  </div>
+
+                  <div className="quick-actions quick-actions-top">
+                    <span className="quick-actions-label quick-actions-title"></span>
+                    <div className="slot-inline-group quick-action-buttons">
+                      <button className="btn-quick present" onClick={markAllPresent}>
+                        Mark All Present
+                      </button>
+                      <button className="btn-quick absent" onClick={markAllAbsent}>
+                        Mark All Absent
+                      </button>
+                      <button className="btn-quick clear" onClick={clearAll}>
+                        Clear All
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="quick-actions">
-                  <span className="quick-actions-label">Quick Actions:</span>
-                  <button className="btn-quick present" onClick={markAllPresent}>
-                    Mark All Present
-                  </button>
-                  <button className="btn-quick absent" onClick={markAllAbsent}>
-                    Mark All Absent
-                  </button>
-                  <button className="btn-quick clear" onClick={clearAll}>
-                    Clear All
-                  </button>
-                </div>
-              </div>
-              <div className="attendance-controls">
-                <div className="quick-actions">
-                  <span className="quick-actions-label">Session Slot:</span>
-                  {slotNumbersForDisplay.map((slotNumber) => (
-                    <button
-                      key={slotNumber}
-                      className={`btn-quick ${selectedSlotNumber === slotNumber ? "present" : "clear"}`}
-                      onClick={() => handleSlotChange(slotNumber)}
-                    >
-                      Slot {slotNumber}
-                    </button>
-                  ))}
-                  <button className="btn-quick clear" onClick={addNewSlot}>
-                    + Add Slot
-                  </button>
-                  <button className="btn-quick absent" onClick={deleteSelectedSlot}>
-                    Delete Slot
-                  </button>
-                </div>
-                <div className="date-selector">
-                  <label htmlFor="slot-duration">Duration (minutes)</label>
-                  <input
-                    id="slot-duration"
-                    type="number"
-                    min="1"
-                    className="date-input"
-                    value={slotDurationMinutes}
-                    onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)}
-                  />
+                <div className="session-panel">
+                  <div className="controls-panel-header">
+                    <div>
+                      <span className="controls-panel-label">Attendance Slots</span>
+                      <h3>Session Selection</h3>
+                    </div>
+                    <div className="slot-management-actions">
+                      <button className="btn-quick clear" onClick={addNewSlot}>
+                        + Slot
+                      </button>
+                      <button className="btn-quick absent" onClick={deleteSelectedSlot}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="slot-compact-layout">
+                    <div className="slot-inline-group slot-list-group">
+                      {slotNumbersForDisplay.map((slotNumber) => (
+                        <button
+                          key={slotNumber}
+                          className={`btn-quick slot-pill ${selectedSlotNumber === slotNumber ? "present" : "clear"}`}
+                          onClick={() => handleSlotChange(slotNumber)}
+                        >
+                          S{slotNumber}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="slot-meta-card">
+                      <div className="slot-meta-copy">
+                        <span className="slot-meta-label">Active slot</span>
+                        <strong>S{selectedSlotNumber}</strong>
+                      </div>
+                      <div className="slot-inline-group slot-duration-group">
+                        <label htmlFor="slot-duration" className="quick-actions-label">
+                          Duration
+                        </label>
+                        <div className="slot-duration-input-wrap">
+                          <input
+                            id="slot-duration"
+                            type="number"
+                            min="1"
+                            className="slot-duration-input"
+                            value={slotDurationMinutes}
+                            onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)}
+                          />
+                          <span className="slot-duration-unit">min</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="slot-inline-group slot-copy-controls slot-copy-inline">
+                      <span className="quick-actions-label">Copy attendance</span>
+                      <select
+                        className="slot-copy-select"
+                        value={copyFromSlotNumber}
+                        onChange={(e) => setCopyFromSlotNumber(e.target.value)}
+                        disabled={availableSourceSlots.length === 0}
+                        title="Copy attendance from another slot"
+                      >
+                        {availableSourceSlots.length === 0 ? (
+                          <option value="">Copy from</option>
+                        ) : (
+                          <>
+                            <option value="" disabled>
+                              Copy from
+                            </option>
+                            {availableSourceSlots.map((slotNumber) => (
+                              <option key={slotNumber} value={slotNumber}>
+                                Slot {slotNumber}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                      <button
+                        className="btn-quick clear"
+                        onClick={copyAttendanceFromSlot}
+                        disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}
+                        title={`Copy selected slot attendance to Slot ${selectedSlotNumber}`}
+                      >
+                        Copy to S{selectedSlotNumber}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
