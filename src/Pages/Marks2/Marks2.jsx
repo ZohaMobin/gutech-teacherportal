@@ -5,6 +5,30 @@ import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, 
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 
+const sortStudentsAscending = (studentsList = []) =>
+  [...studentsList].sort((a, b) =>
+    (a.rollNumber || '').localeCompare(b.rollNumber || '', undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  );
+
+const getSafeSheetName = (name, fallback) => {
+  const cleaned = (name || fallback || 'Sheet').replace(/[\\/?*[\]:]/g, '').trim();
+  return (cleaned || fallback || 'Sheet').slice(0, 31);
+};
+
+const formatAssessmentColumnLabel = (assessment) => `${assessment.title} (${assessment.maxMarks})`;
+
+const getSectionFileLabel = (section) => {
+  const courseName = section?.courseId?.name || section?.courseName || 'Section';
+  const sectionName = section?.section ? `Section_${section.section}` : section?.name || 'Section';
+
+  return `${courseName}_${sectionName}`
+    .replace(/\s+/g, '_')
+    .replace(/[\\/?*[\]:]/g, '');
+};
+
 const Marks2 = () => {
   // State variables
   const [sections, setSections] = useState([]);
@@ -132,11 +156,12 @@ const Marks2 = () => {
       });
 
       if (response.data) {
-        setStudents(response.data);
+        const sortedStudents = sortStudentsAscending(response.data);
+        setStudents(sortedStudents);
         
         // Initialize student marks
         const initialMarks = {};
-        response.data.forEach(student => {
+        sortedStudents.forEach(student => {
           initialMarks[student.id] = {};
         });
         setStudentMarks(initialMarks);
@@ -534,39 +559,275 @@ const Marks2 = () => {
     }
   };
 
-  // Export marks to Excel
-  const exportMarks = () => {
-    if (!activeAssessment || !students.length) return;
-    
-    try {
-      // Prepare data for export
-      const exportData = students.map(student => {
-        const mark = studentMarks[student.id]?.[activeAssessment._id] || '';
-        
-        return {
-          'Roll Number': student.rollNumber,
-          'Student Name': student.name,
-          'Assessment': activeAssessment.title,
-          'Max Marks': activeAssessment.maxMarks,
-          'Obtained Marks': mark
-        };
+  const fetchAssessmentMarksMap = async (assessmentId) => {
+    const response = await axios.get(`${apiUrl}/api/teacher-marks/assessment/${assessmentId}/marks`, {
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`
+      }
+    });
+
+    return response.data?.marks || {};
+  };
+
+  const fetchAttendanceSectionData = async () => {
+    if (!activeSection) return null;
+
+    const sectionId = activeSection._id || activeSection.id;
+    const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`
+      }
+    });
+
+    const attendanceArray = response.data?.attendance;
+    if (!Array.isArray(attendanceArray)) {
+      return null;
+    }
+
+    return attendanceArray.find((item) => item.sectionId === sectionId || item.sectionId?.toString() === sectionId.toString()) || null;
+  };
+
+  const buildAssessmentRows = (assessment, marksMap) => {
+    const sortedStudents = sortStudentsAscending(students);
+
+    return sortedStudents.map((student) => ({
+      'Roll Number': student.rollNumber,
+      'Student Name': student.name,
+      'Assessment': assessment.title,
+      'Type': assessment.type,
+      'Max Marks': assessment.maxMarks,
+      'Obtained Marks': marksMap?.[student.id] ?? '',
+      'Weightage (%)': assessment.weightage,
+      'Obtained Weightage (%)':
+        marksMap?.[student.id] !== '' &&
+        marksMap?.[student.id] !== undefined &&
+        marksMap?.[student.id] !== null &&
+        Number(assessment.maxMarks) > 0
+          ? Number((((Number(marksMap[student.id]) / Number(assessment.maxMarks)) * Number(assessment.weightage || 0))).toFixed(2))
+          : ''
+    }));
+  };
+
+  const buildAssessmentRegisterSheet = async () => {
+    const sortedStudents = sortStudentsAscending(students);
+    const assessmentMarkMaps = {};
+
+    for (const assessment of assessments) {
+      assessmentMarkMaps[assessment._id] = await fetchAssessmentMarksMap(assessment._id);
+    }
+
+    const totalWeightage = assessments.reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0);
+    const totalMaxMarks = assessments.reduce((sum, assessment) => sum + (Number(assessment.maxMarks) || 0), 0);
+
+    const registerRows = sortedStudents.map((student) => {
+      const row = {
+        'Roll Number': student.rollNumber,
+        'Student Name': student.name,
+      };
+
+      let grandTotal = 0;
+      let grandMaxTotal = 0;
+      let weightedTotal = 0;
+
+      assessments.forEach((assessment) => {
+        const rawMark = assessmentMarkMaps[assessment._id]?.[student.id];
+        const numericMark = rawMark === '' || rawMark === undefined || rawMark === null ? null : Number(rawMark);
+
+        row[formatAssessmentColumnLabel(assessment)] = numericMark ?? '';
+
+        if (numericMark !== null && !Number.isNaN(numericMark)) {
+          grandTotal += numericMark;
+          grandMaxTotal += Number(assessment.maxMarks) || 0;
+
+          if (Number(assessment.maxMarks) > 0) {
+            weightedTotal += (numericMark / Number(assessment.maxMarks)) * (Number(assessment.weightage) || 0);
+          }
+        }
       });
+
+      row[`Total Obtained Marks (${totalMaxMarks})`] = grandTotal;
+      row['Total Weightage'] = totalWeightage;
+      row['Grand Obtained Weightage'] = totalWeightage > 0 ? Number(weightedTotal.toFixed(2)) : 0;
+
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(registerRows);
+    worksheet['!cols'] = [
+      { wch: 15 },
+      { wch: 28 },
+      ...assessments.map(() => ({ wch: 18 })),
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 18 },
+    ];
+
+    return worksheet;
+  };
+
+  const appendAttendanceSheet = (workbook, sectionAttendanceData) => {
+    if (!sectionAttendanceData?.dates) return;
+
+    const allDateSlots = [];
+    Object.keys(sectionAttendanceData.dates)
+      .sort()
+      .forEach((dateKey) => {
+        const dateEntry = sectionAttendanceData.dates[dateKey];
+        if (dateEntry?.slots && Array.isArray(dateEntry.slots)) {
+          dateEntry.slots
+            .slice()
+            .sort((a, b) => a.slotNumber - b.slotNumber)
+            .forEach((slot) => {
+              allDateSlots.push({
+                key: `${dateKey}__slot-${slot.slotNumber}`,
+                label: `${dateKey} (S${slot.slotNumber})`,
+                students: slot.students || [],
+              });
+            });
+        } else if (dateEntry?.students) {
+          allDateSlots.push({
+            key: `${dateKey}__slot-1`,
+            label: `${dateKey} (S1)`,
+            students: dateEntry.students || [],
+          });
+        }
+      });
+
+    const attendanceRows = [
+      ['Roll Number', 'Student Name', ...allDateSlots.map((entry) => entry.label)],
+      ...sortStudentsAscending(students).map((student) => {
+        const studentId = student.id?.toString() || student.id;
+        return [
+          student.rollNumber || '',
+          student.name || '',
+          ...allDateSlots.map((dateSlot) => {
+            const record = (dateSlot.students || []).find((entry) => {
+              const recordStudentId = entry.studentId?.toString() || entry.studentId;
+              return recordStudentId === studentId;
+            });
+
+            if (record?.status === 'present') return 'P';
+            if (record?.status === 'absent') return 'A';
+            if (record?.status === 'late') return 'L';
+            if (record?.status === 'leave') return 'LV';
+            return '';
+          }),
+        ];
+      }),
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(attendanceRows);
+    worksheet['!cols'] = [
+      { wch: 15 },
+      { wch: 28 },
+      ...allDateSlots.map(() => ({ wch: 14 })),
+    ];
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
+  };
+
+  // Export active assessment to Excel
+  const exportMarks = async () => {
+    if (!activeAssessment || !students.length) return;
+
+    try {
+      const marksMap = await fetchAssessmentMarksMap(activeAssessment._id);
+      const exportData = buildAssessmentRows(activeAssessment, marksMap);
       
-      // Create workbook and worksheet
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Marks');
+      XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(activeAssessment.title, 'Marks'));
       
-      // Generate filename
-      const filename = `${activeSection.name}_${activeAssessment.title}_marks.xlsx`;
+      const filename = `${getSectionFileLabel(activeSection)}_${activeAssessment.title.replace(/\s+/g, '_')}_marks.xlsx`;
       
-      // Save file
       XLSX.writeFile(workbook, filename);
       
       toast.success('Marks exported successfully');
     } catch (error) {
       console.error('Error exporting marks:', error);
       toast.error('Error exporting marks');
+    }
+  };
+
+  const exportAllAssessments = async () => {
+    if (!activeSection || !assessments.length || !students.length) {
+      toast.error('No assessments available to export');
+      return;
+    }
+
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      const assessmentRegisterSheet = await buildAssessmentRegisterSheet();
+      XLSX.utils.book_append_sheet(workbook, assessmentRegisterSheet, 'Assessment Register');
+
+      const summaryRows = assessments.map((assessment) => ({
+        'Assessment Title': assessment.title,
+        Type: assessment.type,
+        'Max Marks': assessment.maxMarks,
+        'Weightage (%)': assessment.weightage,
+        Description: assessment.description || '',
+      }));
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), 'Assessments');
+
+      for (const assessment of assessments) {
+        const marksMap = await fetchAssessmentMarksMap(assessment._id);
+        const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
+        XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
+      }
+
+      XLSX.writeFile(workbook, `${getSectionFileLabel(activeSection)}_all_assessments.xlsx`);
+      toast.success('All assessments exported successfully');
+    } catch (error) {
+      console.error('Error exporting all assessments:', error);
+      toast.error('Error exporting all assessments');
+    }
+  };
+
+  const exportAllSectionData = async () => {
+    if (!activeSection || !students.length) {
+      toast.error('No section data available to export');
+      return;
+    }
+
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      const overviewRows = sortStudentsAscending(students).map((student) => ({
+        'Roll Number': student.rollNumber,
+        'Student Name': student.name,
+        Section: activeSection.section,
+        Course: activeSection.courseId?.name || '',
+      }));
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(overviewRows), 'Students');
+
+      if (assessments.length > 0) {
+        const assessmentRegisterSheet = await buildAssessmentRegisterSheet();
+        XLSX.utils.book_append_sheet(workbook, assessmentRegisterSheet, 'Assessment Register');
+
+        const assessmentSummaryRows = assessments.map((assessment) => ({
+          'Assessment Title': assessment.title,
+          Type: assessment.type,
+          'Max Marks': assessment.maxMarks,
+          'Weightage (%)': assessment.weightage,
+          Description: assessment.description || '',
+        }));
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(assessmentSummaryRows), 'Assessment Summary');
+
+        for (const assessment of assessments) {
+          const marksMap = await fetchAssessmentMarksMap(assessment._id);
+          const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
+          XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
+        }
+      }
+
+      const sectionAttendanceData = await fetchAttendanceSectionData();
+      appendAttendanceSheet(workbook, sectionAttendanceData);
+
+      XLSX.writeFile(workbook, `${getSectionFileLabel(activeSection)}_full_section_data.xlsx`);
+      toast.success('Full section data exported successfully');
+    } catch (error) {
+      console.error('Error exporting full section data:', error);
+      toast.error('Error exporting full section data');
     }
   };
 
@@ -673,7 +934,21 @@ const Marks2 = () => {
             onClick={exportMarks}
             disabled={!activeAssessment || !students.length}
           >
-            <Download size={16} /> Export
+            <Download size={16} /> Export Assessment
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={exportAllAssessments}
+            disabled={!activeSection || !assessments.length || !students.length}
+          >
+            <Download size={16} /> Export All Assessments
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={exportAllSectionData}
+            disabled={!activeSection || !students.length}
+          >
+            <FileSpreadsheet size={16} /> Export Full Data
           </button>
           <label className="btn btn-secondary">
             <Upload size={16} /> Import
@@ -853,7 +1128,7 @@ const Marks2 = () => {
                               type="number" 
                               min="0" 
                               max={activeAssessment.maxMarks}
-                              value={studentMarks[student.id]?.[activeAssessment._id] || ''}
+                              value={studentMarks[student.id]?.[activeAssessment._id] ?? ''}
                               onChange={(e) => handleMarkChange(student.id, e.target.value)}
                               placeholder="Enter marks"
                             />
