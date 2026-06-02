@@ -1,0 +1,309 @@
+.settings-page {
+  width: 100%;
+  max-width: 1120px;
+  padding: 24px 28px 44px;
+}
+
+.settings-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+  padding: 28px;
+  border: 1px solid #eceff3;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(153, 29, 32, 0.08), rgba(255, 255, 255, 0) 42%),
+    #ffffff;
+}
+
+.settings-eyebrow {
+  margin-bottom: 8px;
+  color: #991d20;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-hero h1 {
+  margin-bottom: 8px;
+  color: #172033;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 2.35rem;
+  line-height: 1.12;
+}
+
+.settings-hero p {
+  max-width: 560px;
+  color: #667085;
+  font-size: 1rem;
+}
+
+.settings-account-card {
+  display: flex;
+  align-items: center;
+  min-width: 270px;
+  padding: 16px;
+  border: 1px solid #eceff3;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.settings-avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background: #b01920;
+  color: #ffffff;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 1.2rem;
+}
+
+.settings-account-card span {
+  display: block;
+  color: #1f2937;
+  font-family: 'Poppins-Medium', sans-serif;
+}
+
+.settings-account-card p {
+  max-width: 180px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #667085;
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1.25fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.settings-info-panel,
+.password-reset-panel {
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.07);
+}
+
+.settings-info-panel {
+  padding: 24px;
+}
+
+.settings-info-icon,
+.panel-title-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #991d20;
+}
+
+.settings-info-panel h2,
+.panel-title-row h2 {
+  margin: 16px 0 8px;
+  color: #1f2937;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 1.25rem;
+}
+
+.settings-info-panel p,
+.panel-title-row p {
+  color: #667085;
+  font-size: 0.94rem;
+}
+
+.settings-info-panel ul {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-info-panel li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #344054;
+  font-size: 0.94rem;
+}
+
+.settings-info-panel li svg {
+  flex: 0 0 auto;
+  color: #15803d;
+}
+
+.password-reset-panel {
+  max-width: 620px;
+  padding: 26px;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.panel-title-row h2 {
+  margin-top: 0;
+}
+
+.password-reset-panel label {
+  display: block;
+  margin-bottom: 17px;
+  color: #344054;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 0.93rem;
+}
+
+.password-input-wrap {
+  position: relative;
+  margin-top: 8px;
+}
+
+.password-input-wrap input {
+  height: 48px;
+  margin: 0;
+  padding: 12px 46px 12px 14px;
+  border: 1px solid #d8dde6;
+  border-radius: 7px;
+  background: #fbfcfe;
+  color: #111827;
+  font-family: 'Poppins-Regular', sans-serif;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.password-input-wrap input::placeholder {
+  color: #98a2b3;
+}
+
+.password-input-wrap input:focus {
+  border-color: #991d20;
+  background: #ffffff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(153, 29, 32, 0.12);
+}
+
+.password-visibility-button {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #667085;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-visibility-button:hover {
+  background: #f2f4f7;
+  color: #991d20;
+}
+
+.update-password-button {
+  width: 100%;
+  height: 48px;
+  margin-top: 4px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 7px;
+  background: #a71920;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 1rem;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.update-password-button:hover:not(:disabled) {
+  background: #861319;
+  box-shadow: 0 10px 20px rgba(153, 29, 32, 0.2);
+  transform: translateY(-1px);
+}
+
+.update-password-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.settings-alert {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 7px;
+  font-family: 'Poppins-Medium', sans-serif;
+  font-size: 0.9rem;
+}
+
+.settings-alert.success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.settings-alert.error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+@media (max-width: 980px) {
+  .settings-page {
+    padding: 18px 18px 34px;
+  }
+
+  .settings-hero,
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-account-card,
+  .password-reset-panel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-page {
+    padding: 12px 8px 28px;
+  }
+
+  .settings-hero {
+    padding: 20px;
+  }
+
+  .settings-hero h1 {
+    font-size: 1.85rem;
+  }
+
+  .settings-info-panel,
+  .password-reset-panel {
+    padding: 20px;
+  }
+}
