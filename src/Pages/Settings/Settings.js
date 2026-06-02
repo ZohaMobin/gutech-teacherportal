@@ -98,7 +98,7 @@ const Settings = () => {
         <div>
           <p className="settings-eyebrow">Account Settings</p>
           <h1>Security</h1>
-          <p>Update your password after signing in with a temporary password from admin.</p>
+          <p>Update your password</p>
         </div>
 
         <div className="settings-account-card">
