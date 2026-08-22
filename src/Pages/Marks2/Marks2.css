@@ -76,9 +76,53 @@
   letter-spacing: -0.025em;
 }
 
+.marks2-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
 .marks2-actions {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.marks-view-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-bottom: var(--spacing-lg);
+  padding: 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.marks-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+}
+
+.marks-view-tab:hover {
+  background: var(--background-light);
+  color: var(--text-primary);
+}
+
+.marks-view-tab.active {
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(153, 29, 32, 0.18);
 }
 
 /* Button styles */
@@ -320,6 +364,290 @@
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
   overflow: auto;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.workspace-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspace-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.workspace-header p:last-child {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.workspace-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.workspace-summary-card {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(153, 29, 32, 0.06), rgba(255, 255, 255, 0) 48%),
+    var(--background-white);
+}
+
+.workspace-summary-card span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspace-summary-card strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.summary-warning {
+  color: var(--warning-color) !important;
+}
+
+.workspace-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-light);
+}
+
+.workspace-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 280px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--background-white);
+  color: var(--text-secondary);
+}
+
+.workspace-search input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.workspace-search input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.workspace-note {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.gradebook-table-shell {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.gradebook-table {
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.gradebook-table th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  min-width: 132px;
+  padding: 0.75rem 0.8rem;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.gradebook-table thead tr:nth-child(2) th {
+  top: 41px;
+  z-index: 4;
+  background: #f8fafc;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.gradebook-table td {
+  min-width: 132px;
+  padding: 0.65rem 0.8rem;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--background-white);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  vertical-align: middle;
+}
+
+.gradebook-table tbody tr:hover td {
+  background: #fbfdff;
+}
+
+.gradebook-table .sticky-col {
+  position: sticky;
+  z-index: 5;
+  background: #ffffff;
+}
+
+.gradebook-table th.sticky-col {
+  z-index: 7;
+  background: #eaf0f7;
+}
+
+.roll-col {
+  left: 0;
+  min-width: 116px !important;
+  font-weight: 700;
+}
+
+.name-col {
+  left: 116px;
+  min-width: 210px !important;
+  border-right: 2px solid #cbd5e1 !important;
+  font-weight: 700;
+}
+
+.weighted-header,
+.weighted-meta {
+  background: #fff7ed !important;
+}
+
+.total-header,
+.grade-header {
+  background: #eef2ff !important;
+}
+
+.marks-entry-cell input {
+  width: 96px;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.marks-entry-cell input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.weighted-cell,
+.total-cell,
+.grade-cell {
+  font-weight: 800;
+}
+
+.weighted-cell strong,
+.total-cell strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.weighted-cell span,
+.total-cell span {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.weighted-cell.strong,
+.total-cell.strong,
+.grade-cell.strong {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.weighted-cell.good,
+.total-cell.good,
+.grade-cell.good {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.weighted-cell.watch,
+.total-cell.watch,
+.grade-cell.watch {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.weighted-cell.risk,
+.total-cell.risk,
+.grade-cell.risk {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.weighted-cell.missing,
+.total-cell.missing,
+.grade-cell.missing {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.grade-cell {
+  min-width: 120px !important;
+  text-align: center;
+  font-size: 0.92rem;
 }
 
 /* Assessment header */

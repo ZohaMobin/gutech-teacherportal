@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2 } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 
@@ -52,6 +52,7 @@ const Marks2 = () => {
   });
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
+  const [activeMarksView, setActiveMarksView] = useState('entry');
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -569,6 +570,267 @@ const Marks2 = () => {
     return response.data?.marks || {};
   };
 
+  const loadGradebookMarks = async (assessmentList = assessments) => {
+    if (!students.length || !assessmentList.length) return;
+
+    try {
+      const assessmentMarkMaps = await Promise.all(
+        assessmentList.map(async (assessment) => ({
+          assessmentId: assessment._id,
+          marks: await fetchAssessmentMarksMap(assessment._id),
+        }))
+      );
+
+      setStudentMarks((prevMarks) => {
+        const updatedMarks = { ...prevMarks };
+
+        students.forEach((student) => {
+          if (!updatedMarks[student.id]) {
+            updatedMarks[student.id] = {};
+          }
+        });
+
+        assessmentMarkMaps.forEach(({ assessmentId, marks }) => {
+          Object.entries(marks).forEach(([studentId, mark]) => {
+            if (!updatedMarks[studentId]) {
+              updatedMarks[studentId] = {};
+            }
+            updatedMarks[studentId][assessmentId] = mark;
+          });
+        });
+
+        return updatedMarks;
+      });
+    } catch (error) {
+      console.error('Error loading gradebook workspace:', error);
+      toast.error('Unable to load complete gradebook workspace');
+    }
+  };
+
+  const calculateWeightedScore = (studentId, assessment) => {
+    const mark = studentMarks[studentId]?.[assessment._id];
+    const numericMark = mark === '' || mark === undefined || mark === null ? null : Number(mark);
+    const maxMarks = Number(assessment.maxMarks) || 0;
+    const weightage = Number(assessment.weightage) || 0;
+
+    if (numericMark === null || Number.isNaN(numericMark) || maxMarks <= 0) {
+      return null;
+    }
+
+    return (numericMark / maxMarks) * weightage;
+  };
+
+  const getEstimatedGrade = (percentage) => {
+    if (percentage === null || percentage === undefined || Number.isNaN(percentage)) return 'N/A';
+    if (percentage >= 85) return 'A';
+    if (percentage >= 80) return 'A-';
+    if (percentage >= 75) return 'B+';
+    if (percentage >= 71) return 'B';
+    if (percentage >= 68) return 'B-';
+    if (percentage >= 64) return 'C+';
+    if (percentage >= 61) return 'C';
+    if (percentage >= 58) return 'C-';
+    if (percentage >= 54) return 'D+';
+    if (percentage >= 50) return 'D';
+    return 'F';
+  };
+
+  const getPerformanceClass = (percentage) => {
+    if (percentage === null || percentage === undefined || Number.isNaN(percentage)) return 'missing';
+    if (percentage >= 80) return 'strong';
+    if (percentage >= 70) return 'good';
+    if (percentage >= 50) return 'watch';
+    return 'risk';
+  };
+
+  const coveredWeightage = useMemo(
+    () => assessments.reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0),
+    [assessments]
+  );
+
+  const gradebookRows = useMemo(() => {
+    const visibleStudents = sortStudentsAscending(students).filter((student) => {
+      const query = searchTerm.trim().toLowerCase();
+      if (!query) return true;
+      return (
+        (student.name || '').toLowerCase().includes(query) ||
+        (student.rollNumber || '').toLowerCase().includes(query)
+      );
+    });
+
+    return visibleStudents.map((student) => {
+      const weightedTotal = assessments.reduce((sum, assessment) => {
+        const weightedScore = calculateWeightedScore(student.id, assessment);
+        return sum + (weightedScore || 0);
+      }, 0);
+      const percentage = coveredWeightage > 0 ? (weightedTotal / coveredWeightage) * 100 : null;
+
+      return {
+        ...student,
+        weightedTotal,
+        percentage,
+        estimatedGrade: getEstimatedGrade(percentage),
+        performanceClass: getPerformanceClass(percentage),
+      };
+    });
+  }, [students, assessments, studentMarks, searchTerm, coveredWeightage]);
+
+  const gradebookSummary = useMemo(() => {
+    const rowsWithScores = gradebookRows.filter((row) => row.percentage !== null);
+    const classAverage = rowsWithScores.length
+      ? rowsWithScores.reduce((sum, row) => sum + row.percentage, 0) / rowsWithScores.length
+      : 0;
+    const missingMarks = students.reduce((count, student) => {
+      const missingForStudent = assessments.filter((assessment) => {
+        const mark = studentMarks[student.id]?.[assessment._id];
+        return mark === undefined || mark === null || mark === '';
+      }).length;
+      return count + missingForStudent;
+    }, 0);
+
+    return {
+      classAverage,
+      missingMarks,
+      studentCount: students.length,
+      assessmentCount: assessments.length,
+    };
+  }, [gradebookRows, students, assessments, studentMarks]);
+
+  const handleWorkspaceMarkChange = (studentId, assessment, value) => {
+    const numValue = value === '' ? '' : Number(value);
+
+    if (numValue !== '' && (Number.isNaN(numValue) || numValue < 0 || numValue > Number(assessment.maxMarks))) {
+      toast.error(`Mark must be between 0 and ${assessment.maxMarks}`);
+      return;
+    }
+
+    setStudentMarks((prevMarks) => ({
+      ...prevMarks,
+      [studentId]: {
+        ...(prevMarks[studentId] || {}),
+        [assessment._id]: numValue,
+      },
+    }));
+  };
+
+  const handleGradebookCellKeyDown = (event) => {
+    const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Enter'];
+    if (!navigationKeys.includes(event.key)) return;
+
+    const currentInput = event.currentTarget;
+    const rowIndex = Number(currentInput.dataset.rowIndex);
+    const colIndex = Number(currentInput.dataset.colIndex);
+    let nextRow = rowIndex;
+    let nextCol = colIndex;
+
+    if (event.key === 'ArrowRight') nextCol += 1;
+    if (event.key === 'ArrowLeft') nextCol -= 1;
+    if (event.key === 'ArrowDown' || event.key === 'Enter') nextRow += 1;
+    if (event.key === 'ArrowUp') nextRow -= 1;
+
+    const nextInput = document.querySelector(
+      `[data-gradebook-cell="true"][data-row-index="${nextRow}"][data-col-index="${nextCol}"]`
+    );
+
+    if (nextInput) {
+      event.preventDefault();
+      nextInput.focus();
+      nextInput.select();
+    }
+  };
+
+  const exportGradebookWorkspace = () => {
+    if (!activeSection || !assessments.length || !students.length) {
+      toast.error('No gradebook workspace available to export');
+      return;
+    }
+
+    const exportRows = gradebookRows.map((student) => {
+      const row = {
+        'Roll No': student.rollNumber || '',
+        'Student Name': student.name || '',
+      };
+
+      assessments.forEach((assessment) => {
+        const mark = studentMarks[student.id]?.[assessment._id] ?? '';
+        const weightedScore = calculateWeightedScore(student.id, assessment);
+        row[`${assessment.title} Marks (Total Marks: ${assessment.maxMarks})`] = mark;
+        row[`${assessment.title} Weighted (Weightage: ${assessment.weightage}%)`] =
+          weightedScore === null ? '' : Number(weightedScore.toFixed(2));
+      });
+
+      row[`Total (Weightage: ${coveredWeightage})`] = Number(student.weightedTotal.toFixed(2));
+      row['Estimated Grade'] = student.estimatedGrade;
+      return row;
+    });
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 28 },
+      ...assessments.flatMap(() => [{ wch: 22 }, { wch: 24 }]),
+      { wch: 18 },
+      { wch: 18 },
+    ];
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Gradebook Workspace');
+    XLSX.writeFile(workbook, `${getSectionFileLabel(activeSection)}_gradebook_workspace.xlsx`);
+    toast.success('Gradebook workspace exported successfully');
+  };
+
+  const saveGradebookWorkspace = async () => {
+    if (!activeSection || !assessments.length) {
+      toast.error('Please select a section with assessments first');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const saveRequests = assessments.map((assessment) => {
+        const grades = students
+          .map((student) => {
+            const mark = studentMarks[student.id]?.[assessment._id];
+            if (mark === undefined || mark === '' || Number.isNaN(Number(mark)) || !student.registrationId) {
+              return null;
+            }
+
+            return {
+              registrationId: student.registrationId,
+              obtainedMarks: Number(mark),
+              feedback: '',
+            };
+          })
+          .filter(Boolean);
+
+        if (!grades.length) return null;
+
+        return axios.put(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/assessment/${assessment._id}/grades`, {
+          grades,
+        }, {
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+          },
+        });
+      }).filter(Boolean);
+
+      if (!saveRequests.length) {
+        toast.error('No valid marks to save');
+        return;
+      }
+
+      await Promise.all(saveRequests);
+      toast.success('Gradebook workspace saved successfully');
+      await loadGradebookMarks();
+    } catch (error) {
+      console.error('Error saving gradebook workspace:', error.response?.data || error.message);
+      handleApiError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchAttendanceSectionData = async () => {
     if (!activeSection) return null;
 
@@ -917,10 +1179,19 @@ const Marks2 = () => {
     }
   }, [activeSection]);
 
+  useEffect(() => {
+    if (activeMarksView === 'workspace' && students.length && assessments.length) {
+      loadGradebookMarks();
+    }
+  }, [activeMarksView, students.length, assessments.length, activeSection?._id]);
+
   return (
     <div className="marks2-container">
       <div className="marks2-header">
-        <h1>Marks 2.0</h1>
+        <div>
+          <h1>Marks</h1>
+          <p className="marks2-subtitle">Enter assessment marks or manage the full gradebook workspace.</p>
+        </div>
         <div className="marks2-actions">
           <button 
             className="btn btn-primary" 
@@ -967,6 +1238,25 @@ const Marks2 = () => {
             <FileSpreadsheet size={16} /> Template
           </button>
         </div>
+      </div>
+
+      <div className="marks-view-tabs" role="tablist" aria-label="Marks views">
+        <button
+          type="button"
+          className={`marks-view-tab ${activeMarksView === 'entry' ? 'active' : ''}`}
+          onClick={() => setActiveMarksView('entry')}
+        >
+          <ClipboardList size={16} />
+          Assessment Entry
+        </button>
+        <button
+          type="button"
+          className={`marks-view-tab ${activeMarksView === 'workspace' ? 'active' : ''}`}
+          onClick={() => setActiveMarksView('workspace')}
+        >
+          <Table2 size={16} />
+          Gradebook Workspace
+        </button>
       </div>
 
       {error && (
@@ -1038,6 +1328,151 @@ const Marks2 = () => {
             <div className="empty-state">
               <p>Select a section to view and manage marks</p>
             </div>
+          ) : activeMarksView === 'workspace' ? (
+            <>
+              <div className="workspace-header">
+                <div>
+                  <p className="workspace-eyebrow">Gradebook Workspace</p>
+                  <h2>{activeSection.courseId?.name || 'Selected Course'} - Section {activeSection.section || activeSection.name || '-'}</h2>
+                  <p>Use this sheet to enter marks across assessments and review weighted totals instantly.</p>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  onClick={exportGradebookWorkspace}
+                  disabled={!assessments.length || !students.length}
+                >
+                  <Download size={16} /> Export Workspace
+                </button>
+                <button
+                  className="btn btn-primary save-btn"
+                  onClick={saveGradebookWorkspace}
+                  disabled={!assessments.length || !students.length}
+                >
+                  <Save size={16} /> Save Workspace
+                </button>
+              </div>
+
+              <div className="workspace-summary-grid">
+                <div className="workspace-summary-card">
+                  <span>Class Average</span>
+                  <strong>{gradebookSummary.classAverage.toFixed(1)}%</strong>
+                </div>
+                <div className="workspace-summary-card">
+                  <span>Weightage Covered</span>
+                  <strong className={coveredWeightage > 100 ? 'summary-warning' : ''}>{coveredWeightage} / 100</strong>
+                </div>
+                <div className="workspace-summary-card">
+                  <span>Students</span>
+                  <strong>{gradebookSummary.studentCount}</strong>
+                </div>
+                <div className="workspace-summary-card">
+                  <span>Missing Marks</span>
+                  <strong className={gradebookSummary.missingMarks ? 'summary-warning' : ''}>{gradebookSummary.missingMarks}</strong>
+                </div>
+              </div>
+
+              <div className="workspace-toolbar">
+                <div className="workspace-search">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search student or roll number"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="workspace-note">
+                  Marks cells are editable. Weighted, total, and grade cells recalculate automatically.
+                </div>
+              </div>
+
+              {!assessments.length ? (
+                <div className="empty-state">
+                  <p>Create assessments first, then the workspace will show marks and weighted columns.</p>
+                </div>
+              ) : (
+                <div className="gradebook-table-shell">
+                  <table className="gradebook-table">
+                    <thead>
+                      <tr>
+                        <th className="sticky-col roll-col" rowSpan="2">Roll No</th>
+                        <th className="sticky-col name-col" rowSpan="2">Student Name</th>
+                        {assessments.map((assessment) => (
+                          <React.Fragment key={assessment._id}>
+                            <th>{assessment.title} Marks</th>
+                            <th className="weighted-header">{assessment.title} Weighted</th>
+                          </React.Fragment>
+                        ))}
+                        <th className="total-header" rowSpan="2">Total</th>
+                        <th className="grade-header" rowSpan="2">Estimated Grade</th>
+                      </tr>
+                      <tr>
+                        {assessments.map((assessment) => (
+                          <React.Fragment key={`${assessment._id}-meta`}>
+                            <th className="meta-header">Total Marks: {assessment.maxMarks}</th>
+                            <th className="meta-header weighted-meta">Weightage: {assessment.weightage}%</th>
+                          </React.Fragment>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gradebookRows.length > 0 ? (
+                        gradebookRows.map((student) => (
+                          <tr key={student.id}>
+                            <td className="sticky-col roll-col">{student.rollNumber || '-'}</td>
+                            <td className="sticky-col name-col">{student.name || 'Unnamed Student'}</td>
+                            {assessments.map((assessment) => {
+                              const mark = studentMarks[student.id]?.[assessment._id] ?? '';
+                              const weightedScore = calculateWeightedScore(student.id, assessment);
+                              const markPercentage = weightedScore === null || Number(assessment.weightage) <= 0
+                                ? null
+                                : (weightedScore / Number(assessment.weightage)) * 100;
+
+                              return (
+                                <React.Fragment key={`${student.id}-${assessment._id}`}>
+                                  <td className="marks-entry-cell">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={assessment.maxMarks}
+                                      value={mark}
+                                      onChange={(e) => handleWorkspaceMarkChange(student.id, assessment, e.target.value)}
+                                      onKeyDown={handleGradebookCellKeyDown}
+                                      onFocus={(e) => e.target.select()}
+                                      data-gradebook-cell="true"
+                                      data-row-index={gradebookRows.indexOf(student)}
+                                      data-col-index={assessments.indexOf(assessment)}
+                                      aria-label={`${student.name || 'Student'} ${assessment.title} marks`}
+                                    />
+                                  </td>
+                                  <td className={`weighted-cell ${getPerformanceClass(markPercentage)}`}>
+                                    <strong>{weightedScore === null ? '-' : weightedScore.toFixed(2)}</strong>
+                                    <span>/ {Number(assessment.weightage) || 0}</span>
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className={`total-cell ${student.performanceClass}`}>
+                              <strong>{student.weightedTotal.toFixed(2)}</strong>
+                              <span>/ {coveredWeightage || 0}</span>
+                            </td>
+                            <td className={`grade-cell ${student.performanceClass}`}>
+                              {student.estimatedGrade}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={(assessments.length * 2) + 4} className="no-results">
+                            No students match your search criteria
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           ) : !activeAssessment ? (
             <div className="empty-state">
               <p>Select or create an assessment to manage marks</p>
