@@ -1075,4 +1075,59 @@
     right: 0;
     margin: 0;
   }
-} 
+}
+
+/* Bonus / extra credit */
+.bonus-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  vertical-align: middle;
+}
+
+.bonus-col-header {
+  background: #fffbeb !important;
+}
+
+.bonus-checkbox-group {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-md, 8px);
+  background: #fffbeb;
+}
+
+.bonus-checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem !important;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bonus-checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.bonus-help-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #78716c;
+  line-height: 1.35;
+}
+
+.assessment-item.bonus-assessment,
+.assessment-card.bonus-assessment {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}

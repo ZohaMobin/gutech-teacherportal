@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { getEstimatedGrade } from '../../utils/gradingScale';
 import './Marks2.css';
 
 const sortStudentsAscending = (studentsList = []) =>
@@ -48,6 +49,7 @@ const Marks2 = () => {
     type: 'quiz',
     maxMarks: 100,
     weightage: 10,
+    isBonus: false,
     description: ''
   });
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
@@ -410,6 +412,7 @@ const Marks2 = () => {
         type: newAssessment.type,
         maxMarks: Number(newAssessment.maxMarks),
         weightage: Number(newAssessment.weightage),
+        isBonus: Boolean(newAssessment.isBonus),
         description: newAssessment.description || `${newAssessment.type} Assessment`,
         sectionId: activeSection._id,
         courseId: activeSection.courseId,
@@ -431,6 +434,7 @@ const Marks2 = () => {
           type: 'quiz',
           maxMarks: 100,
           weightage: 10,
+          isBonus: false,
           description: ''
         });
         toast.success('Assessment added successfully');
@@ -620,21 +624,6 @@ const Marks2 = () => {
     return (numericMark / maxMarks) * weightage;
   };
 
-  const getEstimatedGrade = (percentage) => {
-    if (percentage === null || percentage === undefined || Number.isNaN(percentage)) return 'N/A';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 71) return 'B';
-    if (percentage >= 68) return 'B-';
-    if (percentage >= 64) return 'C+';
-    if (percentage >= 61) return 'C';
-    if (percentage >= 58) return 'C-';
-    if (percentage >= 54) return 'D+';
-    if (percentage >= 50) return 'D';
-    return 'F';
-  };
-
   const getPerformanceClass = (percentage) => {
     if (percentage === null || percentage === undefined || Number.isNaN(percentage)) return 'missing';
     if (percentage >= 80) return 'strong';
@@ -644,7 +633,10 @@ const Marks2 = () => {
   };
 
   const coveredWeightage = useMemo(
-    () => assessments.reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0),
+    () =>
+      assessments
+        .filter((assessment) => !assessment.isBonus)
+        .reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0),
     [assessments]
   );
 
@@ -663,7 +655,9 @@ const Marks2 = () => {
         const weightedScore = calculateWeightedScore(student.id, assessment);
         return sum + (weightedScore || 0);
       }, 0);
-      const percentage = coveredWeightage > 0 ? (weightedTotal / coveredWeightage) * 100 : null;
+      // Bonus adds to score but is excluded from denominator; clamp at 100
+      const percentage =
+        coveredWeightage > 0 ? Math.min(100, (weightedTotal / coveredWeightage) * 100) : null;
 
       return {
         ...student,
@@ -676,7 +670,10 @@ const Marks2 = () => {
   }, [students, assessments, studentMarks, searchTerm, coveredWeightage]);
 
   const gradebookSummary = useMemo(() => {
-    const rowsWithScores = gradebookRows.filter((row) => row.percentage !== null);
+    // Exclude students with no scored total (grand total 0) from class average
+    const rowsWithScores = gradebookRows.filter(
+      (row) => row.percentage !== null && Number(row.weightedTotal) > 0
+    );
     const classAverage = rowsWithScores.length
       ? rowsWithScores.reduce((sum, row) => sum + row.percentage, 0) / rowsWithScores.length
       : 0;
@@ -693,6 +690,7 @@ const Marks2 = () => {
       missingMarks,
       studentCount: students.length,
       assessmentCount: assessments.length,
+      failingCount: gradebookRows.filter((row) => row.estimatedGrade === 'F').length,
     };
   }, [gradebookRows, students, assessments, studentMarks]);
 
@@ -878,7 +876,9 @@ const Marks2 = () => {
       assessmentMarkMaps[assessment._id] = await fetchAssessmentMarksMap(assessment._id);
     }
 
-    const totalWeightage = assessments.reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0);
+    const totalWeightage = assessments
+      .filter((assessment) => !assessment.isBonus)
+      .reduce((sum, assessment) => sum + (Number(assessment.weightage) || 0), 0);
     const totalMaxMarks = assessments.reduce((sum, assessment) => sum + (Number(assessment.maxMarks) || 0), 0);
 
     const registerRows = sortedStudents.map((student) => {
@@ -1132,6 +1132,7 @@ const Marks2 = () => {
         title: editingAssessment.title,
         maxMarks: Number(editingAssessment.maxMarks),
         weightage: Number(editingAssessment.weightage),
+        isBonus: Boolean(editingAssessment.isBonus),
         description: editingAssessment.description
       }, {
         headers: {
@@ -1289,10 +1290,13 @@ const Marks2 = () => {
               {assessments.map(assessment => (
                 <div 
                   key={assessment._id}
-                  className={`assessment-item ${activeAssessment?._id === assessment._id ? 'active' : ''}`}
+                  className={`assessment-item ${activeAssessment?._id === assessment._id ? 'active' : ''} ${assessment.isBonus ? 'bonus-assessment' : ''}`}
                   onClick={() => handleAssessmentChange(assessment)}
                 >
-                  <div className="assessment-title">{assessment.title}</div>
+                  <div className="assessment-title">
+                    {assessment.title}
+                    {assessment.isBonus ? <span className="bonus-pill">Bonus</span> : null}
+                  </div>
                   <div className="assessment-actions">
                     <button 
                       className="btn-icon"
@@ -1362,6 +1366,12 @@ const Marks2 = () => {
                   <strong className={coveredWeightage > 100 ? 'summary-warning' : ''}>{coveredWeightage} / 100</strong>
                 </div>
                 <div className="workspace-summary-card">
+                  <span>Students with F</span>
+                  <strong className={gradebookSummary.failingCount ? 'summary-warning' : ''}>
+                    {gradebookSummary.failingCount}
+                  </strong>
+                </div>
+                <div className="workspace-summary-card">
                   <span>Students</span>
                   <strong>{gradebookSummary.studentCount}</strong>
                 </div>
@@ -1399,8 +1409,13 @@ const Marks2 = () => {
                         <th className="sticky-col name-col" rowSpan="2">Student Name</th>
                         {assessments.map((assessment) => (
                           <React.Fragment key={assessment._id}>
-                            <th>{assessment.title} Marks</th>
-                            <th className="weighted-header">{assessment.title} Weighted</th>
+                            <th className={assessment.isBonus ? 'bonus-col-header' : undefined}>
+                              {assessment.title} Marks
+                              {assessment.isBonus ? <span className="bonus-pill">Bonus</span> : null}
+                            </th>
+                            <th className={`weighted-header${assessment.isBonus ? ' bonus-col-header' : ''}`}>
+                              {assessment.title} Weighted
+                            </th>
                           </React.Fragment>
                         ))}
                         <th className="total-header" rowSpan="2">Total</th>
@@ -1409,8 +1424,14 @@ const Marks2 = () => {
                       <tr>
                         {assessments.map((assessment) => (
                           <React.Fragment key={`${assessment._id}-meta`}>
-                            <th className="meta-header">Total Marks: {assessment.maxMarks}</th>
-                            <th className="meta-header weighted-meta">Weightage: {assessment.weightage}%</th>
+                            <th className={`meta-header${assessment.isBonus ? ' bonus-col-header' : ''}`}>
+                              Total Marks: {assessment.maxMarks}
+                            </th>
+                            <th className={`meta-header weighted-meta${assessment.isBonus ? ' bonus-col-header' : ''}`}>
+                              {assessment.isBonus
+                                ? `Bonus: +${assessment.weightage}%`
+                                : `Weightage: ${assessment.weightage}%`}
+                            </th>
                           </React.Fragment>
                         ))}
                       </tr>
@@ -1484,7 +1505,12 @@ const Marks2 = () => {
                 <div className="assessment-details">
                   <span>Type: {activeAssessment.type}</span>
                   <span>Max Marks: {activeAssessment.maxMarks}</span>
-                  <span>Weightage: {activeAssessment.weightage}%</span>
+                  <span>
+                    {activeAssessment.isBonus
+                      ? `Bonus: +${activeAssessment.weightage}%`
+                      : `Weightage: ${activeAssessment.weightage}%`}
+                  </span>
+                  {activeAssessment.isBonus ? <span className="bonus-pill">Bonus</span> : null}
                 </div>
                 <button 
                   className="btn btn-primary save-btn"
@@ -1640,6 +1666,19 @@ const Marks2 = () => {
                   onChange={(e) => setNewAssessment({...newAssessment, weightage: Number(e.target.value)})}
                 />
               </div>
+              <div className="form-group bonus-checkbox-group">
+                <label className="bonus-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(newAssessment.isBonus)}
+                    onChange={(e) => setNewAssessment({ ...newAssessment, isBonus: e.target.checked })}
+                  />
+                  <span>Bonus / Extra credit</span>
+                </label>
+                <p className="bonus-help-text">
+                  Adds marks on top of 100%. Does not increase course weightage.
+                </p>
+              </div>
               <div className="form-group">
                 <label>Description</label>
                 <textarea 
@@ -1789,6 +1828,24 @@ const Marks2 = () => {
                     weightage: Number(e.target.value)
                   })}
                 />
+              </div>
+              <div className="form-group bonus-checkbox-group">
+                <label className="bonus-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(editingAssessment.isBonus)}
+                    onChange={(e) =>
+                      setEditingAssessment({
+                        ...editingAssessment,
+                        isBonus: e.target.checked,
+                      })
+                    }
+                  />
+                  <span>Bonus / Extra credit</span>
+                </label>
+                <p className="bonus-help-text">
+                  Adds marks on top of 100%. Does not increase course weightage.
+                </p>
               </div>
               <div className="form-group">
                 <label>Description</label>
