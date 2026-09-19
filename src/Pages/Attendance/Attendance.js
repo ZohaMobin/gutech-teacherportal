@@ -27,11 +27,18 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
 
   // Get auth token from session storage
   const getAuthToken = () => {
     return sessionStorage.getItem("token");
   };
+
+  const requestHeaders = () => ({
+    Authorization: `Bearer ${getAuthToken()}`,
+  });
+
+  const termParams = () => (activeAcademicTerm?._id ? { academicYearId: activeAcademicTerm._id } : {});
 
   // Get teacher ID from session storage
   const getTeacherId = () => {
@@ -93,6 +100,7 @@ const Attendance = () => {
       }
 
       const response = await axios.get(`${apiUrl}/api/sections/getSections/${teacherId}`, {
+        params: termParams(),
         headers: {
           Authorization: `Bearer ${getAuthToken()}`,
         },
@@ -100,6 +108,11 @@ const Attendance = () => {
 
       if (response.data) {
         setSections(response.data);
+        if (response.data.length === 0) {
+          setActiveSection(null);
+          setStudents([]);
+          setAttendanceData({});
+        }
 
         // Set the first section as active if available
         if (response.data.length > 0 && !activeSection) {
@@ -115,6 +128,18 @@ const Attendance = () => {
     }
   };
 
+  const fetchActiveAcademicTerm = async () => {
+    try {
+      const response = await axios.get(`${apiUrl}/api/academic-years/current`, {
+        headers: requestHeaders(),
+      });
+      setActiveAcademicTerm(response.data);
+    } catch (error) {
+      handleApiError(error);
+      setActiveAcademicTerm(null);
+    }
+  };
+
   // Fetch students for a section
   const fetchStudents = async (sectionId, section = null) => {
     if (!sectionId) return;
@@ -127,9 +152,8 @@ const Attendance = () => {
 
     try {
       const response = await axios.get(`${apiUrl}/api/teacher-marks/section/${sectionId}/students`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
-        },
+        params: termParams(),
+        headers: requestHeaders(),
       });
 
       // Use the passed section parameter or fall back to activeSection
@@ -181,10 +205,12 @@ const Attendance = () => {
     if (!sectionId) return;
 
     try {
-      const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
+      const response = await axios.get(`${apiUrl}/api/teachers/attendance`, {
+        params: {
+          sectionId,
+          ...termParams(),
         },
+        headers: requestHeaders(),
       });
 
       if (response.data && response.data.attendance && Array.isArray(response.data.attendance)) {
@@ -230,10 +256,13 @@ const Attendance = () => {
 
     try {
       const dateStr = getDateKey(date);
-      const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}&date=${dateStr}`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
+      const response = await axios.get(`${apiUrl}/api/teachers/attendance`, {
+        params: {
+          sectionId,
+          date: dateStr,
+          ...termParams(),
         },
+        headers: requestHeaders(),
       });
 
       if (response.data && response.data.attendance && Array.isArray(response.data.attendance)) {
@@ -389,11 +418,15 @@ const Attendance = () => {
 
     try {
       await axios.delete(
-        `${apiUrl}/api/teachers/attendance?sectionId=${sectionId}&courseId=${courseId}&date=${dateStr}&slotNumber=${selectedSlotNumber}`,
+        `${apiUrl}/api/teachers/attendance`,
         {
-          headers: {
-            Authorization: `Bearer ${getAuthToken()}`,
+          params: {
+            sectionId,
+            courseId,
+            date: dateStr,
+            slotNumber: selectedSlotNumber,
           },
+          headers: requestHeaders(),
         }
       );
       toast.success(`Slot ${selectedSlotNumber} deleted`);
@@ -595,10 +628,12 @@ const Attendance = () => {
       // Fetch all attendance records for this course to get date range
       const sectionId = activeSection._id || activeSection.id;
       const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
-      const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
+      const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance`, {
+        params: {
+          sectionId,
+          ...termParams(),
         },
+        headers: requestHeaders(),
       });
 
       if (!attendanceResponse.data || !attendanceResponse.data.attendance) {
@@ -746,8 +781,14 @@ const Attendance = () => {
 
   // Initialize
   useEffect(() => {
-    fetchSections();
+    fetchActiveAcademicTerm();
   }, []);
+
+  useEffect(() => {
+    if (activeAcademicTerm?._id) {
+      fetchSections();
+    }
+  }, [activeAcademicTerm?._id]);
 
   // Fetch attendance when section or date changes
   useEffect(() => {
@@ -790,7 +831,7 @@ const Attendance = () => {
       <div className="attendance-header">
         <div className="header-content">
           <h1>Attendance</h1>
-          <p>Mark and manage student attendance</p>
+          <p>Mark and manage student attendance{activeAcademicTerm ? ` - ${activeAcademicTerm.displayName || `${activeAcademicTerm.semesterType} ${activeAcademicTerm.year}`}` : ""}</p>
         </div>
         {activeSection && attendanceData && Object.keys(attendanceData).length > 0 && (
           <button className="export-btn" onClick={exportToCSV}>
@@ -814,7 +855,7 @@ const Attendance = () => {
             {loading && sections.length === 0 ? (
               <div className="loading-text">Loading sections...</div>
             ) : sections.length === 0 ? (
-              <div className="empty-text">No sections available</div>
+              <div className="empty-text">No enrolled sections for the active semester</div>
             ) : (
               <div className="section-list">
                 {sections.map((section) => (
@@ -1074,7 +1115,9 @@ const Attendance = () => {
             </>
           ) : (
             <div className="empty-state">
-              <p>Please select a section to mark attendance</p>
+              <p>{loading ? "Loading sections..." : sections.length === 0
+                ? "No enrolled sections are available for the active semester. Your sections will appear here once the administrator enrolls students."
+                : "Please select a section to mark attendance"}</p>
             </div>
           )}
         </div>

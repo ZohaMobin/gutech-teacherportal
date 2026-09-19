@@ -61,6 +61,7 @@ const Marks2 = () => {
   const [minMarks, setMinMarks] = useState('');
   const [maxMarks, setMaxMarks] = useState('');
   const [filteredStudents, setFilteredStudents] = useState([]);
+  const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
 
   // API URL from environment variable
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -69,6 +70,12 @@ const Marks2 = () => {
   const getAuthToken = () => {
     return sessionStorage.getItem('token');
   };
+
+  const requestHeaders = () => ({
+    Authorization: `Bearer ${getAuthToken()}`,
+  });
+
+  const termParams = () => (activeAcademicTerm?._id ? { academicYearId: activeAcademicTerm._id } : {});
 
   // Get teacher ID from session storage
   const getTeacherId = () => {
@@ -125,13 +132,16 @@ const Marks2 = () => {
       }
 
       const response = await axios.get(`${apiUrl}/api/sections/getSections/${teacherId}`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`
-        }
+        params: termParams(),
+        headers: requestHeaders()
       });
 
       if (response.data) {
         setSections(response.data);
+        if (response.data.length === 0) {
+          setActiveSection(null);
+          setStudents([]);
+        }
         
         // Set the first section as active if available
         if (response.data.length > 0 && !activeSection) {
@@ -146,6 +156,18 @@ const Marks2 = () => {
     }
   };
 
+  const fetchActiveAcademicTerm = async () => {
+    try {
+      const response = await axios.get(`${apiUrl}/api/academic-years/current`, {
+        headers: requestHeaders(),
+      });
+      setActiveAcademicTerm(response.data);
+    } catch (error) {
+      handleApiError(error);
+      setActiveAcademicTerm(null);
+    }
+  };
+
   // Fetch students for a section
   const fetchStudents = async (sectionId) => {
     setLoading(true);
@@ -153,9 +175,8 @@ const Marks2 = () => {
     
     try {
       const response = await axios.get(`${apiUrl}/api/teacher-marks/section/${sectionId}/students`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`
-        }
+        params: termParams(),
+        headers: requestHeaders()
       });
 
       if (response.data) {
@@ -833,10 +854,12 @@ const Marks2 = () => {
     if (!activeSection) return null;
 
     const sectionId = activeSection._id || activeSection.id;
-    const response = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
-      headers: {
-        Authorization: `Bearer ${getAuthToken()}`
-      }
+    const response = await axios.get(`${apiUrl}/api/teachers/attendance`, {
+      params: {
+        sectionId,
+        ...termParams(),
+      },
+      headers: requestHeaders()
     });
 
     const attendanceArray = response.data?.attendance;
@@ -1170,8 +1193,14 @@ const Marks2 = () => {
 
   // Initialize component
   useEffect(() => {
-    fetchTeacherSections();
+    fetchActiveAcademicTerm();
   }, []);
+
+  useEffect(() => {
+    if (activeAcademicTerm?._id) {
+      fetchTeacherSections();
+    }
+  }, [activeAcademicTerm?._id]);
 
   // Fetch assessments when section changes
   useEffect(() => {
