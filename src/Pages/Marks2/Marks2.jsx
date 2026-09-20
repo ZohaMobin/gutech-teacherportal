@@ -108,7 +108,9 @@ const Marks2 = () => {
       } else if (error.response?.status === 403) {
         setError("You don't have permission to perform this action.");
       } else if (error.response?.status === 400) {
-        setError(error.response.data.message || "Invalid request. Please check your input.");
+        const message = error.response.data.message || "Invalid request. Please check your input.";
+        setError(message);
+        toast.error(message);
       } else {
         setError("Network error. Please check your connection.");
       }
