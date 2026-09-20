@@ -41,7 +41,6 @@ const Marks2 = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [importFile, setImportFile] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
   const [newAssessment, setNewAssessment] = useState({
@@ -507,7 +506,6 @@ const Marks2 = () => {
       return;
     }
     
-    setImportFile(file);
     
     // Preview the file
     const reader = new FileReader();
@@ -576,7 +574,6 @@ const Marks2 = () => {
       localStorage.setItem(storageKey, JSON.stringify(studentMarks));
       
       setShowImportModal(false);
-      setImportFile(null);
       setImportPreview(null);
       toast.success('Data imported successfully');
     } catch (error) {
@@ -911,7 +908,6 @@ const Marks2 = () => {
       };
 
       let grandTotal = 0;
-      let grandMaxTotal = 0;
       let weightedTotal = 0;
 
       assessments.forEach((assessment) => {
@@ -922,7 +918,6 @@ const Marks2 = () => {
 
         if (numericMark !== null && !Number.isNaN(numericMark)) {
           grandTotal += numericMark;
-          grandMaxTotal += Number(assessment.maxMarks) || 0;
 
           if (Number(assessment.maxMarks) > 0) {
             weightedTotal += (numericMark / Number(assessment.maxMarks)) * (Number(assessment.weightage) || 0);
@@ -1746,7 +1741,6 @@ const Marks2 = () => {
                 className="btn-icon"
                 onClick={() => {
                   setShowImportModal(false);
-                  setImportFile(null);
                   setImportPreview(null);
                 }}
               >
@@ -1787,7 +1781,6 @@ const Marks2 = () => {
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowImportModal(false);
-                  setImportFile(null);
                   setImportPreview(null);
                 }}
               >
