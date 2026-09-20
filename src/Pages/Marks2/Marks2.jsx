@@ -691,14 +691,17 @@ const Marks2 = () => {
         const weightedScore = calculateWeightedScore(student.id, assessment);
         return sum + (weightedScore || 0);
       }, 0);
-      // Bonus adds to score but is excluded from denominator; clamp at 100
-      const percentage =
-        coveredWeightage > 0 ? Math.min(100, (weightedTotal / coveredWeightage) * 100) : null;
+      // Bonus adds to the score but not the denominator. The shown/graded percentage stops at 100;
+      // the Total column keeps the true score so staff can see who earned bonus.
+      const rawPercentage = coveredWeightage > 0 ? (weightedTotal / coveredWeightage) * 100 : null;
+      const percentage = rawPercentage === null ? null : Math.min(100, rawPercentage);
+      const bonusCapped = rawPercentage !== null && rawPercentage > 100;
 
       return {
         ...student,
         weightedTotal,
         percentage,
+        bonusCapped,
         estimatedGrade: estimatedGradeFor(percentage),
         performanceClass: getPerformanceClass(percentage),
       };
@@ -1518,6 +1521,7 @@ const Marks2 = () => {
                             })}
                             <td className={`total-cell ${student.performanceClass}`}>
                               <strong>{student.weightedTotal.toFixed(2)}</strong>
+                              {student.bonusCapped && <span className="bonus-pill" title="Bonus took this student above 100. Students see 100%.">capped at 100%</span>}
                               <span>/ {coveredWeightage || 0}</span>
                             </td>
                             <td className={`grade-cell ${student.performanceClass}`}>
@@ -1719,7 +1723,7 @@ const Marks2 = () => {
                   <span>Bonus / Extra credit</span>
                 </label>
                 <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
+                  Extra credit on top of the 100%. It can make up marks lost elsewhere, but a student's total is never shown above 100%.
                 </p>
               </div>
               <div className="form-group">
@@ -1885,7 +1889,7 @@ const Marks2 = () => {
                   <span>Bonus / Extra credit</span>
                 </label>
                 <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
+                  Extra credit on top of the 100%. It can make up marks lost elsewhere, but a student's total is never shown above 100%.
                 </p>
               </div>
               <div className="form-group">
