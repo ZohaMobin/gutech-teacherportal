@@ -691,9 +691,9 @@ const Marks2 = () => {
         const weightedScore = calculateWeightedScore(student.id, assessment);
         return sum + (weightedScore || 0);
       }, 0);
-      // Bonus adds to score but is excluded from denominator; clamp at 100
+      // Bonus adds to the score but not to the denominator, so the percentage can exceed 100
       const percentage =
-        coveredWeightage > 0 ? Math.min(100, (weightedTotal / coveredWeightage) * 100) : null;
+        coveredWeightage > 0 ? (weightedTotal / coveredWeightage) * 100 : null;
 
       return {
         ...student,
@@ -1719,7 +1719,7 @@ const Marks2 = () => {
                   <span>Bonus / Extra credit</span>
                 </label>
                 <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
+                  Extra credit added on top of the 100%. It is outside the 100% limit, so a student can finish above 100%.
                 </p>
               </div>
               <div className="form-group">
@@ -1885,7 +1885,7 @@ const Marks2 = () => {
                   <span>Bonus / Extra credit</span>
                 </label>
                 <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
+                  Extra credit added on top of the 100%. It is outside the 100% limit, so a student can finish above 100%.
                 </p>
               </div>
               <div className="form-group">
