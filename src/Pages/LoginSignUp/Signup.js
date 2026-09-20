@@ -118,7 +118,7 @@ const Signup = () => {
 
       setSignupForm({ name: '', email: '', employeeId: '', department: '', password: '' });
       setIsSignupActive(false);
-      alert('Registration successful! Please log in with your credentials.');
+      alert('Registration received. An administrator must approve your account before you can log in.');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
