@@ -40,5 +40,10 @@
   },
   "devDependencies": {
     "web-vitals": "^4.2.4"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^axios$": "axios/dist/node/axios.cjs"
+    }
   }
 }
