@@ -3,7 +3,6 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { getEstimatedGrade } from '../../utils/gradingScale';
 import './Marks2.css';
 
 const sortStudentsAscending = (studentsList = []) =>
@@ -61,6 +60,8 @@ const Marks2 = () => {
   const [maxMarks, setMaxMarks] = useState('');
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
+  // The university grading scale, as the server holds it (highest band first).
+  const [gradeBands, setGradeBands] = useState([]);
 
   // API URL from environment variable
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -285,6 +286,21 @@ const Marks2 = () => {
   const handleAssessmentChange = (assessment) => {
     setActiveAssessment(assessment);
     fetchAssessmentMarks(assessment._id);
+  };
+
+  // Load the grading scale from the server once; letters are looked up against it, never hard-coded here.
+  useEffect(() => {
+    axios
+      .get(`${apiUrl}/api/results/grading-scale`, { headers: requestHeaders() })
+      .then((response) => setGradeBands(response.data.bands || []))
+      .catch(() => setGradeBands([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const estimatedGradeFor = (percentage) => {
+    if (percentage === null || percentage === undefined || Number.isNaN(percentage) || gradeBands.length === 0) return 'N/A';
+    const band = gradeBands.find((b) => !b.isSpecialGrade && percentage >= b.minPercentage);
+    return band ? band.grade : 'N/A';
   };
 
   // Filter students based on search term and marks range
@@ -681,11 +697,12 @@ const Marks2 = () => {
         ...student,
         weightedTotal,
         percentage,
-        estimatedGrade: getEstimatedGrade(percentage),
+        estimatedGrade: estimatedGradeFor(percentage),
         performanceClass: getPerformanceClass(percentage),
       };
     });
-  }, [students, assessments, studentMarks, searchTerm, coveredWeightage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [students, assessments, studentMarks, searchTerm, coveredWeightage, gradeBands]);
 
   const gradebookSummary = useMemo(() => {
     // Exclude students with no scored total (grand total 0) from class average
