@@ -299,6 +299,34 @@ const Marks2 = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A section's ordinary (non-bonus) weightage may not add up to more than 100. The server enforces this;
+  // this mirrors it so the teacher is told why Save is disabled, before they try.
+  const weightInfo = (candidate, original) => {
+    const excludeId = original?._id;
+    const used = assessments
+      .filter((a) => a._id !== excludeId && !a.isBonus)
+      .reduce((sum, a) => sum + (Number(a.weightage) || 0), 0);
+    const left = Math.max(0, 100 - used);
+    if (candidate.isBonus) return { used, left, problem: null };
+    const before = used + (original && !original.isBonus ? Number(original.weightage) || 0 : 0);
+    const after = used + (Number(candidate.weightage) || 0);
+    if (after > 100 && after > before) {
+      return {
+        used,
+        left,
+        problem: left === 0
+          ? `The other assessments already use all 100% of this section. Lower another assessment first, or tick "Bonus" for extra credit.`
+          : `Only ${left}% is left in this section (the other assessments use ${used}%). Lower this to ${left}% or less, or tick "Bonus" for extra credit.`,
+      };
+    }
+    return { used, left, problem: null };
+  };
+
+  const addWeight = weightInfo(newAssessment, null);
+  const editWeight = editingAssessment
+    ? weightInfo(editingAssessment, assessments.find((a) => a._id === editingAssessment._id))
+    : null;
+
   const estimatedGradeFor = (percentage) => {
     if (percentage === null || percentage === undefined || Number.isNaN(percentage) || gradeBands.length === 0) return 'N/A';
     const band = gradeBands.find((b) => !b.isSpecialGrade && percentage >= b.minPercentage);
@@ -1712,6 +1740,9 @@ const Marks2 = () => {
                   value={newAssessment.weightage}
                   onChange={(e) => setNewAssessment({...newAssessment, weightage: Number(e.target.value)})}
                 />
+                {addWeight.problem
+                  ? <p className="weight-limit-message" role="alert">{addWeight.problem}</p>
+                  : !newAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {addWeight.left}%</p>}
               </div>
               <div className="form-group bonus-checkbox-group">
                 <label className="bonus-checkbox-label">
@@ -1745,7 +1776,8 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={addAssessment}
-                disabled={!newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage}
+                disabled={!newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage || Boolean(addWeight.problem)}
+                title={addWeight.problem || undefined}
               >
                 Add Assessment
               </button>
@@ -1873,6 +1905,9 @@ const Marks2 = () => {
                     weightage: Number(e.target.value)
                   })}
                 />
+                {editWeight?.problem
+                  ? <p className="weight-limit-message" role="alert">{editWeight.problem}</p>
+                  : !editingAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {editWeight?.left}%</p>}
               </div>
               <div className="form-group bonus-checkbox-group">
                 <label className="bonus-checkbox-label">
@@ -1917,7 +1952,8 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={updateAssessment}
-                disabled={!editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage}
+                disabled={!editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage || Boolean(editWeight?.problem)}
+                title={editWeight?.problem || undefined}
               >
                 Update Assessment
               </button>
