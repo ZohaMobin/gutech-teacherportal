@@ -1131,3 +1131,16 @@
   border-color: #f59e0b;
   background: #fffbeb;
 }
+
+.weight-limit-hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #78716c;
+}
+
+.weight-limit-message {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: #b91c1c;
+}
