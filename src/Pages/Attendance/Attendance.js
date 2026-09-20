@@ -627,7 +627,6 @@ const Attendance = () => {
     try {
       // Fetch all attendance records for this course to get date range
       const sectionId = activeSection._id || activeSection.id;
-      const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
       const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance`, {
         params: {
           sectionId,

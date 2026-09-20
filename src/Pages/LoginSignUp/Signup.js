@@ -114,7 +114,7 @@ const Signup = () => {
         role: 'teacher',
       };
 
-      const response = await axios.post(`${apiUrl}/api/auth/register`, userData);
+      await axios.post(`${apiUrl}/api/auth/register`, userData);
 
       setSignupForm({ name: '', email: '', employeeId: '', department: '', password: '' });
       setIsSignupActive(false);
