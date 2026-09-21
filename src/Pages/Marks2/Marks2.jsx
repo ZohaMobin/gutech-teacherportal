@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import WeightSummary from './WeightSummary';
 import BonusExplainer, { BONUS_WEIGHT_LABEL } from './BonusExplainer';
+import WeightMeter from './WeightMeter';
+import LockedNotice, { lockText } from './LockedNotice';
+import { messageOf } from './apiMessage';
 import GradeGenerator from './GradeGenerator';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -56,6 +59,10 @@ const Marks2 = () => {
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
   const [activeMarksView, setActiveMarksView] = useState('entry');
+  // Whether this section's marks can still be edited (submitted, approved, published or locked sections are read-only).
+  const [sectionStatus, setSectionStatus] = useState(null);
+  // A failure inside the Add/Edit dialog is shown in the dialog, where the teacher is looking, not behind it.
+  const [dialogError, setDialogError] = useState(null);
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,23 +110,12 @@ const Marks2 = () => {
     }
   };
 
-  // Error handling utility
-  const handleApiError = (error) => {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 404) {
-        setError("Section or students not found. Please refresh the page.");
-      } else if (error.response?.status === 403) {
-        setError("You don't have permission to perform this action.");
-      } else if (error.response?.status === 400) {
-        const message = error.response.data.message || "Invalid request. Please check your input.";
-        setError(message);
-        toast.error(message);
-      } else {
-        setError("Network error. Please check your connection.");
-      }
-    } else {
-      setError("An unexpected error occurred. Please try again.");
-    }
+  // Error handling utility. The server's own message is shown whenever it sent one; "network error" is only for a real
+  // connection problem. options.dialog puts the message in the open dialog; options.notify also raises a toast.
+  const handleApiError = (error, { dialog = false, notify = false } = {}) => {
+    const message = messageOf(error, { notFound: 'Section or students not found. Please refresh the page.' });
+    if (dialog) setDialogError(message); else setError(message);
+    if (notify) toast.error(message);
     console.error("API Error:", error);
   };
 
@@ -447,7 +443,7 @@ const Marks2 = () => {
       }
     } catch (error) {
       console.error('Error saving marks:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -510,7 +506,7 @@ const Marks2 = () => {
       }
     } catch (error) {
       console.error('Error creating assessment:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { dialog: true });
     } finally {
       setLoading(false);
     }
@@ -538,7 +534,7 @@ const Marks2 = () => {
       
       toast.success('Assessment deleted successfully');
     } catch (error) {
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -894,7 +890,7 @@ const Marks2 = () => {
       await loadGradebookMarks();
     } catch (error) {
       console.error('Error saving gradebook workspace:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -1227,7 +1223,7 @@ const Marks2 = () => {
         toast.success('Assessment updated successfully');
       }
     } catch (error) {
-      handleApiError(error);
+      handleApiError(error, { dialog: true });
     } finally {
       setLoading(false);
     }
@@ -1250,6 +1246,20 @@ const Marks2 = () => {
     }
   }, [activeAcademicTerm?._id]);
 
+  // Is this section's marks editing still open? Re-checked when the section or the tab changes.
+  useEffect(() => {
+    let current = true;
+    setSectionStatus(null);
+    if (!activeSection?._id) return undefined;
+    axios.get(`${apiUrl}/api/result-batches/section/${activeSection._id}/status`, { headers: requestHeaders() })
+      .then((response) => { if (current) setSectionStatus(response.data); })
+      .catch(() => { /* if the check is unavailable the server still refuses a locked change, with its own message */ });
+    return () => { current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection?._id, activeMarksView]);
+
+  useEffect(() => { setDialogError(null); }, [showAddAssessmentModal, showEditAssessmentModal]);
+
   // Fetch assessments when section changes
   useEffect(() => {
     if (activeSection) {
@@ -1263,6 +1273,9 @@ const Marks2 = () => {
     }
   }, [activeMarksView, students.length, assessments.length, activeSection?._id]);
 
+  const locked = sectionStatus?.marksFrozen === true;
+  const lockedTitle = lockText(sectionStatus)?.title;
+
   return (
     <div className="marks2-container">
       <div className="marks2-header">
@@ -1274,7 +1287,8 @@ const Marks2 = () => {
           <button 
             className="btn btn-primary" 
             onClick={() => setShowAddAssessmentModal(true)}
-            disabled={!activeSection}
+            disabled={!activeSection || locked}
+            title={locked ? `${lockedTitle}: assessments cannot be added` : undefined}
           >
             <Plus size={16} /> Add Assessment
           </button>
@@ -1299,12 +1313,13 @@ const Marks2 = () => {
           >
             <FileSpreadsheet size={16} /> Export Full Data
           </button>
-          <label className="btn btn-secondary">
+          <label className={`btn btn-secondary ${locked ? 'is-disabled' : ''}`} title={locked ? `${lockedTitle}: marks cannot be imported` : undefined}>
             <Upload size={16} /> Import
             <input 
               type="file" 
               accept=".xlsx,.xls" 
               onChange={handleFileImport} 
+              disabled={locked}
               style={{ display: 'none' }} 
             />
           </label>
@@ -1344,6 +1359,8 @@ const Marks2 = () => {
           Grade Generator
         </button>
       </div>
+
+      {activeSection && activeMarksView !== 'generator' && <LockedNotice status={sectionStatus} />}
 
       {error && (
         <div className="error-message">
@@ -1390,7 +1407,8 @@ const Marks2 = () => {
                         e.stopPropagation();
                         handleEditAssessment(assessment);
                       }}
-                      data-tooltip="Edit Assessment"
+                      data-tooltip={locked ? 'Locked' : 'Edit Assessment'}
+                      disabled={locked}
                     >
                       <Edit2 size={14} data-icon="edit" />
                     </button>
@@ -1400,7 +1418,8 @@ const Marks2 = () => {
                         e.stopPropagation();
                         deleteAssessment(assessment._id);
                       }}
-                      data-tooltip="Delete Assessment"
+                      data-tooltip={locked ? 'Locked' : 'Delete Assessment'}
+                      disabled={locked}
                     >
                       <Trash2 size={14} data-icon="trash" />
                     </button>
@@ -1438,7 +1457,8 @@ const Marks2 = () => {
                 <button
                   className="btn btn-primary save-btn"
                   onClick={saveGradebookWorkspace}
-                  disabled={!assessments.length || !students.length}
+                  disabled={!assessments.length || !students.length || locked}
+                  title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
                 >
                   <Save size={16} /> Save Workspace
                 </button>
@@ -1545,6 +1565,7 @@ const Marks2 = () => {
                                       min="0"
                                       max={assessment.maxMarks}
                                       value={mark}
+                                      readOnly={locked}
                                       onChange={(e) => handleWorkspaceMarkChange(student.id, assessment, e.target.value)}
                                       onKeyDown={handleGradebookCellKeyDown}
                                       onFocus={(e) => e.target.select()}
@@ -1604,6 +1625,8 @@ const Marks2 = () => {
                 <button 
                   className="btn btn-primary save-btn"
                   onClick={saveMarks}
+                  disabled={locked}
+                  title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
                 >
                   <Save size={16} /> Save Marks
                 </button>
@@ -1679,8 +1702,9 @@ const Marks2 = () => {
                               min="0" 
                               max={activeAssessment.maxMarks}
                               value={studentMarks[student.id]?.[activeAssessment._id] ?? ''}
+                              readOnly={locked}
                               onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                              placeholder="Enter marks"
+                              placeholder={locked ? '' : 'Enter marks'}
                             />
                           </td>
                         </tr>
@@ -1754,9 +1778,7 @@ const Marks2 = () => {
                   value={newAssessment.weightage}
                   onChange={(e) => setNewAssessment({...newAssessment, weightage: Number(e.target.value)})}
                 />
-                {addWeight.problem
-                  ? <p className="weight-limit-message" role="alert">{addWeight.problem}</p>
-                  : !newAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {addWeight.left}%</p>}
+                <WeightMeter others={addWeight.used} current={newAssessment.weightage} isBonus={newAssessment.isBonus} problem={addWeight.problem} />
               </div>
               <BonusExplainer id="bonus-new" checked={newAssessment.isBonus} onChange={(isBonus) => setNewAssessment({ ...newAssessment, isBonus })} />
               <div className="form-group">
@@ -1768,6 +1790,7 @@ const Marks2 = () => {
                 />
               </div>
             </div>
+            {dialogError && <div className="dialog-error" role="alert">{dialogError}</div>}
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"
@@ -1907,9 +1930,7 @@ const Marks2 = () => {
                     weightage: Number(e.target.value)
                   })}
                 />
-                {editWeight?.problem
-                  ? <p className="weight-limit-message" role="alert">{editWeight.problem}</p>
-                  : !editingAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {editWeight?.left}%</p>}
+                <WeightMeter others={editWeight?.used} current={editingAssessment.weightage} isBonus={editingAssessment.isBonus} problem={editWeight?.problem} />
               </div>
               <BonusExplainer id="bonus-edit" checked={editingAssessment.isBonus} onChange={(isBonus) => setEditingAssessment({ ...editingAssessment, isBonus })} />
               <div className="form-group">
@@ -1924,6 +1945,7 @@ const Marks2 = () => {
                 />
               </div>
             </div>
+            {dialogError && <div className="dialog-error" role="alert">{dialogError}</div>}
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"

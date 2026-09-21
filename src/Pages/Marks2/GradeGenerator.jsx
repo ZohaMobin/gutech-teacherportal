@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import {
   AlertTriangle, ArrowUp, Check, CheckCircle2, Clock, Info, Lock, Send, Save, SlidersHorizontal, TrendingUp, Users, X,
 } from 'lucide-react';
+import { messageOf } from './apiMessage';
 import './GradeGenerator.css';
 
 // The Grade Generator: the step between "marks entered" and "results approved". The teacher chooses how the class is
@@ -34,19 +35,6 @@ const LEDE = {
 const fmt = (n) => (n === null || n === undefined ? '–' : Number(n).toFixed(2).replace(/\.?0+$/, ''));
 const sign = (n) => (n > 0 ? `+${fmt(n)}` : '–');
 const gradeText = (g) => (g && (g.grade || g)) || '–';
-// What to tell a person when a request fails: the server's own plain-language message when it sent one, otherwise a
-// clear sentence about what happened and what to do.
-const messageOf = (error) => {
-  const message = error?.response?.data?.message;
-  if (message) return message;
-  const status = error?.response?.status;
-  if (status === 401) return 'Your session has ended. Please sign in again.';
-  if (status === 403) return "You don't have permission to do this.";
-  if (status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
-  if (error?.request && !error?.response) return "Couldn't reach the server. Check your internet connection and try again.";
-  return 'Something went wrong. Please try again.';
-};
-
 // What the current choice means, as a scheme the server understands (or a reason it is not ready).
 export const buildScheme = (choice, marks, target, maxUpgradeMarks) => {
   if (choice === 'NONE') return { scheme: { type: 'NONE' }, problem: null };
