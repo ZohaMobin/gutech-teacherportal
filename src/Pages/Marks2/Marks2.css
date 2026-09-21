@@ -1165,3 +1165,28 @@
 .marks2-content.is-generator .section-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-height: none; padding: 2px; }
 .marks2-content.is-generator .section-item { flex: none; white-space: nowrap; padding: 6px 14px; font-size: 0.875rem; }
 .marks2-content.is-generator .marks2-main { overflow: visible; }
+
+/* ---- a section whose marks are read-only ---- */
+.marks-locked-notice { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 var(--spacing-sm, 1rem); padding: 12px 16px; border-radius: 10px; background: #eef5fb; border: 1px solid #cfe0ef; color: #1f4f77; }
+.marks-locked-notice svg { flex: none; margin-top: 2px; }
+.marks-locked-notice strong { display: block; font-size: 0.92rem; }
+.marks-locked-notice p { margin: 2px 0 0; font-size: 0.85rem; line-height: 1.45; }
+.btn:disabled, .btn.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-icon:disabled { opacity: 0.35; cursor: not-allowed; }
+.marks-table input[readonly], .marks-entry-cell input[readonly] { background: #f8fafc; color: #64748b; cursor: not-allowed; }
+
+/* ---- the weightage meter in the Add and Edit dialogs ---- */
+.weight-meter { margin-top: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 0.82rem; }
+.weight-meter-ok { background: #f0fdf4; border-color: #bbf7d0; }
+.weight-meter-over { background: #fef2f2; border-color: #fecaca; }
+.weight-meter-bonus { background: #fffbeb; border-color: #fde68a; }
+.weight-meter-bar { display: flex; height: 8px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+.weight-meter-bar .wm-others { background: #94a3b8; }
+.weight-meter-bar .wm-mine { background: var(--primary-color, #991d20); }
+.weight-meter-over .wm-mine { background: #dc2626; }
+.weight-meter-rows { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; color: #64748b; }
+.weight-meter-rows b { color: #1e293b; font-variant-numeric: tabular-nums; }
+.weight-meter-total { margin-left: auto; }
+.weight-meter-message { margin: 6px 0 0; color: #475569; line-height: 1.4; }
+.weight-meter-message.bad { color: #b91c1c; font-weight: 500; }
+.dialog-error { margin: 0 1.5rem 12px; padding: 10px 12px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.88rem; line-height: 1.45; }
