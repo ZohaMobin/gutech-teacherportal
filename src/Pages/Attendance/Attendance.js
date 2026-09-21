@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
-import Loading from "../../Components/Loading/Loading";
+import Loading, { BusyLabel } from "../../Components/Loading/Loading";
 import "./Attendance.css";
 
 const Attendance = () => {
@@ -1073,7 +1073,7 @@ const Attendance = () => {
               {/* Save Button */}
               <div className="attendance-footer">
                 <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading}>
-                  {saving ? "Saving..." : "Save Attendance"}
+                  <BusyLabel busy={saving} busyText="Saving…" idle="Save Attendance" />
                 </button>
                 {hasUnsavedChanges && (
                   <div className="unsaved-indicator">
