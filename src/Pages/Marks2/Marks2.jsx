@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import WeightSummary from './WeightSummary';
 import BonusExplainer, { BONUS_WEIGHT_LABEL } from './BonusExplainer';
 import WeightMeter from './WeightMeter';
@@ -49,7 +49,10 @@ const Marks2 = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
-  const [showTools, setShowTools] = useState(false);           // the Import / Export menu
+  const [showTools, setShowTools] = useState(false);
+  // What the server has for each assessment, as last loaded or saved: { assessmentId: { studentId: mark } }. Saving sends only
+  // the marks that differ from it, and needs no reload afterwards.
+  const savedMarks = useRef({});           // the Import / Export menu
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     type: 'quiz',
@@ -241,6 +244,7 @@ const Marks2 = () => {
       });
 
       if (response.data && response.data.marks) {
+        savedMarks.current[assessmentId] = { ...response.data.marks };
         // Update student marks with the fetched marks
         setStudentMarks(prevMarks => {
           const updatedMarks = { ...prevMarks };
@@ -274,6 +278,7 @@ const Marks2 = () => {
     // Reset states when changing sections
     setActiveSection(section);
     setActiveAssessment(null);
+    savedMarks.current = {};
     setStudentMarks({});
     setAssessments([]);
     setSearchTerm('');
@@ -408,7 +413,8 @@ const Marks2 = () => {
         if (mark !== undefined && mark !== '' && !isNaN(Number(mark))) {
           // Find the student's registration ID
           const student = students.find(s => s.id === studentId);
-          if (student && student.registrationId) {
+          const unchanged = String(savedMarks.current[activeAssessment._id]?.[studentId] ?? '') === String(mark);
+          if (student && student.registrationId && !unchanged) {
             grades.push({
               registrationId: student.registrationId,
               obtainedMarks: Number(mark),
@@ -420,7 +426,9 @@ const Marks2 = () => {
 
       // Validate that we have grades to save
       if (grades.length === 0) {
-        toast.error('No valid marks to save');
+        const anyEntered = Object.values(studentMarks).some((m) => m[activeAssessment._id] !== undefined && m[activeAssessment._id] !== '');
+        if (anyEntered) toast('No changes to save');
+        else toast.error('No valid marks to save');
         return;
       }
 
@@ -440,8 +448,12 @@ const Marks2 = () => {
         const storageKey = `marks_${activeSection.name}_${activeAssessment._id}`;
         localStorage.removeItem(storageKey);
 
-        // Refresh the marks display
-        fetchAssessmentMarks(activeAssessment._id);
+        // What was sent is now what the server has: no need to load it all again.
+        savedMarks.current[activeAssessment._id] = { ...(savedMarks.current[activeAssessment._id] || {}) };
+        grades.forEach((g) => {
+          const student = students.find((x) => x.registrationId === g.registrationId);
+          if (student) savedMarks.current[activeAssessment._id][student.id] = g.obtainedMarks;
+        });
       }
     } catch (error) {
       console.error('Error saving marks:', error.response?.data || error.message);
@@ -636,6 +648,7 @@ const Marks2 = () => {
       }
     });
 
+    savedMarks.current[assessmentId] = { ...(response.data?.marks || {}) };
     return response.data?.marks || {};
   };
 
