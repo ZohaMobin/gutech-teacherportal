@@ -1419,7 +1419,7 @@ const Marks2 = () => {
               <p>Select a section to view and manage marks</p>
             </div>
           ) : activeMarksView === 'generator' ? (
-            <GradeGenerator section={activeSection} apiUrl={apiUrl} headers={requestHeaders} />
+            <GradeGenerator section={activeSection} apiUrl={apiUrl} headers={requestHeaders} onOpenEntry={() => setActiveMarksView('entry')} />
           ) : activeMarksView === 'workspace' ? (
             <>
               <div className="workspace-header">

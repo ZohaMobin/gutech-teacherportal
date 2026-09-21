@@ -235,3 +235,19 @@
   .marks2-content.is-generator .marks2-sidebar { padding: 8px 12px; }
   .marks2-content.is-generator .section-selector h3 { display: none; }
 }
+
+/* ---- not ready: the regular weightage does not total 100 yet ---- */
+.gg-gate { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 40px 24px 36px; max-width: 640px; margin: 8px auto 0; }
+.gg-gate-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--gg-accent-soft); color: var(--gg-accent); margin-bottom: 6px; }
+.gg-gate .gg-eyebrow { margin: 0; }
+.gg-gate h2 { font-size: 1.35rem; font-weight: 700; text-wrap: balance; }
+.gg-gate-course { color: var(--gg-muted); font-size: 0.9rem; }
+.gg-gate-text { margin-top: 6px !important; max-width: 52ch; color: var(--gg-ink); font-size: 0.98rem; line-height: 1.55; }
+.gg-gate-meter { display: flex; align-items: center; gap: 12px; width: min(360px, 100%); margin: 10px 0 2px; }
+.gg-gate-track { flex: 1; height: 9px; border-radius: 999px; background: #eceef2; overflow: hidden; }
+.gg-gate-track i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--gg-accent), #b5294f); transition: width 0.3s ease; }
+.gg-gate-track i.over { background: #dc2626; }
+.gg-gate-meter span { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+.gg-gate-note { color: var(--gg-muted); font-size: 0.82rem; }
+.gg-gate .btn { margin-top: 12px; }
+@media (max-width: 640px) { .gg-gate { padding: 28px 16px; } }
