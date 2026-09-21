@@ -5,7 +5,7 @@ import {
   AlertTriangle, ArrowUp, Check, CheckCircle2, Clock, Info, Lock, Send, Save, SlidersHorizontal, TrendingUp, Users, X,
 } from 'lucide-react';
 import { messageOf } from './apiMessage';
-import Loading from '../../Components/Loading/Loading';
+import Loading, { BusyLabel } from '../../Components/Loading/Loading';
 import './GradeGenerator.css';
 
 // The Grade Generator: the step between "marks entered" and "results approved". The teacher chooses how the class is
@@ -464,7 +464,7 @@ const GradeGenerator = ({ section, apiUrl, headers, onOpenEntry }) => {
             )}
             <div className="gg-modal-buttons">
               <button type="button" className="btn btn-secondary" onClick={() => setConfirming(false)} disabled={busy}>Go back</button>
-              <button type="button" className="btn btn-primary" onClick={submit} disabled={busy || (missing.length > 0 && !acknowledge)}>{busy ? 'Submitting…' : 'Submit'}</button>
+              <button type="button" className="btn btn-primary" onClick={submit} disabled={busy || (missing.length > 0 && !acknowledge)}><BusyLabel busy={busy} busyText="Submitting…" idle="Submit" /></button>
             </div>
           </div>
         </div>
