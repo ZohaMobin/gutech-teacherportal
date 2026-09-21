@@ -1203,3 +1203,74 @@
 .marks2-menu-list button:hover:not(:disabled), .marks2-menu-list label:hover { background: #f4f5f7; }
 .marks2-menu-list button:disabled, .marks2-menu-list label.is-disabled { opacity: 0.45; cursor: not-allowed; }
 .marks2-menu-list hr { border: 0; border-top: 1px solid #eef0f4; margin: 0.25rem 0; width: 100%; }
+
+/* ================= second pass: compact gradebook, tidier filters, calmer weightage card, modern dialogs ================= */
+
+/* weightage card (sidebar): label and figure, one bar, one short line */
+.weight-summary { display: grid; gap: 6px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.weight-summary-ok, .weight-summary-todo, .weight-summary-over { background: #fff; }
+.weight-summary-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: #64748b; font-weight: 500; }
+.weight-summary-row strong { color: #1e293b; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.weight-summary-bar { display: block; width: 100%; height: 5px; }
+.weight-summary-message { font-size: 0.76rem; line-height: 1.35; color: #64748b; font-weight: 400; }
+.weight-summary-ok .weight-summary-message { color: #15803d; } .weight-summary-todo .weight-summary-message { color: #a15c07; } .weight-summary-over .weight-summary-message { color: #b91c1c; }
+
+/* entry tab: search and marks range on one tidy row */
+.search-filter-container { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 0.6rem 0.75rem; padding: 0.6rem 0.75rem; margin-bottom: 0.75rem; background: #f8fafc; border: 1px solid #e8edf3; border-radius: 10px; box-shadow: none; }
+.search-filter-container .search-box { flex: 2 1 14rem; min-width: 0; }
+.search-filter-container .filter-box { flex: 1 1 auto; display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
+.search-filter-container .search-input, .search-filter-container .filter-input { height: 2.2rem; padding: 0 0.7rem; font-size: 0.88rem; width: 100%; border-radius: 8px; margin: 0; }
+.search-filter-container .filter-group { flex: 0 0 5.5rem; min-width: 0; gap: 0.2rem; }
+.search-filter-container .filter-group label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #64748b; }
+.search-filter-container .clear-filters { height: 2.2rem; padding: 0 0.85rem; font-size: 0.82rem; border-radius: 8px; }
+
+/* gradebook workspace: one header row, one row of figures, one slim toolbar */
+.workspace-header { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; flex-wrap: wrap; margin: 0 0 0.6rem; padding: 0; border: 0; }
+.workspace-header h2 { margin: 0; font-size: 1.1rem; font-weight: 600; line-height: 1.25; }
+.workspace-header h2 span { font-weight: 500; color: #64748b; font-size: 0.95rem; margin-left: 0.4rem; }
+.workspace-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.workspace-actions .btn { padding: 0.4rem 0.85rem; font-size: 0.85rem; }
+.workspace-summary-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; margin: 0 0 0.6rem; }
+.workspace-summary-card { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.45rem 0.7rem; border-radius: 10px; border: 1px solid #e8edf3; background: #fff; box-shadow: none; min-width: 0; }
+.workspace-summary-card span { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workspace-summary-card strong { font-size: 1.1rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.workspace-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; flex-wrap: wrap; margin: 0 0 0.6rem; padding: 0; }
+.workspace-search { flex: 1 1 14rem; max-width: 22rem; }
+.workspace-search input { height: 2.2rem; }
+.workspace-note { font-size: 0.78rem; color: #94a3b8; }
+.marks2-content.is-generator .marks2-main { padding: var(--spacing-md); }
+@media (max-width: 900px) { .workspace-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .workspace-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* add / edit assessment dialogs */
+.modal-overlay { backdrop-filter: blur(2px); }
+.modal { max-width: 560px; border-radius: 14px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28); display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid #eef0f4; }
+.modal-header h3 { font-size: 1.05rem; font-weight: 600; }
+.modal-body.modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem 1rem; padding: 1.1rem 1.25rem; overflow-y: auto; }
+.modal-grid .form-group { margin: 0; min-width: 0; }
+.modal-grid .form-group.span-2 { grid-column: 1 / -1; }
+.modal-grid .form-group label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #64748b; margin-bottom: 0.3rem; }
+.modal-grid .form-group input:not([type="checkbox"]), .modal-grid .form-group select { height: 2.4rem; padding: 0 0.75rem; border-radius: 8px; font-size: 0.92rem; }
+.modal-grid .form-group textarea { min-height: 4.2rem; padding: 0.6rem 0.75rem; border-radius: 8px; font-size: 0.92rem; resize: vertical; }
+.modal-grid .meter-row { margin-top: -0.35rem; }
+.modal-grid .meter-row .weight-meter { margin-top: 0; }
+.modal-grid .bonus-checkbox-group { padding: 0.55rem 0.75rem; border: 1px solid #e8edf3; border-radius: 10px; background: #f8fafc; }
+.modal-grid .bonus-checkbox-label { text-transform: none; letter-spacing: 0; font-size: 0.88rem; font-weight: 600; color: #1e293b; margin: 0; }
+.modal-grid .bonus-help-text { font-size: 0.78rem; color: #64748b; margin-top: 0.25rem; }
+.modal-footer { padding: 0.8rem 1.25rem; background: #fafbfc; }
+.modal .dialog-error { margin: 0 1.25rem 0.75rem; }
+@media (max-width: 520px) { .modal-body.modal-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.modal-grid .bonus-help-text p { display: inline; margin: 0; }
+.modal-grid .bonus-help-text p + p { margin-left: 0.25rem; }
+.search-filter-container { flex-direction: row; }
+.search-filter-container .search-box { align-self: flex-end; }
+.marks2-content:not(.is-generator) { height: auto; min-height: 500px; align-items: flex-start; }
+.marks2-content:not(.is-generator) .marks2-sidebar { overflow: visible; }
+.marks-table-container th, .marks-table-container td { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+.marks-table-container input[type="number"] { height: 2.1rem; padding: 0 0.5rem; }
+.modal-grid .form-group input, .modal-grid .form-group select, .modal-grid .form-group textarea { margin: 0; }
+.modal-body.modal-grid .bonus-checkbox-group .bonus-checkbox-label { display: flex; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-size: 0.88rem; font-weight: 600; color: #1e293b; margin: 0; }
+.modal-body.modal-grid .bonus-checkbox-group input[type="checkbox"] { width: 1rem; height: 1rem; margin: 0; }
+.modal-body.modal-grid { gap: 0.8rem 1rem; }

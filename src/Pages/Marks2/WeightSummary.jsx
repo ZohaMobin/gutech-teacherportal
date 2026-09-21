@@ -32,8 +32,8 @@ const WeightSummary = ({ assessments }) => {
       <div className="weight-summary-row">
         <span>Regular weightage</span>
         <strong>{regular} / 100</strong>
-        <span className="weight-summary-bar" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, regular))}%` }} /></span>
       </div>
+      <span className="weight-summary-bar" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, regular))}%` }} /></span>
       {bonus > 0 && (
         <div className="weight-summary-row weight-summary-bonus">
           <span>Bonus (on top of 100%)</span>
