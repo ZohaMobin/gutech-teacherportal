@@ -1144,3 +1144,12 @@
   line-height: 1.35;
   color: #b91c1c;
 }
+
+.weight-summary { margin: 8px 0 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 0.85rem; }
+.weight-summary-ok { background: #f0fdf4; border-color: #bbf7d0; }
+.weight-summary-todo { background: #fffbeb; border-color: #fde68a; }
+.weight-summary-over { background: #fef2f2; border-color: #fecaca; }
+.weight-summary-row { display: flex; justify-content: space-between; gap: 8px; }
+.weight-summary-bonus { color: #92400e; }
+.weight-summary-message { margin: 6px 0 2px; font-weight: 600; }
+.weight-summary-help { margin: 2px 0 0; color: #6b7280; font-size: 0.8rem; }

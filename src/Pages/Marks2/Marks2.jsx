@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import WeightSummary from './WeightSummary';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
@@ -1360,6 +1361,7 @@ const Marks2 = () => {
 
           <div className="assessment-selector">
             <h3>Assessments</h3>
+            <WeightSummary assessments={assessments} />
             <div className="assessment-list">
               {assessments.map(assessment => (
                 <div 
@@ -1732,7 +1734,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Weightage (%)</label>
+                <label>{newAssessment.isBonus ? 'Extra credit weightage (%, on top of the 100)' : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1751,10 +1753,12 @@ const Marks2 = () => {
                     checked={Boolean(newAssessment.isBonus)}
                     onChange={(e) => setNewAssessment({ ...newAssessment, isBonus: e.target.checked })}
                   />
-                  <span>Bonus / Extra credit</span>
+                  <span>Extra credit (bonus)</span>
                 </label>
                 <p className="bonus-help-text">
-                  Extra credit on top of the 100%. It can make up marks lost elsewhere, but a student's total is never shown above 100%.
+                  Tick this only for <strong>extra credit</strong>, for example to help a student who is not passing or to let students score better.
+                  It is added <strong>on top of</strong> the course's 100%, so it never uses up any of the 100. Leave it unticked if this is a normal
+                  part of the course grade. A student's total is still shown as at most 100%.
                 </p>
               </div>
               <div className="form-group">
@@ -1894,7 +1898,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Weightage (%)</label>
+                <label>{editingAssessment.isBonus ? 'Extra credit weightage (%, on top of the 100)' : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1921,10 +1925,12 @@ const Marks2 = () => {
                       })
                     }
                   />
-                  <span>Bonus / Extra credit</span>
+                  <span>Extra credit (bonus)</span>
                 </label>
                 <p className="bonus-help-text">
-                  Extra credit on top of the 100%. It can make up marks lost elsewhere, but a student's total is never shown above 100%.
+                  Tick this only for <strong>extra credit</strong>, for example to help a student who is not passing or to let students score better.
+                  It is added <strong>on top of</strong> the course's 100%, so it never uses up any of the 100. Leave it unticked if this is a normal
+                  part of the course grade. A student's total is still shown as at most 100%.
                 </p>
               </div>
               <div className="form-group">
