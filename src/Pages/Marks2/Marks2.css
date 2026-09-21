@@ -1123,8 +1123,10 @@
   margin: 0;
   font-size: 0.8rem;
   color: #78716c;
-  line-height: 1.35;
+  line-height: 1.4;
 }
+.bonus-help-text p { margin: 0 0 0.45rem; }
+.bonus-help-text p:last-child { margin-bottom: 0; }
 
 .assessment-item.bonus-assessment,
 .assessment-card.bonus-assessment {
