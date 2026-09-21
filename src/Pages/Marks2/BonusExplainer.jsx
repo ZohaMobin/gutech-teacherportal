@@ -6,7 +6,7 @@ export const BONUS_LABEL = 'Bonus (on top of 100%)';
 export const BONUS_WEIGHT_LABEL = 'Bonus weightage (%, on top of the 100)';
 
 const BonusExplainer = ({ checked, onChange, id = 'bonus-checkbox' }) => (
-  <div className="form-group bonus-checkbox-group">
+  <div className="form-group bonus-checkbox-group span-2">
     <label className="bonus-checkbox-label" htmlFor={id}>
       <input id={id} type="checkbox" checked={Boolean(checked)} onChange={(e) => onChange(e.target.checked)} />
       <span>{BONUS_LABEL}</span>

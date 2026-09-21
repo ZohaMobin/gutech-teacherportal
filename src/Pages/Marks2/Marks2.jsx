@@ -1369,7 +1369,7 @@ const Marks2 = () => {
         </div>
       )}
 
-      <div className={`marks2-content ${activeMarksView === 'generator' ? 'is-generator' : ''}`}>
+      <div className={`marks2-content ${activeMarksView === 'generator' || activeMarksView === 'workspace' ? 'is-generator' : ''}`}>
         <div className="marks2-sidebar">
           <div className="section-selector">
             <h3>Sections</h3>
@@ -1442,26 +1442,24 @@ const Marks2 = () => {
           ) : activeMarksView === 'workspace' ? (
             <>
               <div className="workspace-header">
-                <div>
-                  <p className="workspace-eyebrow">Gradebook Workspace</p>
-                  <h2>{activeSection.courseId?.name || 'Selected Course'} - Section {activeSection.section || activeSection.name || '-'}</h2>
-                  <p>Use this sheet to enter marks across assessments and review weighted totals instantly.</p>
+                <h2>{activeSection.courseId?.name || 'Selected Course'} <span>Section {activeSection.section || activeSection.name || '-'}</span></h2>
+                <div className="workspace-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={exportGradebookWorkspace}
+                    disabled={!assessments.length || !students.length}
+                  >
+                    <Download size={16} /> Export
+                  </button>
+                  <button
+                    className="btn btn-primary save-btn"
+                    onClick={saveGradebookWorkspace}
+                    disabled={!assessments.length || !students.length || locked}
+                    title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
+                  >
+                    <Save size={16} /> Save Workspace
+                  </button>
                 </div>
-                <button
-                  className="btn btn-secondary"
-                  onClick={exportGradebookWorkspace}
-                  disabled={!assessments.length || !students.length}
-                >
-                  <Download size={16} /> Export Workspace
-                </button>
-                <button
-                  className="btn btn-primary save-btn"
-                  onClick={saveGradebookWorkspace}
-                  disabled={!assessments.length || !students.length || locked}
-                  title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
-                >
-                  <Save size={16} /> Save Workspace
-                </button>
               </div>
 
               <div className="workspace-summary-grid">
@@ -1470,7 +1468,7 @@ const Marks2 = () => {
                   <strong>{gradebookSummary.classAverage.toFixed(1)}%</strong>
                 </div>
                 <div className="workspace-summary-card">
-                  <span>Weightage Covered</span>
+                  <span>Weightage</span>
                   <strong className={coveredWeightage > 100 ? 'summary-warning' : ''}>{coveredWeightage} / 100</strong>
                 </div>
                 <div className="workspace-summary-card">
@@ -1499,9 +1497,7 @@ const Marks2 = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="workspace-note">
-                  Marks cells are editable. Weighted, total, and grade cells recalculate automatically.
-                </div>
+                <div className="workspace-note">Marks are editable; totals and grades update as you type.</div>
               </div>
 
               {!assessments.length ? (
@@ -1737,8 +1733,8 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="modal-body modal-grid">
+              <div className="form-group span-2">
                 <label>Title</label>
                 <input 
                   type="text" 
@@ -1778,10 +1774,10 @@ const Marks2 = () => {
                   value={newAssessment.weightage}
                   onChange={(e) => setNewAssessment({...newAssessment, weightage: Number(e.target.value)})}
                 />
-                <WeightMeter others={addWeight.used} current={newAssessment.weightage} isBonus={newAssessment.isBonus} problem={addWeight.problem} />
               </div>
+              <div className="form-group span-2 meter-row"><WeightMeter others={addWeight.used} current={newAssessment.weightage} isBonus={newAssessment.isBonus} problem={addWeight.problem} /></div>
               <BonusExplainer id="bonus-new" checked={newAssessment.isBonus} onChange={(isBonus) => setNewAssessment({ ...newAssessment, isBonus })} />
-              <div className="form-group">
+              <div className="form-group span-2">
                 <label>Description</label>
                 <textarea 
                   value={newAssessment.description}
@@ -1827,7 +1823,7 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body modal-grid">
               <div className="import-preview">
                 <h4>Preview</h4>
                 <p>Review the data before importing. Make sure the student IDs match.</p>
@@ -1893,8 +1889,8 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="modal-body modal-grid">
+              <div className="form-group span-2">
                 <label>Title</label>
                 <input 
                   type="text" 
@@ -1930,10 +1926,10 @@ const Marks2 = () => {
                     weightage: Number(e.target.value)
                   })}
                 />
-                <WeightMeter others={editWeight?.used} current={editingAssessment.weightage} isBonus={editingAssessment.isBonus} problem={editWeight?.problem} />
               </div>
+              <div className="form-group span-2 meter-row"><WeightMeter others={editWeight?.used} current={editingAssessment.weightage} isBonus={editingAssessment.isBonus} problem={editWeight?.problem} /></div>
               <BonusExplainer id="bonus-edit" checked={editingAssessment.isBonus} onChange={(isBonus) => setEditingAssessment({ ...editingAssessment, isBonus })} />
-              <div className="form-group">
+              <div className="form-group span-2">
                 <label>Description</label>
                 <textarea 
                   value={editingAssessment.description}
