@@ -29,7 +29,6 @@ const Attendance = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
-  const [showSlotTools, setShowSlotTools] = useState(false);
 
   // Get auth token from session storage
   const getAuthToken = () => {
@@ -827,134 +826,277 @@ const Attendance = () => {
     }
   }, [selectedSlotNumber, slotNumbersKey, copyFromSlotNumber]);
 
-  const termLabel = activeAcademicTerm ? activeAcademicTerm.displayName || `${activeAcademicTerm.semesterType} ${activeAcademicTerm.year}` : "";
-  const statusOf = (student) => attendanceData[student.id] || attendanceData[student.id?.toString()];
-  const markedCount = stats.present + stats.absent + stats.late;
-
   return (
-    <div className="att">
-      <header className="att-head">
-        <div>
+    <div className="attendance-container">
+      <div className="attendance-header">
+        <div className="header-content">
           <h1>Attendance</h1>
-          <p>{termLabel ? `Mark and manage student attendance · ${termLabel}` : "Mark and manage student attendance"}</p>
+          <p>Mark and manage student attendance{activeAcademicTerm ? ` - ${activeAcademicTerm.displayName || `${activeAcademicTerm.semesterType} ${activeAcademicTerm.year}`}` : ""}</p>
         </div>
         {activeSection && attendanceData && Object.keys(attendanceData).length > 0 && (
-          <button type="button" className="att-btn" onClick={exportToCSV}><Download size={16} /> Export to Excel</button>
+          <button className="export-btn" onClick={exportToCSV}>
+            <Download size={18} />
+            Export to Excel
+          </button>
         )}
-      </header>
+      </div>
 
-      {error && <div className="att-error" role="alert">{error}</div>}
+      {error && (
+        <div className="error-message">
+          <span>{error}</span>
+        </div>
+      )}
 
-      {loading && sections.length === 0 ? (
-        <Loading variant="page" rows={3} label="Loading your sections" />
-      ) : sections.length === 0 ? (
-        <div className="att-empty"><p>{sections.length === 0 && !loading ? "No enrolled sections are available for the active semester. Your sections will appear here once the administrator enrolls students." : ""}</p></div>
-      ) : (
-        <>
-          {/* One compact bar: what you are marking (section, date, slot) and the quick actions. */}
-          <section className="att-bar" aria-label="Attendance controls">
-            <label className="att-field att-section">
-              <span>Section</span>
-              <select value={activeSection?._id || ""} onChange={(e) => { const next = sections.find((x) => x._id === e.target.value); if (next) handleSectionChange(next); }}>
-                <option value="" disabled>Choose a section</option>
+      <div className="attendance-content">
+        {/* Sidebar - Section Selection */}
+        <div className="attendance-sidebar">
+          <div className="section-selector">
+            <h3>Select Section</h3>
+            {loading && sections.length === 0 ? (
+              <Loading variant="list" rows={4} label="Loading sections" />
+            ) : sections.length === 0 ? (
+              <div className="empty-text">No enrolled sections for the active semester</div>
+            ) : (
+              <div className="section-list">
                 {sections.map((section) => (
-                  <option key={section._id} value={section._id}>{section.courseId?.code || ""} · {section.courseId?.name || "Unknown course"} · Section {section.section}</option>
+                  <div key={section._id} className={`section-item ${activeSection?._id === section._id ? "active" : ""}`} onClick={() => handleSectionChange(section)}>
+                    <div className="section-info">
+                      <div className="section-name">{section.courseId?.name || "Unknown Course"}</div>
+                      <div className="section-code">
+                        Section {section.section} - {section.courseId?.code || ""}
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </select>
-            </label>
+              </div>
+            )}
+          </div>
+        </div>
 
-            {activeSection && (
-              <>
-                <div className="att-field att-date">
-                  <label htmlFor="attendance-date">Date</label>
-                  <DatePicker
-                    id="attendance-date"
-                    selected={selectedDate}
-                    onChange={handleDateChange}
-                    onSelect={handleDateChange}
-                    dateFormat="yyyy-MM-dd"
-                    className="date-input"
-                    dayClassName={dayClassName}
-                    highlightDates={markedDates.map((dateStr) => {
-                      const [year, month, day] = dateStr.split("-");
-                      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    })}
-                    maxDate={new Date()}
-                    filterDate={(date) => date <= new Date()}
-                  />
-                </div>
+        {/* Main Content */}
+        <div className="attendance-main">
+          {activeSection ? (
+            <>
+              {/* Attendance Controls */}
+              <div className="attendance-controls">
+                <div className="attendance-controls-top">
+                  <div className="date-selector">
+                    <label htmlFor="attendance-date">Select Date</label>
+                    <DatePicker
+                      id="attendance-date"
+                      selected={selectedDate}
+                      onChange={handleDateChange}
+                      onSelect={handleDateChange}
+                      dateFormat="yyyy-MM-dd"
+                      className="date-input"
+                      dayClassName={dayClassName}
+                      highlightDates={markedDates.map((dateStr) => {
+                        const [year, month, day] = dateStr.split("-");
+                        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                      })}
+                      maxDate={new Date()}
+                      filterDate={(date) => date <= new Date()}
+                    />
+                    <div className="date-legend">
+                      <span className="legend-dot"></span>
+                      <span className="legend-text">Dates with marked attendance</span>
+                    </div>
+                  </div>
 
-                <div className="att-field att-slots">
-                  <span>Slot</span>
-                  <div className="att-slot-row">
-                    {slotNumbersForDisplay.map((slotNumber) => (
-                      <button key={slotNumber} type="button" className={`att-pill ${selectedSlotNumber === slotNumber ? "is-on" : ""}`} aria-pressed={selectedSlotNumber === slotNumber} onClick={() => handleSlotChange(slotNumber)}>S{slotNumber}</button>
-                    ))}
-                    <button type="button" className="att-pill att-add" onClick={addNewSlot} title="Add another slot for this date">+ Slot</button>
-                    <button type="button" className="att-link" onClick={() => setShowSlotTools((open) => !open)} aria-expanded={showSlotTools}>{showSlotTools ? "Fewer options" : "More options"}</button>
+                  <div className="quick-actions quick-actions-top">
+                    <span className="quick-actions-label quick-actions-title"></span>
+                    <div className="slot-inline-group quick-action-buttons">
+                      <button className="btn-quick present" onClick={markAllPresent}>
+                        Mark All Present
+                      </button>
+                      <button className="btn-quick absent" onClick={markAllAbsent}>
+                        Mark All Absent
+                      </button>
+                      <button className="btn-quick clear" onClick={clearAll}>
+                        Clear All
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
-          </section>
 
-          {activeSection && showSlotTools && (
-            <section className="att-tools" aria-label="Slot options">
-              <label className="att-inline">Duration
-                <span className="att-duration"><input id="slot-duration" type="number" min="1" value={slotDurationMinutes} onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)} /> min</span>
-              </label>
-              <label className="att-inline">Copy from
-                <select value={copyFromSlotNumber} onChange={(e) => setCopyFromSlotNumber(e.target.value)} disabled={availableSourceSlots.length === 0} title="Copy attendance from another slot">
-                  <option value="" disabled>{availableSourceSlots.length === 0 ? "No other slot" : "Choose slot"}</option>
-                  {availableSourceSlots.map((slotNumber) => <option key={slotNumber} value={slotNumber}>Slot {slotNumber}</option>)}
-                </select>
-              </label>
-              <button type="button" className="att-btn" onClick={copyAttendanceFromSlot} disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}>Copy to S{selectedSlotNumber}</button>
-              <button type="button" className="att-btn att-danger" onClick={deleteSelectedSlot}>Delete S{selectedSlotNumber}</button>
-            </section>
-          )}
+                <div className="session-panel">
+                  <div className="controls-panel-header">
+                    <div>
+                      <span className="controls-panel-label">Attendance Slots</span>
+                      <h3>Session Selection</h3>
+                    </div>
+                    <div className="slot-management-actions">
+                      <button className="btn-quick clear" onClick={addNewSlot}>
+                        + Slot
+                      </button>
+                    </div>
+                  </div>
 
-          {!activeSection ? (
-            <div className="att-empty"><p>Choose a section to mark attendance.</p></div>
-          ) : (
-            <section className="att-list" aria-label="Students">
-              <div className="att-listbar">
-                <div className="att-counts" aria-label="Summary">
-                  <span className="att-count"><b>{stats.total}</b> students</span>
-                  <span className="att-count present"><b>{stats.present}</b> present</span>
-                  <span className="att-count absent"><b>{stats.absent}</b> absent</span>
-                  <span className="att-count late"><b>{stats.late}</b> late</span>
-                  <span className="att-count unmarked"><b>{stats.unmarked}</b> unmarked</span>
-                </div>
-                <div className="att-listtools">
-                  <input type="search" className="att-search" placeholder="Search name or roll number" aria-label="Search students" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                  <button type="button" className="att-btn present" onClick={markAllPresent}>All present</button>
-                  <button type="button" className="att-btn absent" onClick={markAllAbsent}>All absent</button>
-                  <button type="button" className="att-btn" onClick={clearAll}>Clear</button>
+                  <div className="slot-compact-layout">
+                    <div className="slot-inline-group slot-list-group">
+                      {slotNumbersForDisplay.map((slotNumber) => (
+                        <button
+                          key={slotNumber}
+                          className={`btn-quick slot-pill ${selectedSlotNumber === slotNumber ? "present" : "clear"}`}
+                          onClick={() => handleSlotChange(slotNumber)}
+                        >
+                          S{slotNumber}
+                        </button>
+                      ))}
+                    </div>
+
+                    <details className="slot-more">
+                      <summary>Slot options</summary>
+                      <div className="slot-more-body">
+                    <div className="slot-meta-card">
+                      <div className="slot-meta-copy">
+                        <span className="slot-meta-label">Active slot</span>
+                        <strong>S{selectedSlotNumber}</strong>
+                      </div>
+                      <div className="slot-inline-group slot-duration-group">
+                        <label htmlFor="slot-duration" className="quick-actions-label">
+                          Duration
+                        </label>
+                        <div className="slot-duration-input-wrap">
+                          <input
+                            id="slot-duration"
+                            type="number"
+                            min="1"
+                            className="slot-duration-input"
+                            value={slotDurationMinutes}
+                            onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)}
+                          />
+                          <span className="slot-duration-unit">min</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="slot-inline-group slot-copy-controls slot-copy-inline">
+                      <span className="quick-actions-label">Copy attendance</span>
+                      <select
+                        className="slot-copy-select"
+                        value={copyFromSlotNumber}
+                        onChange={(e) => setCopyFromSlotNumber(e.target.value)}
+                        disabled={availableSourceSlots.length === 0}
+                        title="Copy attendance from another slot"
+                      >
+                        {availableSourceSlots.length === 0 ? (
+                          <option value="">Copy from</option>
+                        ) : (
+                          <>
+                            <option value="" disabled>
+                              Copy from
+                            </option>
+                            {availableSourceSlots.map((slotNumber) => (
+                              <option key={slotNumber} value={slotNumber}>
+                                Slot {slotNumber}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                      <button
+                        className="btn-quick clear"
+                        onClick={copyAttendanceFromSlot}
+                        disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}
+                        title={`Copy selected slot attendance to Slot ${selectedSlotNumber}`}
+                      >
+                        Copy to S{selectedSlotNumber}
+                      </button>
+                    </div>
+                        <button className="btn-quick absent" onClick={deleteSelectedSlot}>
+                          Delete S{selectedSlotNumber}
+                        </button>
+                      </div>
+                    </details>
+                  </div>
                 </div>
               </div>
 
+              {/* Statistics */}
+              <div className="attendance-stats">
+                <div className="stat-card total">
+                  <div className="stat-value">{stats.total}</div>
+                  <div className="stat-label">Total</div>
+                </div>
+                <div className="stat-card present">
+                  <div className="stat-value">{stats.present}</div>
+                  <div className="stat-label">Present</div>
+                </div>
+                <div className="stat-card absent">
+                  <div className="stat-value">{stats.absent}</div>
+                  <div className="stat-label">Absent</div>
+                </div>
+                <div className="stat-card late">
+                  <div className="stat-value">{stats.late}</div>
+                  <div className="stat-label">Late</div>
+                </div>
+                <div className="stat-card unmarked">
+                  <div className="stat-value">{stats.unmarked}</div>
+                  <div className="stat-label">Unmarked</div>
+                </div>
+              </div>
+
+              {/* Search */}
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search students by name or roll number..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+
+              {/* Students Table */}
               {loading ? (
                 <Loading variant="table" rows={8} label="Loading students" />
               ) : students.length === 0 ? (
-                <div className="att-empty"><p>No students enrolled in this course</p></div>
+                <div className="empty-state">
+                  <p>No students enrolled in this course</p>
+                </div>
               ) : filteredStudents.length === 0 ? (
-                <div className="att-empty"><p>No students found matching your search</p></div>
+                <div className="empty-state">
+                  <p>No students found matching your search</p>
+                </div>
               ) : (
-                <div className="att-table-wrap">
-                  <table className="att-table">
-                    <thead><tr><th className="att-n">#</th><th>Roll number</th><th>Name</th><th className="att-mark">Attendance</th></tr></thead>
+                <div className="students-table-container">
+                  <table className="students-table">
+                    <thead>
+                      <tr>
+                        <th>Roll Number</th>
+                        <th>Name</th>
+                        <th>Attendance</th>
+                      </tr>
+                    </thead>
                     <tbody>
-                      {filteredStudents.map((student, index) => (
-                        <tr key={student.id} className={statusOf(student) ? `is-${statusOf(student)}` : ""}>
-                          <td className="att-n">{index + 1}</td>
-                          <td className="att-roll">{student.rollNumber}</td>
-                          <td className="att-name">{student.name}</td>
-                          <td className="att-mark">
-                            <div className="att-seg" role="group" aria-label={`Attendance for ${student.name}`}>
-                              {[["present", "Present"], ["absent", "Absent"], ["late", "Late"]].map(([status, label]) => (
-                                <button key={status} type="button" className={`att-opt ${status} ${statusOf(student) === status ? "is-on" : ""}`} aria-pressed={statusOf(student) === status} onClick={() => handleAttendanceChange(student.id, status)}>{label}</button>
-                              ))}
+                      {filteredStudents.map((student) => (
+                        <tr key={student.id}>
+                          <td className="roll-number">{student.rollNumber}</td>
+                          <td className="student-name">{student.name}</td>
+                          <td className="attendance-actions-cell">
+                            <div className="attendance-actions">
+                              <button
+                                onClick={() => handleAttendanceChange(student.id, "present")}
+                                className={`attendance-btn present ${(attendanceData[student.id] || attendanceData[student.id?.toString()]) === "present" ? "active" : ""}`}
+                                title="Present"
+                              >
+                                Present
+                              </button>
+                              <button
+                                onClick={() => handleAttendanceChange(student.id, "absent")}
+                                className={`attendance-btn absent ${(attendanceData[student.id] || attendanceData[student.id?.toString()]) === "absent" ? "active" : ""}`}
+                                title="Absent"
+                              >
+                                Absent
+                              </button>
+                              <button
+                                onClick={() => handleAttendanceChange(student.id, "late")}
+                                className={`attendance-btn late ${(attendanceData[student.id] || attendanceData[student.id?.toString()]) === "late" ? "active" : ""}`}
+                                title="Late"
+                              >
+                                Late
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -964,14 +1106,27 @@ const Attendance = () => {
                 </div>
               )}
 
-              <div className="att-save">
-                <span className={`att-save-note ${hasUnsavedChanges ? "is-dirty" : ""}`}>{hasUnsavedChanges ? "You have unsaved changes" : `${markedCount} of ${stats.total} marked`}</span>
-                <button type="button" className="att-btn att-primary" onClick={saveAttendance} disabled={saving || loading}>{saving ? "Saving…" : "Save attendance"}</button>
+              {/* Save Button */}
+              <div className="attendance-footer">
+                <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading}>
+                  {saving ? "Saving..." : "Save Attendance"}
+                </button>
+                {hasUnsavedChanges && (
+                  <div className="unsaved-indicator">
+                    <span>You have unsaved changes</span>
+                  </div>
+                )}
               </div>
-            </section>
+            </>
+          ) : (
+            <div className="empty-state">
+              <p>{loading ? "Loading sections..." : sections.length === 0
+                ? "No enrolled sections are available for the active semester. Your sections will appear here once the administrator enrolls students."
+                : "Please select a section to mark attendance"}</p>
+            </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
