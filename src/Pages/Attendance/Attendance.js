@@ -31,6 +31,15 @@ const Attendance = () => {
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
   const [showSlotOptions, setShowSlotOptions] = useState(false);
 
+  // A message is about the last thing done. It goes when the person moves on (another section, date or slot), after a few
+  // seconds, or when they dismiss it.
+  useEffect(() => { setError(null); }, [activeSection?._id, selectedDate, selectedSlotNumber]);
+  useEffect(() => {
+    if (!error) return undefined;
+    const timer = setTimeout(() => setError(null), 8000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   // Get auth token from session storage
   const getAuthToken = () => {
     return sessionStorage.getItem("token");
@@ -843,8 +852,9 @@ const Attendance = () => {
       </div>
 
       {error && (
-        <div className="error-message">
+        <div className="error-message" role="alert">
           <span>{error}</span>
+          <button type="button" className="error-dismiss" onClick={() => setError(null)} aria-label="Dismiss">×</button>
         </div>
       )}
 
@@ -1073,11 +1083,15 @@ const Attendance = () => {
               </div>
             </>
           ) : (
-            <div className="empty-state">
-              <p>{loading ? "Loading sections..." : sections.length === 0
-                ? "No enrolled sections are available for the active semester. Your sections will appear here once the administrator enrolls students."
-                : "Please select a section to mark attendance"}</p>
-            </div>
+            loading && sections.length === 0 ? (
+              <Loading variant="page" rows={4} label="Loading attendance" />
+            ) : (
+              <div className="empty-state">
+                <p>{sections.length === 0
+                  ? "No enrolled sections are available for the active semester. Your sections will appear here once the administrator enrolls students."
+                  : "Please select a section to mark attendance"}</p>
+              </div>
+            )
           )}
         </div>
       </div>
