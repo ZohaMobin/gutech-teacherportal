@@ -1189,3 +1189,19 @@
 .slotbar-danger { margin-left: auto; color: var(--error-color); border-color: rgba(239, 68, 68, 0.4); }
 .slotbar-danger:hover:not(:disabled) { background: var(--error-light); }
 .slotbar :is(button, select, input):focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+
+/* header: title above the sentence, not beside it */
+.attendance-header .header-content { display: block; }
+.attendance-header .header-content h1, .attendance-header .header-content p { display: block; }
+
+/* the message can be dismissed */
+.error-message { justify-content: space-between; }
+.error-dismiss { border: 0; background: none; color: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; border-radius: var(--radius-sm); }
+.error-dismiss:hover { background: rgba(239, 68, 68, 0.12); }
+
+/* slot options: every control on one baseline, no stray margins */
+.slotbar-options button, .slotbar-options input, .slotbar-options select { margin: 0; }
+.slotbar-options { align-items: flex-end; }
+.slotbar-input { min-height: 2.1rem; align-items: center; }
+.slotbar-input span { line-height: 1; align-self: center; margin: 0; }
+.slotbar-btn { display: inline-flex; align-items: center; justify-content: center; }
