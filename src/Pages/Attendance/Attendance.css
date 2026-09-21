@@ -1205,3 +1205,12 @@
 .slotbar-input { min-height: 2.1rem; align-items: center; }
 .slotbar-input span { line-height: 1; align-self: center; margin: 0; }
 .slotbar-btn { display: inline-flex; align-items: center; justify-content: center; }
+
+/* Select Date: label, field and quick actions share one centre line */
+.attendance-controls-top { align-items: center; }
+.date-selector { align-items: center; }
+.date-selector label { margin: 0; line-height: 1; }
+.date-selector .react-datepicker-wrapper, .date-selector .react-datepicker__input-container { display: block; margin: 0; }
+.date-selector .date-input { height: 2.1rem; margin: 0; }
+.quick-actions, .quick-actions-top { margin: 0; padding-top: 0; align-self: center; }
+.quick-action-buttons .btn-quick { height: 2.1rem; margin: 0; }
