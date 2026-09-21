@@ -652,16 +652,22 @@ const Marks2 = () => {
     return response.data?.marks || {};
   };
 
+  // Every mark of the active section in ONE request: { assessmentId: { studentId: mark } }.
+  const fetchSectionMarksMap = async () => {
+    const response = await axios.get(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/marks`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
+    });
+    const all = response.data?.marks || {};
+    Object.entries(all).forEach(([assessmentId, marks]) => { savedMarks.current[assessmentId] = { ...marks }; });
+    return all;
+  };
+
   const loadGradebookMarks = async (assessmentList = assessments) => {
     if (!students.length || !assessmentList.length) return;
 
     try {
-      const assessmentMarkMaps = await Promise.all(
-        assessmentList.map(async (assessment) => ({
-          assessmentId: assessment._id,
-          marks: await fetchAssessmentMarksMap(assessment._id),
-        }))
-      );
+      const allMarks = await fetchSectionMarksMap();
+      const assessmentMarkMaps = assessmentList.map((assessment) => ({ assessmentId: assessment._id, marks: allMarks[assessment._id] || {} }));
 
       setStudentMarks((prevMarks) => {
         const updatedMarks = { ...prevMarks };
@@ -954,11 +960,8 @@ const Marks2 = () => {
 
   const buildAssessmentRegisterSheet = async () => {
     const sortedStudents = sortStudentsAscending(students);
-    const assessmentMarkMaps = {};
-
-    for (const assessment of assessments) {
-      assessmentMarkMaps[assessment._id] = await fetchAssessmentMarksMap(assessment._id);
-    }
+    const allMarks = await fetchSectionMarksMap();
+    const assessmentMarkMaps = Object.fromEntries(assessments.map((assessment) => [assessment._id, allMarks[assessment._id] || {}]));
 
     const totalWeightage = assessments
       .filter((assessment) => !assessment.isBonus)
@@ -1113,8 +1116,9 @@ const Marks2 = () => {
       }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), 'Assessments');
 
+      const allMarks = await fetchSectionMarksMap();
       for (const assessment of assessments) {
-        const marksMap = await fetchAssessmentMarksMap(assessment._id);
+        const marksMap = allMarks[assessment._id] || {};
         const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
         XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
       }
@@ -1157,8 +1161,9 @@ const Marks2 = () => {
         }));
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(assessmentSummaryRows), 'Assessment Summary');
 
+        const allMarks = await fetchSectionMarksMap();
         for (const assessment of assessments) {
-          const marksMap = await fetchAssessmentMarksMap(assessment._id);
+          const marksMap = allMarks[assessment._id] || {};
           const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
           XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
         }
