@@ -251,3 +251,68 @@
 .gg-gate-note { color: var(--gg-muted); font-size: 0.82rem; }
 .gg-gate .btn { margin-top: 12px; }
 @media (max-width: 640px) { .gg-gate { padding: 28px 16px; } }
+
+/* ================= second pass: simpler, denser, built for a class of 50 to 60 ================= */
+.gg { gap: 12px; }
+.gg-head-bar { align-items: center; }
+.gg-head-bar h2 { font-size: 1.15rem; }
+.gg-eyebrow { margin-bottom: 2px; }
+.gg-steps { padding: 8px 14px; border-radius: 10px; box-shadow: none; }
+.gg-step-dot { width: 20px; height: 20px; }
+.gg-panel { padding: 14px 16px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.gg-panel h3 { margin-bottom: 10px; font-size: 0.92rem; }
+
+/* readiness: two small chips instead of a panel */
+.gg-ready { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0; background: none; border: 0; box-shadow: none; }
+.gg-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 0.82rem; border: 1px solid transparent; }
+.gg-chip small { color: inherit; opacity: 0.8; }
+.gg-chip.ok { background: #e8f7f1; border-color: #bfe8d6; color: #0b6b49; }
+.gg-chip.warn { background: #fff7e6; border-color: #fde7b0; color: #7c4a03; }
+.gg-chip.bad { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.gg-chip .gg-link { color: inherit; }
+.gg-missing { flex-basis: 100%; }
+
+/* choosing: three compact cards side by side */
+.gg-grid { grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.4fr); gap: 12px; }
+.gg-options { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.gg-option { padding: 10px 12px; }
+.gg-option small { font-size: 0.78rem; }
+.gg-inline { margin: 0; padding: 8px 12px; }
+.gg-reason { margin-top: 10px; }
+.gg-reason textarea { min-height: 52px; }
+.gg-privacy { margin-top: 10px !important; padding-top: 8px; font-size: 0.76rem; }
+
+/* effect: one row of figures, a slimmer chart */
+.gg-tiles { gap: 8px; margin-bottom: 12px; }
+.gg-tile { padding: 8px 10px; gap: 2px; }
+.gg-tile-value strong { font-size: 1.25rem; }
+.gg-tile-label { font-size: 0.68rem; }
+.gg-dist { gap: 3px; }
+.gg-dist-row { grid-template-columns: 26px minmax(0, 1fr) 52px; gap: 8px; }
+.gg-bar { height: 5px; }
+.gg-desc { margin-bottom: 10px !important; }
+
+/* students: dense rows, search and filter, sticky header */
+.gg-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.gg-search { flex: 1 1 14rem; max-width: 22rem; height: 2.1rem; padding: 0 0.7rem; border: 1px solid var(--gg-line); border-radius: 8px; font: inherit; font-size: 0.88rem; color: var(--gg-ink); }
+.gg-search:focus { outline: none; border-color: var(--gg-accent); box-shadow: 0 0 0 3px rgba(153, 29, 32, 0.1); }
+.gg-filter { display: inline-flex; padding: 3px; gap: 2px; background: #eef0f4; border-radius: 9px; }
+.gg-filter button { border: 0; background: none; padding: 4px 10px; border-radius: 7px; font: inherit; font-size: 0.8rem; font-weight: 600; color: #4b5563; cursor: pointer; }
+.gg-filter button.on { background: #fff; color: var(--gg-accent); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
+.gg-table { max-height: max(20rem, calc(100vh - 19rem)); }
+.gg-row { padding: 6px 12px; gap: 6px; font-size: 0.86rem; }
+.gg-row.gg-head { padding-block: 7px; }
+.gg-student { flex-direction: row; align-items: baseline; gap: 8px; }
+.gg-student strong { flex: 0 1 auto; }
+.gg-student small { flex: none; }
+.gg-row:nth-child(even):not(.gg-head):not(.changed) { background: #fcfcfd; }
+.gg-letter { height: 22px; min-width: 28px; }
+
+.gg-actions { padding: 8px 14px; border-radius: 10px; }
+
+@media (max-width: 1000px) { .gg-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .gg-student { flex-direction: column; gap: 0; }
+  .gg-tools { flex-direction: column; align-items: stretch; }
+  .gg-search { max-width: none; }
+}

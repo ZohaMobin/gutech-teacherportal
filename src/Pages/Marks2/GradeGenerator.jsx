@@ -5,6 +5,7 @@ import {
   AlertTriangle, ArrowUp, Check, CheckCircle2, Clock, Info, Lock, Send, Save, SlidersHorizontal, TrendingUp, Users, X,
 } from 'lucide-react';
 import { messageOf } from './apiMessage';
+import Loading from '../../Components/Loading/Loading';
 import './GradeGenerator.css';
 
 // The Grade Generator: the step between "marks entered" and "results approved". The teacher chooses how the class is
@@ -98,12 +99,31 @@ const Distribution = ({ distribution }) => {
 
 const limitNote = (row) => (row.limitedBy === 'CEILING' ? 'Held at 100' : row.limitedBy === 'MAXIMUM' ? 'At the maximum' : null);
 
-const StudentRows = ({ rows, ledger }) => {
+const StudentRows = ({ rows: allRows, ledger }) => {
   const letters = useMemo(() => new Map((ledger || []).map((l) => [String(l.registrationId), l.letterGrade])), [ledger]);
-  if (!rows.length) return <p className="gg-empty">This section has no students yet.</p>;
+  const [query, setQuery] = useState('');
+  const [only, setOnly] = useState('all');           // all | changed | nomarks
+  const rows = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return allRows.filter((r) => (only === 'changed' ? r.upgrade > 0 : only === 'nomarks' ? r.raw === null : true)
+      && (!needle || `${r.name || ''} ${r.rollNumber || ''}`.toLowerCase().includes(needle)));
+  }, [allRows, query, only]);
+  if (!allRows.length) return <p className="gg-empty">This section has no students yet.</p>;
   // Letters exist for a preview and, once approved, in the record. A submitted draft has none, so the column is left out.
-  const showGrade = Boolean(ledger) || rows.some((r) => r.finalGrade);
+  const showGrade = Boolean(ledger) || allRows.some((r) => r.finalGrade);
+  const changed = allRows.filter((r) => r.upgrade > 0).length;
+  const noMarks = allRows.filter((r) => r.raw === null).length;
   return (
+    <>
+    <div className="gg-tools">
+      <input type="search" className="gg-search" placeholder="Search name or roll number" aria-label="Search students" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <div className="gg-filter" role="group" aria-label="Show">
+        <button type="button" className={only === 'all' ? 'on' : ''} aria-pressed={only === 'all'} onClick={() => setOnly('all')}>All {allRows.length}</button>
+        {changed > 0 && <button type="button" className={only === 'changed' ? 'on' : ''} aria-pressed={only === 'changed'} onClick={() => setOnly('changed')}>Upgraded {changed}</button>}
+        {noMarks > 0 && <button type="button" className={only === 'nomarks' ? 'on' : ''} aria-pressed={only === 'nomarks'} onClick={() => setOnly('nomarks')}>No marks {noMarks}</button>}
+      </div>
+    </div>
+    {rows.length === 0 ? <p className="gg-empty">No student matches.</p> : (
     <div className={`gg-table ${showGrade ? '' : 'no-grade'}`} role="table" aria-label="Every student's marks before and after grading">
       <div className="gg-row gg-head" role="row">
         <span role="columnheader">Student</span>
@@ -138,6 +158,8 @@ const StudentRows = ({ rows, ledger }) => {
         );
       })}
     </div>
+    )}
+    </>
   );
 };
 
@@ -168,7 +190,6 @@ const NotReady = ({ section, weights, hasAssessments, onOpenEntry }) => {
             <span>{fmt(regular)} / 100</span>
           </div>
         )}
-        <p className="gg-gate-note">Bonus assessments are extra, on top of the 100%, and are not counted here.</p>
         {onOpenEntry && <button type="button" className="btn btn-primary" onClick={onOpenEntry}>Go to Assessment Entry</button>}
       </div>
     </section>
@@ -285,7 +306,7 @@ const GradeGenerator = ({ section, apiUrl, headers, onOpenEntry }) => {
   };
 
   if (loadError) return <div className="gg-panel gg-error" role="alert"><AlertTriangle size={18} /><span>{loadError}</span><button type="button" className="btn btn-secondary" onClick={load}>Try again</button></div>;
-  if (!batch) return <div className="gg-panel gg-loading" aria-busy="true"><div className="gg-skel wide" /><div className="gg-skel" /><div className="gg-skel" /></div>;
+  if (!batch) return <Loading variant="page" rows={3} label="Loading the grade generator" />;
 
   if (editable && !weightsOk) return <NotReady section={section} weights={batch.readiness?.weights} hasAssessments={batch.readiness?.hasAssessments} onOpenEntry={onOpenEntry} />;
 
@@ -304,7 +325,7 @@ const GradeGenerator = ({ section, apiUrl, headers, onOpenEntry }) => {
         <div>
           <p className="gg-eyebrow">Grade generator</p>
           <h2>{section.courseId?.name || 'Selected course'} <span>Section {section.section || section.name || '–'}</span></h2>
-          <p className="gg-lede">{LEDE[batch.state] || LEDE.OPEN}</p>
+          {!editable && <p className="gg-lede">{LEDE[batch.state] || LEDE.OPEN}</p>}
         </div>
         <span className={`gg-state ${info.tone}`}>{info.label}</span>
       </header>
@@ -323,23 +344,16 @@ const GradeGenerator = ({ section, apiUrl, headers, onOpenEntry }) => {
       )}
 
       {editable && (
-        <div className="gg-panel gg-ready">
-          <div className="gg-ready-item">
-            <span className={`gg-ready-icon ${weightsReady ? 'ok' : 'bad'}`}>{weightsReady ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}</span>
-            <div>
-              <strong>Weightage {fmt(readiness.weights.regularWeight)} / 100</strong>
-              <small>{weightsReady ? 'The regular assessments add up to 100%.' : 'Fix the weightage on the Assessment Entry tab.'}</small>
-            </div>
-          </div>
-          <div className="gg-ready-item">
-            <span className={`gg-ready-icon ${missing.length ? 'warn' : 'ok'}`}>{missing.length ? <AlertTriangle size={13} /> : <Check size={14} strokeWidth={3} />}</span>
-            <div>
-              <strong>{missing.length ? `${missing.length} student${missing.length === 1 ? ' has' : 's have'} marks missing` : 'All marks entered'}</strong>
-              <small>
-                {missing.length ? <>Missing marks count as zero. <button type="button" className="gg-link" onClick={() => setShowMissing((v) => !v)}>{showMissing ? 'Hide who' : 'See who'}</button></> : 'Every student has a mark for every assessment.'}
-              </small>
-            </div>
-          </div>
+        <div className="gg-ready" role="group" aria-label="Before you submit">
+          <span className={`gg-chip ${weightsReady ? 'ok' : 'bad'}`}>
+            {weightsReady ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
+            <strong>Weightage {fmt(readiness.weights.regularWeight)} / 100</strong>
+          </span>
+          <span className={`gg-chip ${missing.length ? 'warn' : 'ok'}`}>
+            {missing.length ? <AlertTriangle size={13} /> : <Check size={13} strokeWidth={3} />}
+            <strong>{missing.length ? `${missing.length} student${missing.length === 1 ? ' has' : 's have'} marks missing` : 'All marks entered'}</strong>
+            {missing.length > 0 && <><small>Missing marks count as zero.</small><button type="button" className="gg-link" onClick={() => setShowMissing((v) => !v)}>{showMissing ? 'Hide who' : 'See who'}</button></>}
+          </span>
           {showMissing && missing.length > 0 && (
             <ul className="gg-missing">{missing.map((m) => <li key={m.registrationId}><strong>{m.name}</strong> <small>{m.rollNumber}</small><span>{m.missingCount} missing</span></li>)}</ul>
           )}
