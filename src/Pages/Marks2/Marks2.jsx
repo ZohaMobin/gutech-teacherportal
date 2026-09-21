@@ -5,9 +5,10 @@ import WeightMeter from './WeightMeter';
 import LockedNotice, { lockText } from './LockedNotice';
 import { messageOf } from './apiMessage';
 import GradeGenerator from './GradeGenerator';
+import Loading from '../../Components/Loading/Loading';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 
@@ -48,6 +49,7 @@ const Marks2 = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
+  const [showTools, setShowTools] = useState(false);           // the Import / Export menu
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     type: 'quiz',
@@ -1281,7 +1283,7 @@ const Marks2 = () => {
       <div className="marks2-header">
         <div>
           <h1>Marks</h1>
-          <p className="marks2-subtitle">Enter assessment marks or manage the full gradebook workspace.</p>
+          <p className="marks2-subtitle">Enter marks, manage the gradebook and generate grades.</p>
         </div>
         <div className="marks2-actions">
           <button 
@@ -1292,44 +1294,24 @@ const Marks2 = () => {
           >
             <Plus size={16} /> Add Assessment
           </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={exportMarks}
-            disabled={!activeAssessment || !students.length}
-          >
-            <Download size={16} /> Export Assessment
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={exportAllAssessments}
-            disabled={!activeSection || !assessments.length || !students.length}
-          >
-            <Download size={16} /> Export All Assessments
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={exportAllSectionData}
-            disabled={!activeSection || !students.length}
-          >
-            <FileSpreadsheet size={16} /> Export Full Data
-          </button>
-          <label className={`btn btn-secondary ${locked ? 'is-disabled' : ''}`} title={locked ? `${lockedTitle}: marks cannot be imported` : undefined}>
-            <Upload size={16} /> Import
-            <input 
-              type="file" 
-              accept=".xlsx,.xls" 
-              onChange={handleFileImport} 
-              disabled={locked}
-              style={{ display: 'none' }} 
-            />
-          </label>
-          <button 
-            className="btn btn-secondary" 
-            onClick={downloadTemplate}
-            disabled={!activeAssessment}
-          >
-            <FileSpreadsheet size={16} /> Template
-          </button>
+          <div className="marks2-menu" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setShowTools(false); }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowTools((open) => !open)} aria-haspopup="menu" aria-expanded={showTools}>
+              <FileSpreadsheet size={16} /> Import / Export <ChevronDown size={14} />
+            </button>
+            {showTools && (
+              <div className="marks2-menu-list" role="menu" onClick={() => setShowTools(false)}>
+                <button type="button" role="menuitem" onClick={exportMarks} disabled={!activeAssessment || !students.length}><Download size={15} /> Export this assessment</button>
+                <button type="button" role="menuitem" onClick={exportAllAssessments} disabled={!activeSection || !assessments.length || !students.length}><Download size={15} /> Export all assessments</button>
+                <button type="button" role="menuitem" onClick={exportAllSectionData} disabled={!activeSection || !students.length}><FileSpreadsheet size={15} /> Export full data</button>
+                <hr />
+                <label role="menuitem" className={locked ? 'is-disabled' : ''} title={locked ? `${lockedTitle}: marks cannot be imported` : undefined}>
+                  <Upload size={15} /> Import marks
+                  <input type="file" accept=".xlsx,.xls" onChange={handleFileImport} disabled={locked} style={{ display: 'none' }} />
+                </label>
+                <button type="button" role="menuitem" onClick={downloadTemplate} disabled={!activeAssessment}><FileSpreadsheet size={15} /> Download template</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1432,7 +1414,7 @@ const Marks2 = () => {
 
         <div className="marks2-main">
           {loading ? (
-            <div className="loading">Loading...</div>
+            <Loading variant="table" rows={8} label="Loading marks" />
           ) : !activeSection ? (
             <div className="empty-state">
               <p>Select a section to view and manage marks</p>

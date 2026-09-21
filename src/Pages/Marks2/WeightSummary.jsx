@@ -32,6 +32,7 @@ const WeightSummary = ({ assessments }) => {
       <div className="weight-summary-row">
         <span>Regular weightage</span>
         <strong>{regular} / 100</strong>
+        <span className="weight-summary-bar" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, regular))}%` }} /></span>
       </div>
       {bonus > 0 && (
         <div className="weight-summary-row weight-summary-bonus">
@@ -40,7 +41,6 @@ const WeightSummary = ({ assessments }) => {
         </div>
       )}
       <p className="weight-summary-message">{message}</p>
-      <p className="weight-summary-help">Bonus is extra, on top of the 100%. It never uses up any of the 100.</p>
     </div>
   );
 };

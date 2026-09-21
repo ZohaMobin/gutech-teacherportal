@@ -22,7 +22,6 @@ test('exactly 100 is confirmed, with the bonus shown as extra on top', async () 
   expect(text).toContain('100 / 100');
   expect(text).toContain('add up to exactly 100%');
   expect(text).toContain('+2%');
-  expect(text).toContain('never uses up any of the 100');
   expect(text).not.toContain('capped');
   expect(text).toContain('Bonus (on top of 100%)');
 });

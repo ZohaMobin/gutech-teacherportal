@@ -47,10 +47,6 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
         <nav className="header-nav">
           <a href="#" className="header-nav-item">Help</a>
           <a href="#" className="header-nav-item">Support</a>
-          <a href="#" className="header-nav-item notification-icon">
-            <span>🔔</span>
-            <span className="notification-badge">3</span>
-          </a>
           
           {/* User profile */}
           <div className="user-profile">

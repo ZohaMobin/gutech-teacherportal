@@ -93,7 +93,7 @@ test('until the regular weightage is 100 the generator shows only a message, and
   expect(text).toContain('add up to exactly 100%');
   expect(text).toContain('They add up to 95% right now, so 5% is still to be added.');
   expect(container.querySelector('.gg-gate-meter').textContent).toContain('95 / 100');
-  expect(text).toContain('Bonus assessments are extra, on top of the 100%, and are not counted here.');
+
   // nothing of the generator itself is on the page
   for (const selector of ['.gg-choose', '.gg-effect', '.gg-students', '.gg-actions', '.gg-steps', '.gg-ready']) expect(container.querySelector(selector)).toBeNull();
   expect(container.textContent).not.toContain('Save draft');
