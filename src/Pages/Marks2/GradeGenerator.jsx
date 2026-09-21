@@ -34,7 +34,18 @@ const LEDE = {
 const fmt = (n) => (n === null || n === undefined ? '–' : Number(n).toFixed(2).replace(/\.?0+$/, ''));
 const sign = (n) => (n > 0 ? `+${fmt(n)}` : '–');
 const gradeText = (g) => (g && (g.grade || g)) || '–';
-const messageOf = (error) => error?.response?.data?.message || error?.message || 'Something went wrong. Please try again.';
+// What to tell a person when a request fails: the server's own plain-language message when it sent one, otherwise a
+// clear sentence about what happened and what to do.
+const messageOf = (error) => {
+  const message = error?.response?.data?.message;
+  if (message) return message;
+  const status = error?.response?.status;
+  if (status === 401) return 'Your session has ended. Please sign in again.';
+  if (status === 403) return "You don't have permission to do this.";
+  if (status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
+  if (error?.request && !error?.response) return "Couldn't reach the server. Check your internet connection and try again.";
+  return 'Something went wrong. Please try again.';
+};
 
 // What the current choice means, as a scheme the server understands (or a reason it is not ready).
 export const buildScheme = (choice, marks, target, maxUpgradeMarks) => {
@@ -220,7 +231,9 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
   const view = editable ? preview : (batch?.generation && { rows: batch.generation.rows, summary: batch.generation.summary, description: batch.generation.description });
   const summary = view?.summary;
 
+  const workflowOn = batch?.workflowEnabled !== false;
   const blocker = !editable ? null
+    : !workflowOn ? "Results processing isn't switched on yet, so you can't save or submit. Please ask a system administrator to turn it on."
     : !readiness?.hasStudents ? 'This section has no students.'
       : !readiness?.hasAssessments ? 'Add assessments and enter marks first.'
         : !weightsReady ? `The regular weightage is ${fmt(readiness.weights.regularWeight)}%. It must total exactly 100% before results can be submitted.`
@@ -273,6 +286,9 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
 
       <Stepper state={batch.state} />
 
+      {!workflowOn && editable && (
+        <div className="gg-banner info" role="status"><Info size={16} /><p><strong>Results processing isn't switched on yet.</strong> You can try out a grading choice and see its effect on every student, but saving and submitting will work once a system administrator turns it on.</p></div>
+      )}
       {batch.returnedReason && editable && (
         <div className="gg-banner warn" role="status"><AlertTriangle size={16} /><div><strong>Returned by the administrator</strong><p>{batch.returnedReason}</p></div></div>
       )}
@@ -384,7 +400,7 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
         <div className="gg-actions">
           <p className={`gg-blocker ${blocker ? 'on' : ''}`} role="status">{blocker ? <><Info size={14} />{blocker}</> : 'Ready to submit. You can still save a draft and come back.'}</p>
           <div className="gg-buttons">
-            <button type="button" className="btn btn-secondary" onClick={saveDraft} disabled={busy || Boolean(problem) || !reasonOk}><Save size={16} /> Save draft</button>
+            <button type="button" className="btn btn-secondary" onClick={saveDraft} disabled={busy || !workflowOn || Boolean(problem) || !reasonOk}><Save size={16} /> Save draft</button>
             <button type="button" className="btn btn-primary" onClick={() => { setAcknowledge(false); setConfirming(true); }} disabled={busy || Boolean(blocker)}><Send size={16} /> Submit to admin</button>
           </div>
         </div>
