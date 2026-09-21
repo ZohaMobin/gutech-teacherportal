@@ -134,3 +134,20 @@ test('saving sends only the marks that changed, and does not reload them afterwa
   await save(); await wait(20);
   expect(axios.put).toHaveBeenCalledTimes(1);                                // nothing changed since: nothing sent
 });
+
+test('opening the gradebook loads every mark with ONE request, however many assessments there are', async () => {
+  await mount();
+  axios.get.mockImplementation((url) => {
+    if (url.includes('/students')) return Promise.resolve({ data: [{ id: 'r1', registrationId: 'g1', rollNumber: 'R-1', name: 'Ayesha' }] });
+    if (url.includes('/section/s1/marks')) return Promise.resolve({ data: { marks: { a1: { r1: 7 }, a2: { r1: 55 } } } });
+    if (url.includes('/status')) return Promise.resolve({ data: { workflowEnabled: true, state: 'OPEN', marksFrozen: false } });
+    if (url.includes('/assessments/section/')) return Promise.resolve({ data: { assessments } });
+    return Promise.resolve({ data: [] });
+  });
+  axios.get.mockClear();
+  await click([...container.querySelectorAll('.marks-view-tab')].find((b) => b.textContent.includes('Gradebook')));
+  await wait(50);
+  const marksCalls = axios.get.mock.calls.map(([u]) => u).filter((u) => /\/marks$/.test(u));
+  expect(marksCalls).toHaveLength(1);
+  expect(marksCalls[0]).toContain('/section/s1/marks');
+});
