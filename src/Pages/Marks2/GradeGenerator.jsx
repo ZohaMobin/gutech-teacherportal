@@ -153,7 +153,41 @@ const StudentRows = ({ rows, ledger }) => {
   );
 };
 
-const GradeGenerator = ({ section, apiUrl, headers }) => {
+// Shown instead of the generator until the regular weightage totals exactly 100%: there is nothing to grade fairly before then.
+const NotReady = ({ section, weights, hasAssessments, onOpenEntry }) => {
+  const regular = Number(weights?.regularWeight) || 0;
+  const none = !hasAssessments || regular === 0;
+  const invalid = weights?.status === 'invalid';
+  const over = regular > 100;
+  const width = Math.max(0, Math.min(100, regular));
+  return (
+    <section className="gg" aria-label="Grade generator">
+      <div className="gg-panel gg-gate" role="status">
+        <span className="gg-gate-icon" aria-hidden="true"><SlidersHorizontal size={22} /></span>
+        <p className="gg-eyebrow">Grade generator</p>
+        <h2>{none ? 'Add your assessments first' : "The grade generator isn't ready yet"}</h2>
+        <p className="gg-gate-course">{section.courseId?.name || 'Selected course'} · Section {section.section || section.name || '–'}</p>
+        <p className="gg-gate-text">
+          {invalid
+            ? 'Some assessments have a missing or invalid weightage or maximum marks. Fix them on the Assessment Entry tab.'
+            : none
+              ? 'No assessments have been added to this section yet. Add your quizzes, assignments, midterm and final on the Assessment Entry tab. Their weightage needs to add up to exactly 100%.'
+              : `Grades can be generated once the regular assessments add up to exactly 100%. They add up to ${fmt(regular)}% right now, ${over ? `so ${fmt(regular - 100)}% needs to come off.` : `so ${fmt(100 - regular)}% is still to be added.`}`}
+        </p>
+        {!none && !invalid && (
+          <div className="gg-gate-meter" aria-label={`Regular weightage: ${fmt(regular)} out of 100`}>
+            <div className="gg-gate-track"><i className={over ? 'over' : ''} style={{ width: `${width}%` }} /></div>
+            <span>{fmt(regular)} / 100</span>
+          </div>
+        )}
+        <p className="gg-gate-note">Bonus assessments are extra, on top of the 100%, and are not counted here.</p>
+        {onOpenEntry && <button type="button" className="btn btn-primary" onClick={onOpenEntry}>Go to Assessment Entry</button>}
+      </div>
+    </section>
+  );
+};
+
+const GradeGenerator = ({ section, apiUrl, headers, onOpenEntry }) => {
   const sectionId = section?._id;
   const [batch, setBatch] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -202,12 +236,13 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
   }, [load]);
 
   const editable = batch?.state === 'OPEN';
+  const weightsOk = batch?.readiness?.weights?.ready === true;
   const maxUpgradeMarks = batch?.policy?.maxUpgradeMarks;
   const { scheme, problem } = useMemo(() => buildScheme(choice, marks, target, maxUpgradeMarks), [choice, marks, target, maxUpgradeMarks]);
 
   // The live preview: what the class would look like. Nothing is saved by looking.
   useEffect(() => {
-    if (!editable || !scheme) { setPreview(null); return undefined; }
+    if (!editable || !weightsOk || !scheme) { setPreview(null); return undefined; }
     const token = ++previewToken.current;
     setPreviewing(true);
     const timer = setTimeout(async () => {
@@ -221,7 +256,7 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [base, config, editable, scheme]);
+  }, [base, config, editable, weightsOk, scheme]);
 
   const needsReason = choice !== 'NONE';
   const reasonOk = !needsReason || reason.trim().length >= 5;
@@ -263,6 +298,8 @@ const GradeGenerator = ({ section, apiUrl, headers }) => {
 
   if (loadError) return <div className="gg-panel gg-error" role="alert"><AlertTriangle size={18} /><span>{loadError}</span><button type="button" className="btn btn-secondary" onClick={load}>Try again</button></div>;
   if (!batch) return <div className="gg-panel gg-loading" aria-busy="true"><div className="gg-skel wide" /><div className="gg-skel" /><div className="gg-skel" /></div>;
+
+  if (editable && !weightsOk) return <NotReady section={section} weights={batch.readiness?.weights} hasAssessments={batch.readiness?.hasAssessments} onOpenEntry={onOpenEntry} />;
 
   const info = STATE_INFO[batch.state] || STATE_INFO.OPEN;
   const banner = {

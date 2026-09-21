@@ -84,10 +84,60 @@ test('submitting saves the choice first, asks for confirmation, and only then su
   expect(submit).toBeTruthy();
 });
 
-test('when the weightage is not 100 the teacher is told and cannot submit', async () => {
-  await mount(batch({ readiness: { ...readiness, weights: { ready: false, regularWeight: 95 }, readyToSubmit: false } }));
-  expect(container.querySelector('.gg-blocker').textContent).toContain('95%');
-  expect(button('Submit to admin').disabled).toBe(true);
+const notReady = (weights, extra = {}) => batch({ readiness: { ...readiness, weights: { ready: false, ...weights }, readyToSubmit: false, ...extra } });
+
+test('until the regular weightage is 100 the generator shows only a message, and says how much is missing', async () => {
+  await mount(notReady({ regularWeight: 95 }));
+  const text = container.textContent;
+  expect(text).toContain("The grade generator isn't ready yet");
+  expect(text).toContain('add up to exactly 100%');
+  expect(text).toContain('They add up to 95% right now, so 5% is still to be added.');
+  expect(container.querySelector('.gg-gate-meter').textContent).toContain('95 / 100');
+  expect(text).toContain('Bonus assessments are extra, on top of the 100%, and are not counted here.');
+  // nothing of the generator itself is on the page
+  for (const selector of ['.gg-choose', '.gg-effect', '.gg-students', '.gg-actions', '.gg-steps', '.gg-ready']) expect(container.querySelector(selector)).toBeNull();
+  expect(container.textContent).not.toContain('Save draft');
+});
+
+test('over 100 says how much has to come off', async () => {
+  await mount(notReady({ regularWeight: 110 }));
+  expect(container.textContent).toContain('They add up to 110% right now, so 10% needs to come off.');
+  expect(container.querySelector('.gg-gate-track i').className).toContain('over');
+  expect(container.querySelector('.gg-gate-track i').style.width).toBe('100%');
+});
+
+test('with no assessments at all it asks for them first', async () => {
+  await mount(notReady({ regularWeight: 0 }, { hasAssessments: false }));
+  expect(container.textContent).toContain('Add your assessments first');
+  expect(container.textContent).toContain('No assessments have been added to this section yet.');
+  expect(container.querySelector('.gg-gate-meter')).toBeNull();
+});
+
+test('an assessment with a missing weightage or maximum is called out', async () => {
+  await mount(notReady({ regularWeight: 90, status: 'invalid' }));
+  expect(container.textContent).toContain('missing or invalid weightage or maximum marks');
+});
+
+test('while it is not ready nothing is previewed, and the button takes the teacher to Assessment Entry', async () => {
+  const opened = jest.fn();
+  axios.get.mockResolvedValue({ data: notReady({ regularWeight: 95 }) });
+  await act(async () => { root.render(<GradeGenerator section={section} apiUrl="http://api" headers={() => ({})} onOpenEntry={opened} />); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 380)); });
+  expect(axios.post).not.toHaveBeenCalled();
+  await act(async () => { button('Go to Assessment Entry').click(); });
+  expect(opened).toHaveBeenCalledTimes(1);
+});
+
+test('at exactly 100 the generator appears as normal', async () => {
+  await mount(batch());
+  expect(container.querySelector('.gg-gate')).toBeNull();
+  expect(container.querySelector('.gg-choose')).not.toBeNull();
+});
+
+test('a section that is already submitted still shows its results, whatever the weightage now says', async () => {
+  await mount(batch({ state: 'SUBMITTED', readiness: { ...readiness, weights: { ready: false, regularWeight: 95 } }, generation: { scheme: { type: 'NONE' }, description: 'As entered (no upgrade)', summary, rows: preview.rows.map(({ rawGrade, finalGrade, ...r }) => r) } }));
+  expect(container.querySelector('.gg-gate')).toBeNull();
+  expect(container.textContent).toContain('Submitted');
 });
 
 test('a submitted section is read-only: no choices, no submit, and a clear notice', async () => {
