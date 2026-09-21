@@ -7,7 +7,7 @@ import Marks2 from './Marks2';
 jest.mock('axios');
 jest.mock('xlsx', () => ({}));
 jest.mock('lucide-react', () => new Proxy({ __esModule: true }, { get: (target, name) => (name in target ? target[name] : () => null) }));
-jest.mock('react-hot-toast', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+jest.mock('react-hot-toast', () => ({ toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const { toast } = require('react-hot-toast');
@@ -103,4 +103,34 @@ test('an open section shows no lock notice and its controls work', async () => {
   const add = [...container.querySelectorAll('button')].find((b) => b.textContent.includes('Add Assessment'));
   expect(add.disabled).toBe(false);
   expect(toast.error).not.toHaveBeenCalled();
+});
+
+test('saving sends only the marks that changed, and does not reload them afterwards', async () => {
+  await mount();
+  axios.get.mockImplementation((url) => {
+    if (url.includes('/getSections/')) return Promise.resolve({ data: [{ _id: 's1', section: 'A', courseId: { name: 'Linear Algebra' } }] });
+    if (url.includes('/academic-years/current')) return Promise.resolve({ data: { _id: 't1' } });
+    if (url.includes('/status')) return Promise.resolve({ data: { workflowEnabled: true, state: 'OPEN', marksFrozen: false } });
+    if (url.includes('/students')) return Promise.resolve({ data: [{ id: 'r1', registrationId: 'g1', rollNumber: 'R-1', name: 'Ayesha' }, { id: 'r2', registrationId: 'g2', rollNumber: 'R-2', name: 'Bilal' }] });
+    if (url.includes('/assessments/section/')) return Promise.resolve({ data: { assessments } });
+    if (url.includes('/marks')) return Promise.resolve({ data: { marks: { r1: 7 } } });
+    return Promise.resolve({ data: [] });
+  });
+  axios.put.mockResolvedValue({ data: { grades: [] } });
+  await click(container.querySelectorAll('.section-item')[0]);            // reload the section with the new students
+  await wait(20);
+  await click(container.querySelector('.assessment-item'));
+  await wait(30);
+  const inputs = [...container.querySelectorAll('.marks-table input[type="number"], .students-table input[type="number"], input.mark-input')];
+  expect(inputs.length).toBeGreaterThanOrEqual(2);
+  await type(inputs[1], '9');
+  const save = () => click([...container.querySelectorAll('button')].find((b) => b.textContent.includes('Save Marks')));
+  const marksGets = () => axios.get.mock.calls.filter(([u]) => /assessment\/a1\/marks/.test(u)).length;
+  const before = marksGets();
+  await save(); await wait(20);
+  expect(axios.put).toHaveBeenCalledTimes(1);
+  expect(axios.put.mock.calls[0][1].grades).toEqual([{ registrationId: 'g2', obtainedMarks: 9, feedback: '' }]);   // Ayesha's 7 is already saved
+  expect(marksGets()).toBe(before);                                          // no reload after saving
+  await save(); await wait(20);
+  expect(axios.put).toHaveBeenCalledTimes(1);                                // nothing changed since: nothing sent
 });
