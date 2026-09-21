@@ -23,6 +23,8 @@ test('exactly 100 is confirmed, with the bonus shown as extra on top', async () 
   expect(text).toContain('add up to exactly 100%');
   expect(text).toContain('+2%');
   expect(text).toContain('never uses up any of the 100');
+  expect(text).not.toContain('capped');
+  expect(text).toContain('Bonus (on top of 100%)');
 });
 
 test('under 100 says how much is still to add', async () => {
@@ -39,6 +41,6 @@ test('over 100 says by how much, and points to the Bonus tick for extra credit',
 });
 
 test('with no bonus the extra-credit line is not shown, and with no assessments nothing is shown', async () => {
-  expect(await show([a(100)])).not.toContain('Extra credit');
+  expect(await show([a(100)])).not.toContain('Bonus (on top of 100%)');
   expect(await show([])).toBe('');
 });

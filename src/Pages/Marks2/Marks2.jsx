@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import WeightSummary from './WeightSummary';
+import BonusExplainer, { BONUS_WEIGHT_LABEL } from './BonusExplainer';
 import GradeGenerator from './GradeGenerator';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -317,8 +318,8 @@ const Marks2 = () => {
         used,
         left,
         problem: left === 0
-          ? `The other assessments already use all 100% of this section. Lower another assessment first, or tick "Bonus" for extra credit.`
-          : `Only ${left}% is left in this section (the other assessments use ${used}%). Lower this to ${left}% or less, or tick "Bonus" for extra credit.`,
+          ? `The other assessments already use all 100% of this section. Lower another assessment first, or tick "Bonus" if it is extra credit on top of the 100%.`
+          : `Only ${left}% is left in this section (the other assessments use ${used}%). Lower this to ${left}% or less, or tick "Bonus" if it is extra credit on top of the 100%.`,
       };
     }
     return { used, left, problem: null };
@@ -1745,7 +1746,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>{newAssessment.isBonus ? 'Extra credit weightage (%, on top of the 100)' : 'Weightage (%)'}</label>
+                <label>{newAssessment.isBonus ? BONUS_WEIGHT_LABEL : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1757,21 +1758,7 @@ const Marks2 = () => {
                   ? <p className="weight-limit-message" role="alert">{addWeight.problem}</p>
                   : !newAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {addWeight.left}%</p>}
               </div>
-              <div className="form-group bonus-checkbox-group">
-                <label className="bonus-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(newAssessment.isBonus)}
-                    onChange={(e) => setNewAssessment({ ...newAssessment, isBonus: e.target.checked })}
-                  />
-                  <span>Extra credit (bonus)</span>
-                </label>
-                <p className="bonus-help-text">
-                  Tick this only for <strong>extra credit</strong>, for example to help a student who is not passing or to let students score better.
-                  It is added <strong>on top of</strong> the course's 100%, so it never uses up any of the 100. Leave it unticked if this is a normal
-                  part of the course grade. A student's total is still shown as at most 100%.
-                </p>
-              </div>
+              <BonusExplainer id="bonus-new" checked={newAssessment.isBonus} onChange={(isBonus) => setNewAssessment({ ...newAssessment, isBonus })} />
               <div className="form-group">
                 <label>Description</label>
                 <textarea 
@@ -1909,7 +1896,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>{editingAssessment.isBonus ? 'Extra credit weightage (%, on top of the 100)' : 'Weightage (%)'}</label>
+                <label>{editingAssessment.isBonus ? BONUS_WEIGHT_LABEL : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1924,26 +1911,7 @@ const Marks2 = () => {
                   ? <p className="weight-limit-message" role="alert">{editWeight.problem}</p>
                   : !editingAssessment.isBonus && <p className="weight-limit-hint">Available in this section: {editWeight?.left}%</p>}
               </div>
-              <div className="form-group bonus-checkbox-group">
-                <label className="bonus-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(editingAssessment.isBonus)}
-                    onChange={(e) =>
-                      setEditingAssessment({
-                        ...editingAssessment,
-                        isBonus: e.target.checked,
-                      })
-                    }
-                  />
-                  <span>Extra credit (bonus)</span>
-                </label>
-                <p className="bonus-help-text">
-                  Tick this only for <strong>extra credit</strong>, for example to help a student who is not passing or to let students score better.
-                  It is added <strong>on top of</strong> the course's 100%, so it never uses up any of the 100. Leave it unticked if this is a normal
-                  part of the course grade. A student's total is still shown as at most 100%.
-                </p>
-              </div>
+              <BonusExplainer id="bonus-edit" checked={editingAssessment.isBonus} onChange={(isBonus) => setEditingAssessment({ ...editingAssessment, isBonus })} />
               <div className="form-group">
                 <label>Description</label>
                 <textarea 

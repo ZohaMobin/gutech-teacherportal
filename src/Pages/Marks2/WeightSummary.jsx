@@ -25,7 +25,7 @@ const WeightSummary = ({ assessments }) => {
     ? 'The regular assessments add up to exactly 100%.'
     : gap > 0
       ? `${gap}% is still to be added to reach 100%.`
-      : `${-gap}% over 100%. Lower a weightage, or if one of these is extra credit, tick Bonus on it.`;
+      : `${-gap}% over 100%. Lower a weightage, or if one of these is extra credit, tick Bonus on it (bonus is on top of the 100%).`;
 
   return (
     <div className={`weight-summary weight-summary-${tone}`} role="status">
@@ -35,12 +35,12 @@ const WeightSummary = ({ assessments }) => {
       </div>
       {bonus > 0 && (
         <div className="weight-summary-row weight-summary-bonus">
-          <span>Extra credit (bonus)</span>
+          <span>Bonus (on top of 100%)</span>
           <strong>+{bonus}%</strong>
         </div>
       )}
       <p className="weight-summary-message">{message}</p>
-      <p className="weight-summary-help">Bonus is extra credit on top of the 100%. It never uses up any of the 100.</p>
+      <p className="weight-summary-help">Bonus is extra, on top of the 100%. It never uses up any of the 100.</p>
     </div>
   );
 };
