@@ -29,6 +29,7 @@ const Attendance = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
+  const [showSlotOptions, setShowSlotOptions] = useState(false);
 
   // Get auth token from session storage
   const getAuthToken = () => {
@@ -919,97 +920,50 @@ const Attendance = () => {
                   </div>
                 </div>
 
-                <div className="session-panel">
-                  <div className="controls-panel-header">
-                    <div>
-                      <span className="controls-panel-label">Attendance Slots</span>
-                      <h3>Session Selection</h3>
-                    </div>
-                    <div className="slot-management-actions">
-                      <button className="btn-quick clear" onClick={addNewSlot}>
-                        + Slot
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="slot-compact-layout">
-                    <div className="slot-inline-group slot-list-group">
+                <div className="slotbar">
+                  <div className="slotbar-row">
+                    <span className="slotbar-label">Slot</span>
+                    <div className="slotbar-pills" role="group" aria-label="Attendance slots">
                       {slotNumbersForDisplay.map((slotNumber) => (
                         <button
                           key={slotNumber}
-                          className={`btn-quick slot-pill ${selectedSlotNumber === slotNumber ? "present" : "clear"}`}
+                          type="button"
+                          className={`slotbar-pill ${selectedSlotNumber === slotNumber ? "is-on" : ""}`}
+                          aria-pressed={selectedSlotNumber === slotNumber}
                           onClick={() => handleSlotChange(slotNumber)}
                         >
                           S{slotNumber}
                         </button>
                       ))}
+                      <button type="button" className="slotbar-pill slotbar-add" onClick={addNewSlot} title="Add another slot for this date">+ Slot</button>
                     </div>
+                    <button type="button" className="slotbar-toggle" onClick={() => setShowSlotOptions((open) => !open)} aria-expanded={showSlotOptions} aria-controls="slot-options">
+                      Options <span aria-hidden="true">{showSlotOptions ? "▴" : "▾"}</span>
+                    </button>
+                  </div>
 
-                    <details className="slot-more">
-                      <summary>Slot options</summary>
-                      <div className="slot-more-body">
-                    <div className="slot-meta-card">
-                      <div className="slot-meta-copy">
-                        <span className="slot-meta-label">Active slot</span>
-                        <strong>S{selectedSlotNumber}</strong>
-                      </div>
-                      <div className="slot-inline-group slot-duration-group">
-                        <label htmlFor="slot-duration" className="quick-actions-label">
-                          Duration
-                        </label>
-                        <div className="slot-duration-input-wrap">
-                          <input
-                            id="slot-duration"
-                            type="number"
-                            min="1"
-                            className="slot-duration-input"
-                            value={slotDurationMinutes}
-                            onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)}
-                          />
-                          <span className="slot-duration-unit">min</span>
+                  {showSlotOptions && (
+                    <div className="slotbar-options" id="slot-options">
+                      <div className="slotbar-field">
+                        <label htmlFor="slot-duration">Duration</label>
+                        <div className="slotbar-input">
+                          <input id="slot-duration" type="number" min="1" value={slotDurationMinutes} onChange={(e) => setSlotDurationMinutes(Number(e.target.value) || 75)} />
+                          <span>min</span>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="slot-inline-group slot-copy-controls slot-copy-inline">
-                      <span className="quick-actions-label">Copy attendance</span>
-                      <select
-                        className="slot-copy-select"
-                        value={copyFromSlotNumber}
-                        onChange={(e) => setCopyFromSlotNumber(e.target.value)}
-                        disabled={availableSourceSlots.length === 0}
-                        title="Copy attendance from another slot"
-                      >
-                        {availableSourceSlots.length === 0 ? (
-                          <option value="">Copy from</option>
-                        ) : (
-                          <>
-                            <option value="" disabled>
-                              Copy from
-                            </option>
-                            {availableSourceSlots.map((slotNumber) => (
-                              <option key={slotNumber} value={slotNumber}>
-                                Slot {slotNumber}
-                              </option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                      <button
-                        className="btn-quick clear"
-                        onClick={copyAttendanceFromSlot}
-                        disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}
-                        title={`Copy selected slot attendance to Slot ${selectedSlotNumber}`}
-                      >
-                        Copy to S{selectedSlotNumber}
-                      </button>
-                    </div>
-                        <button className="btn-quick absent" onClick={deleteSelectedSlot}>
-                          Delete S{selectedSlotNumber}
-                        </button>
+                      <div className="slotbar-field slotbar-copy">
+                        <label htmlFor="slot-copy-from">Copy attendance from</label>
+                        <div className="slotbar-input">
+                          <select id="slot-copy-from" value={copyFromSlotNumber} onChange={(e) => setCopyFromSlotNumber(e.target.value)} disabled={availableSourceSlots.length === 0} title="Copy attendance from another slot">
+                            <option value="" disabled>{availableSourceSlots.length === 0 ? "No other slot yet" : "Choose a slot"}</option>
+                            {availableSourceSlots.map((slotNumber) => <option key={slotNumber} value={slotNumber}>Slot {slotNumber}</option>)}
+                          </select>
+                          <button type="button" className="slotbar-btn" onClick={copyAttendanceFromSlot} disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}>Copy to S{selectedSlotNumber}</button>
+                        </div>
                       </div>
-                    </details>
-                  </div>
+                      <button type="button" className="slotbar-btn slotbar-danger" onClick={deleteSelectedSlot}>Delete S{selectedSlotNumber}</button>
+                    </div>
+                  )}
                 </div>
               </div>
 

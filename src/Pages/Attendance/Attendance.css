@@ -1161,3 +1161,31 @@
 .attendance-btn { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 .attendance-actions { gap: 0.35rem; }
 .students-table-container { overflow-x: auto; }
+
+/* ---------- slot bar: slots on one line, the rarely-used options in a tidy row underneath ---------- */
+.slotbar { background: var(--background-white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; display: grid; gap: 0.6rem; }
+.slotbar-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.slotbar-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); }
+.slotbar-pills { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; flex: 1 1 auto; min-width: 0; }
+.slotbar-pill { min-width: 2.4rem; height: 1.9rem; padding: 0 0.7rem; border: 1px solid var(--border-color); border-radius: 999px; background: var(--background-white); font: inherit; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+.slotbar-pill:hover { background: var(--background-light); }
+.slotbar-pill.is-on { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.slotbar-add { border-style: dashed; color: var(--primary-color); }
+.slotbar-toggle { margin-left: auto; border: 0; background: none; padding: 0.25rem 0.4rem; font: inherit; font-size: 0.82rem; font-weight: 600; color: var(--primary-color); cursor: pointer; border-radius: var(--radius-sm); }
+.slotbar-toggle:hover { background: var(--primary-light); }
+.slotbar-options { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem 1rem; padding-top: 0.6rem; border-top: 1px solid var(--border-color); }
+.slotbar-field { display: grid; gap: 0.25rem; min-width: 0; }
+.slotbar-field > label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+.slotbar-copy { flex: 1 1 15rem; }
+.slotbar-input { display: flex; align-items: center; gap: 0.4rem; }
+.slotbar-input span { font-size: 0.82rem; color: var(--text-secondary); }
+.slotbar-input input, .slotbar-input select { height: 2.1rem; padding: 0 0.6rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-white); font: inherit; font-size: 0.85rem; color: var(--text-primary); min-width: 0; }
+.slotbar-input input { width: 4.5rem; }
+.slotbar-input select { flex: 1 1 auto; }
+.slotbar-input select:disabled { background: var(--background-light); color: var(--text-light); }
+.slotbar-btn { height: 2.1rem; padding: 0 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-white); font: inherit; font-size: 0.82rem; font-weight: 500; color: var(--text-primary); cursor: pointer; white-space: nowrap; }
+.slotbar-btn:hover:not(:disabled) { background: var(--background-light); }
+.slotbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.slotbar-danger { margin-left: auto; color: var(--error-color); border-color: rgba(239, 68, 68, 0.4); }
+.slotbar-danger:hover:not(:disabled) { background: var(--error-light); }
+.slotbar :is(button, select, input):focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
