@@ -119,3 +119,40 @@ test('a load failure is shown with a way to try again', async () => {
   expect(container.textContent).toContain('You do not teach this section');
   expect(button('Try again')).toBeTruthy();
 });
+
+test('when results processing is switched off the teacher is told up front, can still preview, and cannot save or submit', async () => {
+  await mount(batch({ workflowEnabled: false }));
+  expect(container.textContent).toContain("Results processing isn't switched on yet.");
+  expect(container.textContent).toContain('ask a system administrator to turn it on');
+  expect(container.querySelector('.gg-blocker').textContent).toContain("you can't save or submit");
+  expect(container.textContent).not.toMatch(/workflow|flag|resultBatches/i);
+  await choose(1);
+  expect(axios.post).toHaveBeenCalledWith(expect.stringContaining('/preview'), expect.anything(), expect.anything());   // trying it out still works
+  expect(button('Save draft').disabled).toBe(true);
+  expect(button('Submit to admin').disabled).toBe(true);
+});
+
+test('with processing switched on there is no such notice', async () => {
+  await mount(batch({ workflowEnabled: true }));
+  expect(container.textContent).not.toContain("isn't switched on yet");
+});
+
+test('failures are explained in plain words: no connection, a server fault, and a signed-out session', async () => {
+  let n = 0;
+  const failWith = async (error) => {
+    axios.get.mockRejectedValue(error);
+    n += 1;
+    await act(async () => { root.render(<GradeGenerator section={{ ...section, _id: `s${n}` }} apiUrl="http://api" headers={() => ({})} />); });
+    return container.querySelector('.gg-error').textContent;
+  };
+  expect(await failWith({ request: {} })).toContain("Couldn't reach the server. Check your internet connection and try again.");
+  expect(await failWith({ response: { status: 500, data: {} } })).toContain('Something went wrong on our side. Please try again in a moment.');
+  expect(await failWith({ response: { status: 401, data: {} } })).toContain('Your session has ended. Please sign in again.');
+  expect(await failWith({ response: { status: 403, data: {} } })).toContain("You don't have permission to do this.");
+});
+
+test("the server's own plain message is shown as it is, for example when the rules have not been set up", async () => {
+  axios.get.mockRejectedValue({ response: { status: 409, data: { code: 'POLICY_MISSING', message: "The university's academic rules have not been set up yet. Please ask a system administrator to set them up." } } });
+  await act(async () => { root.render(<GradeGenerator section={section} apiUrl="http://api" headers={() => ({})} />); });
+  expect(container.querySelector('.gg-error').textContent).toContain('academic rules have not been set up yet');
+});
