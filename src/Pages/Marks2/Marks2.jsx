@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import WeightSummary from './WeightSummary';
+import GradeGenerator from './GradeGenerator';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 
@@ -1333,6 +1334,14 @@ const Marks2 = () => {
           <Table2 size={16} />
           Gradebook Workspace
         </button>
+        <button
+          type="button"
+          className={`marks-view-tab ${activeMarksView === 'generator' ? 'active' : ''}`}
+          onClick={() => setActiveMarksView('generator')}
+        >
+          <Sparkles size={16} />
+          Grade Generator
+        </button>
       </div>
 
       {error && (
@@ -1342,7 +1351,7 @@ const Marks2 = () => {
         </div>
       )}
 
-      <div className="marks2-content">
+      <div className={`marks2-content ${activeMarksView === 'generator' ? 'is-generator' : ''}`}>
         <div className="marks2-sidebar">
           <div className="section-selector">
             <h3>Sections</h3>
@@ -1408,6 +1417,8 @@ const Marks2 = () => {
             <div className="empty-state">
               <p>Select a section to view and manage marks</p>
             </div>
+          ) : activeMarksView === 'generator' ? (
+            <GradeGenerator section={activeSection} apiUrl={apiUrl} headers={requestHeaders} />
           ) : activeMarksView === 'workspace' ? (
             <>
               <div className="workspace-header">

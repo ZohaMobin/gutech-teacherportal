@@ -1153,3 +1153,13 @@
 .weight-summary-bonus { color: #92400e; }
 .weight-summary-message { margin: 6px 0 2px; font-weight: 600; }
 .weight-summary-help { margin: 2px 0 0; color: #6b7280; font-size: 0.8rem; }
+
+/* Grade Generator tab: the section list becomes a slim row of chips above a full-width screen. */
+.marks2-content.is-generator { flex-direction: column; height: auto; min-height: 0; gap: var(--spacing-sm); }
+.marks2-content.is-generator .marks2-sidebar { width: 100%; flex-direction: row; align-items: center; padding: 10px var(--spacing-md); gap: var(--spacing-sm); }
+.marks2-content.is-generator .assessment-selector { display: none; }
+.marks2-content.is-generator .section-selector { display: flex; align-items: center; gap: var(--spacing-sm); min-width: 0; flex: 1; }
+.marks2-content.is-generator .section-selector h3 { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); flex: none; }
+.marks2-content.is-generator .section-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-height: none; padding: 2px; }
+.marks2-content.is-generator .section-item { flex: none; white-space: nowrap; padding: 6px 14px; font-size: 0.875rem; }
+.marks2-content.is-generator .marks2-main { overflow: visible; }
