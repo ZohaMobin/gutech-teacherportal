@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import WeightSummary from './WeightSummary';
+import BonusExplainer, { BONUS_WEIGHT_LABEL } from './BonusExplainer';
+import WeightMeter from './WeightMeter';
+import LockedNotice, { lockText } from './LockedNotice';
+import { messageOf } from './apiMessage';
+import GradeGenerator from './GradeGenerator';
+import Loading from '../../Components/Loading/Loading';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { getEstimatedGrade } from '../../utils/gradingScale';
 import './Marks2.css';
 
 const sortStudentsAscending = (studentsList = []) =>
@@ -43,6 +49,10 @@ const Marks2 = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
+  const [showTools, setShowTools] = useState(false);
+  // What the server has for each assessment, as last loaded or saved: { assessmentId: { studentId: mark } }. Saving sends only
+  // the marks that differ from it, and needs no reload afterwards.
+  const savedMarks = useRef({});           // the Import / Export menu
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     type: 'quiz',
@@ -54,6 +64,10 @@ const Marks2 = () => {
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
   const [activeMarksView, setActiveMarksView] = useState('entry');
+  // Whether this section's marks can still be edited (submitted, approved, published or locked sections are read-only).
+  const [sectionStatus, setSectionStatus] = useState(null);
+  // A failure inside the Add/Edit dialog is shown in the dialog, where the teacher is looking, not behind it.
+  const [dialogError, setDialogError] = useState(null);
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,6 +75,8 @@ const Marks2 = () => {
   const [maxMarks, setMaxMarks] = useState('');
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
+  // The university grading scale, as the server holds it (highest band first).
+  const [gradeBands, setGradeBands] = useState([]);
 
   // API URL from environment variable
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -99,21 +115,12 @@ const Marks2 = () => {
     }
   };
 
-  // Error handling utility
-  const handleApiError = (error) => {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 404) {
-        setError("Section or students not found. Please refresh the page.");
-      } else if (error.response?.status === 403) {
-        setError("You don't have permission to perform this action.");
-      } else if (error.response?.status === 400) {
-        setError(error.response.data.message || "Invalid request. Please check your input.");
-      } else {
-        setError("Network error. Please check your connection.");
-      }
-    } else {
-      setError("An unexpected error occurred. Please try again.");
-    }
+  // Error handling utility. The server's own message is shown whenever it sent one; "network error" is only for a real
+  // connection problem. options.dialog puts the message in the open dialog; options.notify also raises a toast.
+  const handleApiError = (error, { dialog = false, notify = false } = {}) => {
+    const message = messageOf(error, { notFound: 'Section or students not found. Please refresh the page.' });
+    if (dialog) setDialogError(message); else setError(message);
+    if (notify) toast.error(message);
     console.error("API Error:", error);
   };
 
@@ -237,6 +244,7 @@ const Marks2 = () => {
       });
 
       if (response.data && response.data.marks) {
+        savedMarks.current[assessmentId] = { ...response.data.marks };
         // Update student marks with the fetched marks
         setStudentMarks(prevMarks => {
           const updatedMarks = { ...prevMarks };
@@ -270,6 +278,7 @@ const Marks2 = () => {
     // Reset states when changing sections
     setActiveSection(section);
     setActiveAssessment(null);
+    savedMarks.current = {};
     setStudentMarks({});
     setAssessments([]);
     setSearchTerm('');
@@ -285,6 +294,49 @@ const Marks2 = () => {
   const handleAssessmentChange = (assessment) => {
     setActiveAssessment(assessment);
     fetchAssessmentMarks(assessment._id);
+  };
+
+  // Load the grading scale from the server once; letters are looked up against it, never hard-coded here.
+  useEffect(() => {
+    axios
+      .get(`${apiUrl}/api/results/grading-scale`, { headers: requestHeaders() })
+      .then((response) => setGradeBands(response.data.bands || []))
+      .catch(() => setGradeBands([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A section's ordinary (non-bonus) weightage may not add up to more than 100. The server enforces this;
+  // this mirrors it so the teacher is told why Save is disabled, before they try.
+  const weightInfo = (candidate, original) => {
+    const excludeId = original?._id;
+    const used = assessments
+      .filter((a) => a._id !== excludeId && !a.isBonus)
+      .reduce((sum, a) => sum + (Number(a.weightage) || 0), 0);
+    const left = Math.max(0, 100 - used);
+    if (candidate.isBonus) return { used, left, problem: null };
+    const before = used + (original && !original.isBonus ? Number(original.weightage) || 0 : 0);
+    const after = used + (Number(candidate.weightage) || 0);
+    if (after > 100 && after > before) {
+      return {
+        used,
+        left,
+        problem: left === 0
+          ? `The other assessments already use all 100% of this section. Lower another assessment first, or tick "Bonus" if it is extra credit on top of the 100%.`
+          : `Only ${left}% is left in this section (the other assessments use ${used}%). Lower this to ${left}% or less, or tick "Bonus" if it is extra credit on top of the 100%.`,
+      };
+    }
+    return { used, left, problem: null };
+  };
+
+  const addWeight = weightInfo(newAssessment, null);
+  const editWeight = editingAssessment
+    ? weightInfo(editingAssessment, assessments.find((a) => a._id === editingAssessment._id))
+    : null;
+
+  const estimatedGradeFor = (percentage) => {
+    if (percentage === null || percentage === undefined || Number.isNaN(percentage) || gradeBands.length === 0) return 'N/A';
+    const band = gradeBands.find((b) => !b.isSpecialGrade && percentage >= b.minPercentage);
+    return band ? band.grade : 'N/A';
   };
 
   // Filter students based on search term and marks range
@@ -361,7 +413,8 @@ const Marks2 = () => {
         if (mark !== undefined && mark !== '' && !isNaN(Number(mark))) {
           // Find the student's registration ID
           const student = students.find(s => s.id === studentId);
-          if (student && student.registrationId) {
+          const unchanged = String(savedMarks.current[activeAssessment._id]?.[studentId] ?? '') === String(mark);
+          if (student && student.registrationId && !unchanged) {
             grades.push({
               registrationId: student.registrationId,
               obtainedMarks: Number(mark),
@@ -373,7 +426,9 @@ const Marks2 = () => {
 
       // Validate that we have grades to save
       if (grades.length === 0) {
-        toast.error('No valid marks to save');
+        const anyEntered = Object.values(studentMarks).some((m) => m[activeAssessment._id] !== undefined && m[activeAssessment._id] !== '');
+        if (anyEntered) toast('No changes to save');
+        else toast.error('No valid marks to save');
         return;
       }
 
@@ -393,12 +448,16 @@ const Marks2 = () => {
         const storageKey = `marks_${activeSection.name}_${activeAssessment._id}`;
         localStorage.removeItem(storageKey);
 
-        // Refresh the marks display
-        fetchAssessmentMarks(activeAssessment._id);
+        // What was sent is now what the server has: no need to load it all again.
+        savedMarks.current[activeAssessment._id] = { ...(savedMarks.current[activeAssessment._id] || {}) };
+        grades.forEach((g) => {
+          const student = students.find((x) => x.registrationId === g.registrationId);
+          if (student) savedMarks.current[activeAssessment._id][student.id] = g.obtainedMarks;
+        });
       }
     } catch (error) {
       console.error('Error saving marks:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -461,7 +520,7 @@ const Marks2 = () => {
       }
     } catch (error) {
       console.error('Error creating assessment:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { dialog: true });
     } finally {
       setLoading(false);
     }
@@ -489,7 +548,7 @@ const Marks2 = () => {
       
       toast.success('Assessment deleted successfully');
     } catch (error) {
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -589,19 +648,26 @@ const Marks2 = () => {
       }
     });
 
+    savedMarks.current[assessmentId] = { ...(response.data?.marks || {}) };
     return response.data?.marks || {};
+  };
+
+  // Every mark of the active section in ONE request: { assessmentId: { studentId: mark } }.
+  const fetchSectionMarksMap = async () => {
+    const response = await axios.get(`${apiUrl}/api/teacher-marks/section/${activeSection._id}/marks`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
+    });
+    const all = response.data?.marks || {};
+    Object.entries(all).forEach(([assessmentId, marks]) => { savedMarks.current[assessmentId] = { ...marks }; });
+    return all;
   };
 
   const loadGradebookMarks = async (assessmentList = assessments) => {
     if (!students.length || !assessmentList.length) return;
 
     try {
-      const assessmentMarkMaps = await Promise.all(
-        assessmentList.map(async (assessment) => ({
-          assessmentId: assessment._id,
-          marks: await fetchAssessmentMarksMap(assessment._id),
-        }))
-      );
+      const allMarks = await fetchSectionMarksMap();
+      const assessmentMarkMaps = assessmentList.map((assessment) => ({ assessmentId: assessment._id, marks: allMarks[assessment._id] || {} }));
 
       setStudentMarks((prevMarks) => {
         const updatedMarks = { ...prevMarks };
@@ -673,19 +739,23 @@ const Marks2 = () => {
         const weightedScore = calculateWeightedScore(student.id, assessment);
         return sum + (weightedScore || 0);
       }, 0);
-      // Bonus adds to score but is excluded from denominator; clamp at 100
-      const percentage =
-        coveredWeightage > 0 ? Math.min(100, (weightedTotal / coveredWeightage) * 100) : null;
+      // Bonus adds to the score but not the denominator. The shown/graded percentage stops at 100;
+      // the Total column keeps the true score so staff can see who earned bonus.
+      const rawPercentage = coveredWeightage > 0 ? (weightedTotal / coveredWeightage) * 100 : null;
+      const percentage = rawPercentage === null ? null : Math.min(100, rawPercentage);
+      const bonusCapped = rawPercentage !== null && rawPercentage > 100;
 
       return {
         ...student,
         weightedTotal,
         percentage,
-        estimatedGrade: getEstimatedGrade(percentage),
+        bonusCapped,
+        estimatedGrade: estimatedGradeFor(percentage),
         performanceClass: getPerformanceClass(percentage),
       };
     });
-  }, [students, assessments, studentMarks, searchTerm, coveredWeightage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [students, assessments, studentMarks, searchTerm, coveredWeightage, gradeBands]);
 
   const gradebookSummary = useMemo(() => {
     // Exclude students with no scored total (grand total 0) from class average
@@ -841,7 +911,7 @@ const Marks2 = () => {
       await loadGradebookMarks();
     } catch (error) {
       console.error('Error saving gradebook workspace:', error.response?.data || error.message);
-      handleApiError(error);
+      handleApiError(error, { notify: true });
     } finally {
       setLoading(false);
     }
@@ -890,11 +960,8 @@ const Marks2 = () => {
 
   const buildAssessmentRegisterSheet = async () => {
     const sortedStudents = sortStudentsAscending(students);
-    const assessmentMarkMaps = {};
-
-    for (const assessment of assessments) {
-      assessmentMarkMaps[assessment._id] = await fetchAssessmentMarksMap(assessment._id);
-    }
+    const allMarks = await fetchSectionMarksMap();
+    const assessmentMarkMaps = Object.fromEntries(assessments.map((assessment) => [assessment._id, allMarks[assessment._id] || {}]));
 
     const totalWeightage = assessments
       .filter((assessment) => !assessment.isBonus)
@@ -1049,8 +1116,9 @@ const Marks2 = () => {
       }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), 'Assessments');
 
+      const allMarks = await fetchSectionMarksMap();
       for (const assessment of assessments) {
-        const marksMap = await fetchAssessmentMarksMap(assessment._id);
+        const marksMap = allMarks[assessment._id] || {};
         const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
         XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
       }
@@ -1093,8 +1161,9 @@ const Marks2 = () => {
         }));
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(assessmentSummaryRows), 'Assessment Summary');
 
+        const allMarks = await fetchSectionMarksMap();
         for (const assessment of assessments) {
-          const marksMap = await fetchAssessmentMarksMap(assessment._id);
+          const marksMap = allMarks[assessment._id] || {};
           const worksheet = XLSX.utils.json_to_sheet(buildAssessmentRows(assessment, marksMap));
           XLSX.utils.book_append_sheet(workbook, worksheet, getSafeSheetName(assessment.title, `Assessment-${assessment.type}`));
         }
@@ -1174,7 +1243,7 @@ const Marks2 = () => {
         toast.success('Assessment updated successfully');
       }
     } catch (error) {
-      handleApiError(error);
+      handleApiError(error, { dialog: true });
     } finally {
       setLoading(false);
     }
@@ -1197,6 +1266,20 @@ const Marks2 = () => {
     }
   }, [activeAcademicTerm?._id]);
 
+  // Is this section's marks editing still open? Re-checked when the section or the tab changes.
+  useEffect(() => {
+    let current = true;
+    setSectionStatus(null);
+    if (!activeSection?._id) return undefined;
+    axios.get(`${apiUrl}/api/result-batches/section/${activeSection._id}/status`, { headers: requestHeaders() })
+      .then((response) => { if (current) setSectionStatus(response.data); })
+      .catch(() => { /* if the check is unavailable the server still refuses a locked change, with its own message */ });
+    return () => { current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection?._id, activeMarksView]);
+
+  useEffect(() => { setDialogError(null); }, [showAddAssessmentModal, showEditAssessmentModal]);
+
   // Fetch assessments when section changes
   useEffect(() => {
     if (activeSection) {
@@ -1210,58 +1293,43 @@ const Marks2 = () => {
     }
   }, [activeMarksView, students.length, assessments.length, activeSection?._id]);
 
+  const locked = sectionStatus?.marksFrozen === true;
+  const lockedTitle = lockText(sectionStatus)?.title;
+
   return (
     <div className="marks2-container">
       <div className="marks2-header">
         <div>
           <h1>Marks</h1>
-          <p className="marks2-subtitle">Enter assessment marks or manage the full gradebook workspace.</p>
+          <p className="marks2-subtitle">Enter marks, manage the gradebook and generate grades.</p>
         </div>
         <div className="marks2-actions">
           <button 
             className="btn btn-primary" 
             onClick={() => setShowAddAssessmentModal(true)}
-            disabled={!activeSection}
+            disabled={!activeSection || locked}
+            title={locked ? `${lockedTitle}: assessments cannot be added` : undefined}
           >
             <Plus size={16} /> Add Assessment
           </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={exportMarks}
-            disabled={!activeAssessment || !students.length}
-          >
-            <Download size={16} /> Export Assessment
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={exportAllAssessments}
-            disabled={!activeSection || !assessments.length || !students.length}
-          >
-            <Download size={16} /> Export All Assessments
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={exportAllSectionData}
-            disabled={!activeSection || !students.length}
-          >
-            <FileSpreadsheet size={16} /> Export Full Data
-          </button>
-          <label className="btn btn-secondary">
-            <Upload size={16} /> Import
-            <input 
-              type="file" 
-              accept=".xlsx,.xls" 
-              onChange={handleFileImport} 
-              style={{ display: 'none' }} 
-            />
-          </label>
-          <button 
-            className="btn btn-secondary" 
-            onClick={downloadTemplate}
-            disabled={!activeAssessment}
-          >
-            <FileSpreadsheet size={16} /> Template
-          </button>
+          <div className="marks2-menu" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setShowTools(false); }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowTools((open) => !open)} aria-haspopup="menu" aria-expanded={showTools}>
+              <FileSpreadsheet size={16} /> Import / Export <ChevronDown size={14} />
+            </button>
+            {showTools && (
+              <div className="marks2-menu-list" role="menu" onClick={() => setShowTools(false)}>
+                <button type="button" role="menuitem" onClick={exportMarks} disabled={!activeAssessment || !students.length}><Download size={15} /> Export this assessment</button>
+                <button type="button" role="menuitem" onClick={exportAllAssessments} disabled={!activeSection || !assessments.length || !students.length}><Download size={15} /> Export all assessments</button>
+                <button type="button" role="menuitem" onClick={exportAllSectionData} disabled={!activeSection || !students.length}><FileSpreadsheet size={15} /> Export full data</button>
+                <hr />
+                <label role="menuitem" className={locked ? 'is-disabled' : ''} title={locked ? `${lockedTitle}: marks cannot be imported` : undefined}>
+                  <Upload size={15} /> Import marks
+                  <input type="file" accept=".xlsx,.xls" onChange={handleFileImport} disabled={locked} style={{ display: 'none' }} />
+                </label>
+                <button type="button" role="menuitem" onClick={downloadTemplate} disabled={!activeAssessment}><FileSpreadsheet size={15} /> Download template</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1282,7 +1350,17 @@ const Marks2 = () => {
           <Table2 size={16} />
           Gradebook Workspace
         </button>
+        <button
+          type="button"
+          className={`marks-view-tab ${activeMarksView === 'generator' ? 'active' : ''}`}
+          onClick={() => setActiveMarksView('generator')}
+        >
+          <Sparkles size={16} />
+          Grade Generator
+        </button>
       </div>
+
+      {activeSection && activeMarksView !== 'generator' && <LockedNotice status={sectionStatus} />}
 
       {error && (
         <div className="error-message">
@@ -1291,7 +1369,7 @@ const Marks2 = () => {
         </div>
       )}
 
-      <div className="marks2-content">
+      <div className={`marks2-content ${activeMarksView === 'generator' || activeMarksView === 'workspace' ? 'is-generator' : ''}`}>
         <div className="marks2-sidebar">
           <div className="section-selector">
             <h3>Sections</h3>
@@ -1310,6 +1388,7 @@ const Marks2 = () => {
 
           <div className="assessment-selector">
             <h3>Assessments</h3>
+            <WeightSummary assessments={assessments} />
             <div className="assessment-list">
               {assessments.map(assessment => (
                 <div 
@@ -1328,7 +1407,8 @@ const Marks2 = () => {
                         e.stopPropagation();
                         handleEditAssessment(assessment);
                       }}
-                      data-tooltip="Edit Assessment"
+                      data-tooltip={locked ? 'Locked' : 'Edit Assessment'}
+                      disabled={locked}
                     >
                       <Edit2 size={14} data-icon="edit" />
                     </button>
@@ -1338,7 +1418,8 @@ const Marks2 = () => {
                         e.stopPropagation();
                         deleteAssessment(assessment._id);
                       }}
-                      data-tooltip="Delete Assessment"
+                      data-tooltip={locked ? 'Locked' : 'Delete Assessment'}
+                      disabled={locked}
                     >
                       <Trash2 size={14} data-icon="trash" />
                     </button>
@@ -1351,33 +1432,34 @@ const Marks2 = () => {
 
         <div className="marks2-main">
           {loading ? (
-            <div className="loading">Loading...</div>
+            <Loading variant="table" rows={8} label="Loading marks" />
           ) : !activeSection ? (
             <div className="empty-state">
               <p>Select a section to view and manage marks</p>
             </div>
+          ) : activeMarksView === 'generator' ? (
+            <GradeGenerator section={activeSection} apiUrl={apiUrl} headers={requestHeaders} onOpenEntry={() => setActiveMarksView('entry')} />
           ) : activeMarksView === 'workspace' ? (
             <>
               <div className="workspace-header">
-                <div>
-                  <p className="workspace-eyebrow">Gradebook Workspace</p>
-                  <h2>{activeSection.courseId?.name || 'Selected Course'} - Section {activeSection.section || activeSection.name || '-'}</h2>
-                  <p>Use this sheet to enter marks across assessments and review weighted totals instantly.</p>
+                <h2>{activeSection.courseId?.name || 'Selected Course'} <span>Section {activeSection.section || activeSection.name || '-'}</span></h2>
+                <div className="workspace-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={exportGradebookWorkspace}
+                    disabled={!assessments.length || !students.length}
+                  >
+                    <Download size={16} /> Export
+                  </button>
+                  <button
+                    className="btn btn-primary save-btn"
+                    onClick={saveGradebookWorkspace}
+                    disabled={!assessments.length || !students.length || locked}
+                    title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
+                  >
+                    <Save size={16} /> Save Workspace
+                  </button>
                 </div>
-                <button
-                  className="btn btn-secondary"
-                  onClick={exportGradebookWorkspace}
-                  disabled={!assessments.length || !students.length}
-                >
-                  <Download size={16} /> Export Workspace
-                </button>
-                <button
-                  className="btn btn-primary save-btn"
-                  onClick={saveGradebookWorkspace}
-                  disabled={!assessments.length || !students.length}
-                >
-                  <Save size={16} /> Save Workspace
-                </button>
               </div>
 
               <div className="workspace-summary-grid">
@@ -1386,7 +1468,7 @@ const Marks2 = () => {
                   <strong>{gradebookSummary.classAverage.toFixed(1)}%</strong>
                 </div>
                 <div className="workspace-summary-card">
-                  <span>Weightage Covered</span>
+                  <span>Weightage</span>
                   <strong className={coveredWeightage > 100 ? 'summary-warning' : ''}>{coveredWeightage} / 100</strong>
                 </div>
                 <div className="workspace-summary-card">
@@ -1415,9 +1497,7 @@ const Marks2 = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="workspace-note">
-                  Marks cells are editable. Weighted, total, and grade cells recalculate automatically.
-                </div>
+                <div className="workspace-note">Marks are editable; totals and grades update as you type.</div>
               </div>
 
               {!assessments.length ? (
@@ -1481,6 +1561,7 @@ const Marks2 = () => {
                                       min="0"
                                       max={assessment.maxMarks}
                                       value={mark}
+                                      readOnly={locked}
                                       onChange={(e) => handleWorkspaceMarkChange(student.id, assessment, e.target.value)}
                                       onKeyDown={handleGradebookCellKeyDown}
                                       onFocus={(e) => e.target.select()}
@@ -1499,6 +1580,7 @@ const Marks2 = () => {
                             })}
                             <td className={`total-cell ${student.performanceClass}`}>
                               <strong>{student.weightedTotal.toFixed(2)}</strong>
+                              {student.bonusCapped && <span className="bonus-pill" title="Bonus took this student above 100. Students see 100%.">capped at 100%</span>}
                               <span>/ {coveredWeightage || 0}</span>
                             </td>
                             <td className={`grade-cell ${student.performanceClass}`}>
@@ -1539,6 +1621,8 @@ const Marks2 = () => {
                 <button 
                   className="btn btn-primary save-btn"
                   onClick={saveMarks}
+                  disabled={locked}
+                  title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
                 >
                   <Save size={16} /> Save Marks
                 </button>
@@ -1614,8 +1698,9 @@ const Marks2 = () => {
                               min="0" 
                               max={activeAssessment.maxMarks}
                               value={studentMarks[student.id]?.[activeAssessment._id] ?? ''}
+                              readOnly={locked}
                               onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                              placeholder="Enter marks"
+                              placeholder={locked ? '' : 'Enter marks'}
                             />
                           </td>
                         </tr>
@@ -1648,8 +1733,8 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="modal-body modal-grid">
+              <div className="form-group span-2">
                 <label>Title</label>
                 <input 
                   type="text" 
@@ -1681,7 +1766,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Weightage (%)</label>
+                <label>{newAssessment.isBonus ? BONUS_WEIGHT_LABEL : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1690,20 +1775,9 @@ const Marks2 = () => {
                   onChange={(e) => setNewAssessment({...newAssessment, weightage: Number(e.target.value)})}
                 />
               </div>
-              <div className="form-group bonus-checkbox-group">
-                <label className="bonus-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(newAssessment.isBonus)}
-                    onChange={(e) => setNewAssessment({ ...newAssessment, isBonus: e.target.checked })}
-                  />
-                  <span>Bonus / Extra credit</span>
-                </label>
-                <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
-                </p>
-              </div>
-              <div className="form-group">
+              <div className="form-group span-2 meter-row"><WeightMeter others={addWeight.used} current={newAssessment.weightage} isBonus={newAssessment.isBonus} problem={addWeight.problem} /></div>
+              <BonusExplainer id="bonus-new" checked={newAssessment.isBonus} onChange={(isBonus) => setNewAssessment({ ...newAssessment, isBonus })} />
+              <div className="form-group span-2">
                 <label>Description</label>
                 <textarea 
                   value={newAssessment.description}
@@ -1712,6 +1786,7 @@ const Marks2 = () => {
                 />
               </div>
             </div>
+            {dialogError && <div className="dialog-error" role="alert">{dialogError}</div>}
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"
@@ -1722,7 +1797,8 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={addAssessment}
-                disabled={!newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage}
+                disabled={!newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage || Boolean(addWeight.problem)}
+                title={addWeight.problem || undefined}
               >
                 Add Assessment
               </button>
@@ -1747,7 +1823,7 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body modal-grid">
               <div className="import-preview">
                 <h4>Preview</h4>
                 <p>Review the data before importing. Make sure the student IDs match.</p>
@@ -1813,8 +1889,8 @@ const Marks2 = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="modal-body modal-grid">
+              <div className="form-group span-2">
                 <label>Title</label>
                 <input 
                   type="text" 
@@ -1839,7 +1915,7 @@ const Marks2 = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Weightage (%)</label>
+                <label>{editingAssessment.isBonus ? BONUS_WEIGHT_LABEL : 'Weightage (%)'}</label>
                 <input 
                   type="number" 
                   min="1"
@@ -1851,25 +1927,9 @@ const Marks2 = () => {
                   })}
                 />
               </div>
-              <div className="form-group bonus-checkbox-group">
-                <label className="bonus-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(editingAssessment.isBonus)}
-                    onChange={(e) =>
-                      setEditingAssessment({
-                        ...editingAssessment,
-                        isBonus: e.target.checked,
-                      })
-                    }
-                  />
-                  <span>Bonus / Extra credit</span>
-                </label>
-                <p className="bonus-help-text">
-                  Adds marks on top of 100%. Does not increase course weightage.
-                </p>
-              </div>
-              <div className="form-group">
+              <div className="form-group span-2 meter-row"><WeightMeter others={editWeight?.used} current={editingAssessment.weightage} isBonus={editingAssessment.isBonus} problem={editWeight?.problem} /></div>
+              <BonusExplainer id="bonus-edit" checked={editingAssessment.isBonus} onChange={(isBonus) => setEditingAssessment({ ...editingAssessment, isBonus })} />
+              <div className="form-group span-2">
                 <label>Description</label>
                 <textarea 
                   value={editingAssessment.description}
@@ -1881,6 +1941,7 @@ const Marks2 = () => {
                 />
               </div>
             </div>
+            {dialogError && <div className="dialog-error" role="alert">{dialogError}</div>}
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"
@@ -1894,7 +1955,8 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={updateAssessment}
-                disabled={!editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage}
+                disabled={!editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage || Boolean(editWeight?.problem)}
+                title={editWeight?.problem || undefined}
               >
                 Update Assessment
               </button>

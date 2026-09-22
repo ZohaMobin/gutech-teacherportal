@@ -1,3 +1,4 @@
+import { BusyLabel } from '../../Components/Loading/Loading';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
@@ -194,7 +195,7 @@ const Signup = () => {
                 {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
               </div>
             </div>
-            <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Processing...' : 'Register'}</button>
+            <button type="submit" disabled={isSubmitting}><BusyLabel busy={isSubmitting} busyText="Registering…" idle="Register" /></button>
           </form>
         </div>
 

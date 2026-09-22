@@ -1,3 +1,4 @@
+import Loading from '../../Components/Loading/Loading';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { showToast, TOAST_TYPES } from '../../Components/Toast/Toast';
@@ -147,10 +148,7 @@ const ClassSchedule = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading your schedule{retryCount > 0 ? ` (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})` : ''}...</p>
-      </div>
+      <div style={{ padding: '1.25rem' }}><Loading variant="table" rows={6} label={`Loading your schedule${retryCount > 0 ? ` (attempt ${retryCount + 1} of ${MAX_RETRIES + 1})` : ''}`} /></div>
     );
   }
 

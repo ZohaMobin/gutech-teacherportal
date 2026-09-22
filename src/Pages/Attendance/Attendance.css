@@ -1088,3 +1088,129 @@
     font-size: 0.625rem;
   }
 }
+
+
+/* ---------- compact controls (same layout as before, less height) ---------- */
+.attendance-header { margin-bottom: var(--spacing-sm); padding-bottom: var(--spacing-xs); }
+.header-content h1 { font-size: 1.5rem; margin-bottom: 0.1rem; }
+.attendance-sidebar { width: 300px; min-width: 300px; }
+.attendance-main { padding: var(--spacing-md); gap: var(--spacing-sm); min-width: 0; }
+.attendance-controls { padding: 0.75rem 1rem; gap: 0.6rem; }
+.attendance-controls-top { align-items: flex-end; gap: 0.75rem 1rem; }
+.date-selector { flex-direction: row; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.date-selector .react-datepicker-wrapper { width: 9rem; }
+.date-input { padding: 0.4rem 0.65rem; }
+.date-legend { display: none; }                                   /* the green dates explain themselves; saves a line */
+.quick-actions-title, .quick-actions .quick-actions-label:empty { display: none; }
+.quick-action-buttons { gap: 0.4rem; flex-wrap: wrap; }
+.btn-quick { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+/* slots: one row instead of a titled panel */
+.session-panel { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.5rem 0.75rem; }
+.controls-panel-header { display: contents; }
+.controls-panel-header > div:first-child { display: none; }        /* "Attendance Slots / Session Selection" heading */
+.slot-management-actions { order: 2; margin-left: auto; display: flex; gap: 0.4rem; }
+.slot-compact-layout { order: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.9rem; flex: 1 1 auto; }
+.slot-meta-card { display: flex; align-items: center; gap: 0.6rem; padding: 0; border: 0; background: none; box-shadow: none; }
+.slot-meta-copy { display: none; }                                  /* "Active slot S1" repeats the highlighted pill */
+.slot-duration-input { width: 4.2rem; padding: 0.3rem 0.4rem; }
+.slot-copy-inline { gap: 0.4rem; flex-wrap: wrap; }
+
+/* statistics: five small figures in one row */
+.attendance-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; }
+.stat-card { padding: 0.45rem 0.6rem; display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
+.stat-value { font-size: 1.15rem; line-height: 1.1; }
+.stat-label { font-size: 0.72rem; }
+.search-container { margin: 0; }
+.search-input { padding: 0.45rem 0.75rem; }
+.students-table th, .students-table td { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+@media (max-width: 900px) { .attendance-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Same breakpoint as Marks: side by side until phone width. Below that the sections become one scrolling row. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .attendance-content { flex-direction: row; }
+  .attendance-sidebar { width: 250px; min-width: 250px; position: sticky; max-height: calc(100vh - 12rem); }
+}
+@media (max-width: 768px) {
+  .attendance-sidebar { width: 100%; min-width: 0; position: static; max-height: none; padding: var(--spacing-sm); }
+  .section-selector h3 { margin-bottom: 0.5rem; }
+  .section-list { flex-direction: row; max-height: none; overflow-x: auto; overflow-y: hidden; padding-bottom: 0.25rem; }
+  .section-item { flex: none; white-space: nowrap; }
+  .attendance-controls-top { flex-direction: column; align-items: stretch; }
+}
+.slot-copy-controls, .slot-copy-inline { border-top: 0; padding-top: 0; }
+.quick-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+@media (min-width: 769px) and (max-width: 1100px) {
+  .attendance-container { padding: var(--spacing-sm); }
+  .attendance-sidebar { width: 210px; min-width: 210px; padding: var(--spacing-sm); }
+  .attendance-content { gap: var(--spacing-sm); }
+  .attendance-main { padding: var(--spacing-sm); }
+}
+
+.slot-more { flex: 1 1 100%; order: 3; }
+.slot-more > summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--primary-color); list-style: none; display: inline-block; }
+.slot-more > summary::-webkit-details-marker { display: none; }
+.slot-more > summary::before { content: "▸ "; }
+.slot-more[open] > summary::before { content: "▾ "; }
+.slot-more-body { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); }
+.slot-meta-card .slot-meta-copy { display: none; }
+.session-panel { gap: 0.4rem 0.75rem; }
+.slot-management-actions { order: 2; margin-left: 0; }
+.slot-compact-layout { flex: 0 1 auto; }
+.slot-more { order: 3; }
+.attendance-btn { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.attendance-actions { gap: 0.35rem; }
+.students-table-container { overflow-x: auto; }
+
+/* ---------- slot bar: slots on one line, the rarely-used options in a tidy row underneath ---------- */
+.slotbar { background: var(--background-white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; display: grid; gap: 0.6rem; }
+.slotbar-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.slotbar-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); }
+.slotbar-pills { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; flex: 1 1 auto; min-width: 0; }
+.slotbar-pill { min-width: 2.4rem; height: 1.9rem; padding: 0 0.7rem; border: 1px solid var(--border-color); border-radius: 999px; background: var(--background-white); font: inherit; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+.slotbar-pill:hover { background: var(--background-light); }
+.slotbar-pill.is-on { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.slotbar-add { border-style: dashed; color: var(--primary-color); }
+.slotbar-toggle { margin-left: auto; border: 0; background: none; padding: 0.25rem 0.4rem; font: inherit; font-size: 0.82rem; font-weight: 600; color: var(--primary-color); cursor: pointer; border-radius: var(--radius-sm); }
+.slotbar-toggle:hover { background: var(--primary-light); }
+.slotbar-options { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem 1rem; padding-top: 0.6rem; border-top: 1px solid var(--border-color); }
+.slotbar-field { display: grid; gap: 0.25rem; min-width: 0; }
+.slotbar-field > label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+.slotbar-copy { flex: 1 1 15rem; }
+.slotbar-input { display: flex; align-items: center; gap: 0.4rem; }
+.slotbar-input span { font-size: 0.82rem; color: var(--text-secondary); }
+.slotbar-input input, .slotbar-input select { height: 2.1rem; padding: 0 0.6rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-white); font: inherit; font-size: 0.85rem; color: var(--text-primary); min-width: 0; }
+.slotbar-input input { width: 4.5rem; }
+.slotbar-input select { flex: 1 1 auto; }
+.slotbar-input select:disabled { background: var(--background-light); color: var(--text-light); }
+.slotbar-btn { height: 2.1rem; padding: 0 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-white); font: inherit; font-size: 0.82rem; font-weight: 500; color: var(--text-primary); cursor: pointer; white-space: nowrap; }
+.slotbar-btn:hover:not(:disabled) { background: var(--background-light); }
+.slotbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.slotbar-danger { margin-left: auto; color: var(--error-color); border-color: rgba(239, 68, 68, 0.4); }
+.slotbar-danger:hover:not(:disabled) { background: var(--error-light); }
+.slotbar :is(button, select, input):focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+
+/* header: title above the sentence, not beside it */
+.attendance-header .header-content { display: block; }
+.attendance-header .header-content h1, .attendance-header .header-content p { display: block; }
+
+/* the message can be dismissed */
+.error-message { justify-content: space-between; }
+.error-dismiss { border: 0; background: none; color: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; border-radius: var(--radius-sm); }
+.error-dismiss:hover { background: rgba(239, 68, 68, 0.12); }
+
+/* slot options: every control on one baseline, no stray margins */
+.slotbar-options button, .slotbar-options input, .slotbar-options select { margin: 0; }
+.slotbar-options { align-items: flex-end; }
+.slotbar-input { min-height: 2.1rem; align-items: center; }
+.slotbar-input span { line-height: 1; align-self: center; margin: 0; }
+.slotbar-btn { display: inline-flex; align-items: center; justify-content: center; }
+
+/* Select Date: label, field and quick actions share one centre line */
+.attendance-controls-top { align-items: center; }
+.date-selector { align-items: center; }
+.date-selector label { margin: 0; line-height: 1; }
+.date-selector .react-datepicker-wrapper, .date-selector .react-datepicker__input-container { display: block; margin: 0; }
+.date-selector .date-input { height: 2.1rem; margin: 0; }
+.quick-actions, .quick-actions-top { margin: 0; padding-top: 0; align-self: center; }
+.quick-action-buttons .btn-quick { height: 2.1rem; margin: 0; }

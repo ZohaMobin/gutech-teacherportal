@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import Loading from './Loading/Loading';
 
 const AuthContext = createContext();
 
@@ -53,7 +54,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Or your loading component
+    return <div style={{ padding: '2rem', maxWidth: 640 }}><Loading variant="page" rows={3} label="Loading" /></div>;
   }
 
   return (
