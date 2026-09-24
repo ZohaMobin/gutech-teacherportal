@@ -23,18 +23,18 @@ const type = async (el, value) => act(async () => {
   el.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
-const mount = async ({ status = { workflowEnabled: true, state: 'OPEN', marksFrozen: false }, putError = null } = {}) => {
+const mount = async ({ status = { workflowEnabled: true, state: 'OPEN', marksFrozen: false }, putError = null, students = [{ id: 'r1', rollNumber: 'R-1', name: 'Ayesha' }], gradesPut = null } = {}) => {
   axios.isAxiosError = (e) => Boolean(e && (e.response || e.request));
   axios.get.mockImplementation((url) => {
     if (url.includes('/getSections/')) return Promise.resolve({ data: [{ _id: 's1', section: 'A', courseId: { name: 'Linear Algebra' } }] });
     if (url.includes('/academic-years/current')) return Promise.resolve({ data: { _id: 't1' } });
     if (url.includes('/grading-scale')) return Promise.resolve({ data: { bands: [] } });
     if (url.includes('/status')) return Promise.resolve({ data: status });
-    if (url.includes('/students')) return Promise.resolve({ data: [{ id: 'r1', rollNumber: 'R-1', name: 'Ayesha' }] });
+    if (url.includes('/students')) return Promise.resolve({ data: students });
     if (url.includes('/assessments/section/')) return Promise.resolve({ data: { assessments } });
     return Promise.resolve({ data: [] });
   });
-  axios.put.mockImplementation(() => (putError ? Promise.reject(putError) : Promise.resolve({ data: { ...assessments[0], weightage: 30 } })));
+  axios.put.mockImplementation((url) => (url.includes('/grades') && gradesPut ? gradesPut() : putError ? Promise.reject(putError) : Promise.resolve({ data: { ...assessments[0], weightage: 30 } })));
   await act(async () => { root.render(<Marks2 />); });
   await wait(20);
   await click(container.querySelector('.section-item'));
@@ -150,4 +150,28 @@ test('opening the gradebook loads every mark with ONE request, however many asse
   const marksCalls = axios.get.mock.calls.map(([u]) => u).filter((u) => /\/marks$/.test(u));
   expect(marksCalls).toHaveLength(1);
   expect(marksCalls[0]).toContain('/section/s1/marks');
+});
+
+// Saving marks writes, it does not read: the panel must stay on screen, with only the button and the table saying so.
+test('saving marks keeps the table on screen and shows the button working, then confirms', async () => {
+  let finish;
+  await mount({ students: [{ id: 'r1', registrationId: 'reg1', rollNumber: 'R-1', name: 'Ayesha' }], gradesPut: () => new Promise((resolve) => { finish = () => resolve({ data: { ok: true } }); }) });
+  await click(container.querySelector('.assessment-item'));
+  await wait(20);
+  await type(container.querySelector('.marks-table input'), '7');
+  const saveButton = () => [...container.querySelectorAll('button.save-btn')][0];
+  await click(saveButton());
+
+  expect(container.querySelector('.ld-table')).toBeNull();                          // no skeleton in place of the table
+  expect(container.querySelectorAll('.marks-table tbody input').length).toBe(1);    // the entered marks are still there
+  expect(container.querySelector('.marks-table input').readOnly).toBe(true);        // ...but cannot be edited mid-save
+  expect(saveButton().textContent).toContain('Saving');
+  expect(saveButton().disabled).toBe(true);
+
+  await act(async () => { finish(); });
+  await wait();
+  expect(saveButton().textContent).toContain('Save Marks');
+  expect(saveButton().disabled).toBe(false);
+  expect(container.querySelector('.marks-table input').readOnly).toBe(false);
+  expect(toast.success).toHaveBeenCalledWith('Marks saved successfully');
 });
