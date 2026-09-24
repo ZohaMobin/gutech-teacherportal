@@ -551,12 +551,13 @@
 
 .roll-col {
   left: 0;
-  min-width: 116px !important;
+  min-width: 136px !important;   /* wide enough for a roll number like 26G-BCS002 on one line */
+  white-space: nowrap;
   font-weight: 700;
 }
 
 .name-col {
-  left: 116px;
+  left: 136px;                   /* must equal the roll column's width: it is the sticky offset */
   min-width: 210px !important;
   border-right: 2px solid #cbd5e1 !important;
   font-weight: 700;
@@ -1274,3 +1275,27 @@
 .modal-body.modal-grid .bonus-checkbox-group .bonus-checkbox-label { display: flex; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-size: 0.88rem; font-weight: 600; color: #1e293b; margin: 0; }
 .modal-body.modal-grid .bonus-checkbox-group input[type="checkbox"] { width: 1rem; height: 1rem; margin: 0; }
 .modal-body.modal-grid { gap: 0.8rem 1rem; }
+
+/* ---- Alignment ---------------------------------------------------------------------------------------------------- */
+
+/* The global input rule (styles/global.css) puts a 1.5rem margin under every input. Inside a table cell that made the
+   cell 24px taller than its input, so the input sat 12px above the middle of its row. */
+.marks-table input, .marks-entry-cell input { margin: 0; }
+/* 80px cut the placeholder to "Enter m". */
+.marks-table input { width: 7rem; }
+
+/* An old "move the button slightly up" margin was never reset when the filter row was made compact, so the button
+   floated 27px above the inputs it belongs beside. */
+.search-filter-container .clear-filters { margin: 0; min-width: 0; }
+
+/* The three info pills used to push Save onto a row of its own. They wrap inside their own space instead, so the title,
+   the pills and Save share one row. */
+.assessment-header h2 { flex: 0 0 auto; }
+.assessment-header .assessment-details { flex: 1 1 16rem; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+.assessment-header .save-btn { flex: 0 0 auto; }
+
+/* The weightage box sits outside the scrolling lists, which keep room for a scrollbar; it gets the same inset so the
+   column lines up. The assessment list is also tall enough for a normal section, instead of cutting a card in half. */
+.section-list, .assessment-list { scrollbar-gutter: stable; }
+.marks2-sidebar .weight-summary { margin-right: calc(var(--spacing-xs, 0.25rem) + 4px); }
+.marks2-content:not(.is-generator) .assessment-list { max-height: 30rem; }
