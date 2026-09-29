@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/sidebar/Sidebar';
 import Topbar from '../topbar/topbar';
+import AppToaster from '../../Components/Toast/AppToaster';
 import { Outlet, useLocation } from 'react-router-dom';
 
 const MainLayout = ({ children }) => {
@@ -34,6 +35,7 @@ const MainLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen w-full max-w-full flex flex-col bg-gray-50 overflow-x-hidden">
+      <AppToaster />
       <Topbar
         toggleSidebar={toggleSidebar}
         isSidebarOpen={isSidebarOpen}

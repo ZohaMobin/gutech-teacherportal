@@ -5,7 +5,7 @@ import WeightMeter from './WeightMeter';
 import LockedNotice, { lockText } from './LockedNotice';
 import { messageOf } from './apiMessage';
 import GradeGenerator from './GradeGenerator';
-import Loading from '../../Components/Loading/Loading';
+import Loading, { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
@@ -44,7 +44,8 @@ const Marks2 = () => {
   const [assessments, setAssessments] = useState([]);
   const [activeAssessment, setActiveAssessment] = useState(null);
   const [studentMarks, setStudentMarks] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);   // reading data: the panel shows placeholders while it arrives
+  const [saving, setSaving] = useState(false);       // writing data: the panel stays as it is, and the button says so
   const [error, setError] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
@@ -394,7 +395,7 @@ const Marks2 = () => {
       return;
     }
     
-    setLoading(true);
+    setSaving(true);
     setError(null);
     
     try {
@@ -459,7 +460,7 @@ const Marks2 = () => {
       console.error('Error saving marks:', error.response?.data || error.message);
       handleApiError(error, { notify: true });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -470,7 +471,7 @@ const Marks2 = () => {
       return;
     }
     
-    setLoading(true);
+    setSaving(true);
     setError(null);
     
     try {
@@ -522,7 +523,7 @@ const Marks2 = () => {
       console.error('Error creating assessment:', error.response?.data || error.message);
       handleApiError(error, { dialog: true });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -530,7 +531,7 @@ const Marks2 = () => {
   const deleteAssessment = async (assessmentId) => {
     if (!window.confirm('Are you sure you want to delete this assessment?')) return;
     
-    setLoading(true);
+    setSaving(true);
     setError(null);
     
     try {
@@ -550,7 +551,7 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error, { notify: true });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -870,7 +871,7 @@ const Marks2 = () => {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     setError(null);
 
     try {
@@ -913,7 +914,7 @@ const Marks2 = () => {
       console.error('Error saving gradebook workspace:', error.response?.data || error.message);
       handleApiError(error, { notify: true });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -1211,7 +1212,7 @@ const Marks2 = () => {
   const updateAssessment = async () => {
     if (!editingAssessment) return;
     
-    setLoading(true);
+    setSaving(true);
     setError(null);
     
     try {
@@ -1245,7 +1246,7 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error, { dialog: true });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -1454,10 +1455,10 @@ const Marks2 = () => {
                   <button
                     className="btn btn-primary save-btn"
                     onClick={saveGradebookWorkspace}
-                    disabled={!assessments.length || !students.length || locked}
+                    disabled={!assessments.length || !students.length || locked || saving}
                     title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
                   >
-                    <Save size={16} /> Save Workspace
+                    <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> Save Workspace</>} />
                   </button>
                 </div>
               </div>
@@ -1621,10 +1622,10 @@ const Marks2 = () => {
                 <button 
                   className="btn btn-primary save-btn"
                   onClick={saveMarks}
-                  disabled={locked}
+                  disabled={locked || saving}
                   title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
                 >
-                  <Save size={16} /> Save Marks
+                  <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> Save Marks</>} />
                 </button>
               </div>
 
@@ -1677,6 +1678,7 @@ const Marks2 = () => {
                 </div>
               </div>
 
+              <Refreshing active={saving}>
               <div className="marks-table-container">
                 <table className="marks-table">
                   <thead>
@@ -1698,7 +1700,7 @@ const Marks2 = () => {
                               min="0" 
                               max={activeAssessment.maxMarks}
                               value={studentMarks[student.id]?.[activeAssessment._id] ?? ''}
-                              readOnly={locked}
+                              readOnly={locked || saving}
                               onChange={(e) => handleMarkChange(student.id, e.target.value)}
                               placeholder={locked ? '' : 'Enter marks'}
                             />
@@ -1715,6 +1717,7 @@ const Marks2 = () => {
                   </tbody>
                 </table>
               </div>
+              </Refreshing>
             </>
           )}
         </div>
@@ -1797,10 +1800,10 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={addAssessment}
-                disabled={!newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage || Boolean(addWeight.problem)}
+                disabled={saving || !newAssessment.title || !newAssessment.maxMarks || !newAssessment.weightage || Boolean(addWeight.problem)}
                 title={addWeight.problem || undefined}
               >
-                Add Assessment
+                <BusyLabel busy={saving} busyText="Adding…" idle="Add Assessment" />
               </button>
             </div>
           </div>
@@ -1955,10 +1958,10 @@ const Marks2 = () => {
               <button 
                 className="btn btn-primary"
                 onClick={updateAssessment}
-                disabled={!editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage || Boolean(editWeight?.problem)}
+                disabled={saving || !editingAssessment.title || !editingAssessment.maxMarks || !editingAssessment.weightage || Boolean(editWeight?.problem)}
                 title={editWeight?.problem || undefined}
               >
-                Update Assessment
+                <BusyLabel busy={saving} busyText="Updating…" idle="Update Assessment" />
               </button>
             </div>
           </div>
