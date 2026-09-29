@@ -15,7 +15,6 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   };
   
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     { id: 'marks', label: 'Marks', icon: '📄' },
     { id: 'timetable', label: 'Timetable', icon: '📆' },
