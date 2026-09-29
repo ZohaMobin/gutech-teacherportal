@@ -25,6 +25,8 @@ function App() {
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>
+                {/* The sidebar has always linked here, but no dashboard page was ever built - it rendered blank. */}
+                <Route path="dashboard" element={<Navigate to="/attendance" replace />} />
                 <Route path="marks" element={<Marks2 />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="timetable" element={<ClassSchedule />} />
