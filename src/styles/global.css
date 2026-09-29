@@ -52,6 +52,11 @@ body {
   background-color: var(--background-color);
   color: var(--text-primary);
   line-height: 1.5;
+  /* Matches the admin portal: the whole app renders at 80% of its built sizes. zoom (not transform) so layout
+     reflows and text stays sharp, the same way real browser zoom works. The sidebar's h-screen (100vh) had to
+     change to a bottom-anchored fixed box below, for the same reason as the admin portal's sidebar fix: a box
+     sized with 100vh stops short of the real, zoomed bottom of the screen. */
+  zoom: 0.8;
 }
 
 /* App Layout */
