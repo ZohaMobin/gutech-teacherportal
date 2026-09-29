@@ -25,6 +25,8 @@ function App() {
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>
+                {/* There is no dashboard page yet (see BACKLOG); keeps old links and bookmarks working. */}
+                <Route path="dashboard" element={<Navigate to="/attendance" replace />} />
                 <Route path="marks" element={<Marks2 />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="timetable" element={<ClassSchedule />} />

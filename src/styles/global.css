@@ -52,9 +52,21 @@ body {
   background-color: var(--background-color);
   color: var(--text-primary);
   line-height: 1.5;
+  /* Matches the admin portal: the whole app renders at 80% of its built sizes. zoom (not transform) so layout
+     reflows and text stays sharp, the same way real browser zoom works. The sidebar's h-screen (100vh) had to
+     change to a bottom-anchored fixed box below, for the same reason as the admin portal's sidebar fix: a box
+     sized with 100vh stops short of the real, zoomed bottom of the screen. */
+  zoom: 0.8;
 }
 
 /* App Layout */
+/* Full-height page shell. 125vh, not 100vh: the app renders at zoom 0.8, so 100vh would stop 20% short of the real
+   bottom of the screen and show the grey body behind it. (Tailwind here is the CDN build, which has no arbitrary
+   values like min-h-[125vh], hence a plain class.) */
+.app-shell {
+  min-height: 125vh;
+}
+
 .App {
   text-align: center;
   display: flex;
