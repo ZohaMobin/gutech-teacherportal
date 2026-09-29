@@ -34,7 +34,7 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full flex flex-col bg-gray-50 overflow-x-hidden">
+    <div className="app-shell w-full max-w-full flex flex-col bg-gray-50 overflow-x-hidden">
       <AppToaster />
       <Topbar
         toggleSidebar={toggleSidebar}
@@ -48,7 +48,7 @@ const MainLayout = ({ children }) => {
           activePage={activePage}
         />
         
-        <div className={`flex-1 mt-16 min-h-[calc(100vh-4rem)] w-full transition-all duration-300 bg-white overflow-x-hidden ${
+        <div className={`flex-1 mt-16 w-full transition-all duration-300 bg-white overflow-x-hidden ${
           isSidebarOpen ? 'md:w-[calc(100%-16rem)] md:ml-64' : ''
         }`}>
           <main className="p-5 w-full box-border lg:p-4 md:p-3 sm:p-2">
