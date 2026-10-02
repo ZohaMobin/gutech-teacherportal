@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,6 +28,8 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const mainRef = useRef(null);
+  const toolbarRef = useRef(null);
   const [statusFilter, setStatusFilter] = useState("");   // "" = everyone, else present | absent | late | unmarked
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
   const [showSlotOptions, setShowSlotOptions] = useState(false);
@@ -768,6 +770,20 @@ const Attendance = () => {
       (!statusFilter || statusOf(student) === statusFilter)
   );
 
+  // The table header pins itself just under the toolbar, whatever height the toolbar has (it wraps on narrow screens).
+  const hasToolbar = Boolean(activeSection);
+  useEffect(() => {
+    const main = mainRef.current;
+    const toolbar = toolbarRef.current;
+    if (!main || !toolbar) return undefined;
+    const pin = () => main.style.setProperty("--roster-toolbar-h", `${toolbar.offsetHeight}px`);
+    pin();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(pin);
+    observer.observe(toolbar);
+    return () => observer.disconnect();
+  }, [hasToolbar]);
+
   // Highlight marked dates in calendar
   const dayClassName = (date) => {
     if (!date || !markedDates || markedDates.length === 0) {
@@ -889,7 +905,7 @@ const Attendance = () => {
         </div>
 
         {/* Main Content */}
-        <div className="attendance-main">
+        <div className="attendance-main" ref={mainRef}>
           {activeSection ? (
             <>
               {/* Attendance Controls */}
@@ -982,7 +998,7 @@ const Attendance = () => {
               </div>
 
               {/* Search and counts, in one row. Choosing a count shows only those students. */}
-              <div className="roster-toolbar">
+              <div className="roster-toolbar" ref={toolbarRef}>
                 <div className="search-container">
                   <input
                     type="text"
