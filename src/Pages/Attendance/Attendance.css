@@ -1229,7 +1229,11 @@
 .attendance-main { height: calc(125vh - 15.9rem); min-height: 32rem; }
 .attendance-sidebar { max-height: calc(125vh - 15.9rem); }
 .section-list { max-height: calc(125vh - 24rem); }
-.students-table-container { flex: 1 1 auto; min-height: 12rem; max-height: none; }
+/* Like the Marks page: the panel scrolls as one, so the list is not boxed into a small window of its own. The search / counts /
+   Save row and the table header stay pinned, so the top controls scroll away and the students get the whole panel. */
+.attendance-main { overflow-y: auto; overflow-x: hidden; }
+.students-table-container { flex: none; overflow: visible; max-height: none; min-height: 0; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.students-table th { top: calc(var(--roster-toolbar-h, 3.1rem) - 2px); }   /* tucked 2px under the toolbar so no sliver shows between them */
 
 /* date, quick actions and slots on one row when there is room */
 .attendance-controls { flex: none; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.55rem 0.8rem; }
@@ -1237,9 +1241,9 @@
 .attendance-controls .slotbar { flex: 1 1 20rem; margin-left: auto; }
 
 /* search, counts and Save: one row, flat */
-.roster-toolbar { flex: none; display: flex; align-items: center; gap: 0.5rem 0.8rem; flex-wrap: wrap; }
+.roster-toolbar { flex: none; display: flex; align-items: center; gap: 0.5rem 0.8rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 12; padding: 0.4rem 0; background: var(--background-white); }
 .roster-toolbar .search-container { flex: 1 1 14rem; min-width: 11rem; margin: 0; padding: 0; background: none; }
-.roster-toolbar .search-input { width: 100%; box-sizing: border-box; }
+.roster-toolbar .search-input { width: 100%; box-sizing: border-box; margin: 0; }
 .roster-toolbar .attendance-stats { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0; background: none; border-radius: 0; grid-template-columns: none; }
 .attendance-stats .stat-card { display: inline-flex; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 0.4rem; width: auto; min-width: 0; height: auto; margin: 0; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer; font: inherit; box-shadow: none; transform: none; }
 .attendance-stats .stat-card:hover { transform: none; box-shadow: none; filter: brightness(0.96); }
@@ -1251,10 +1255,13 @@
 .roster-save .unsaved-indicator { padding: 0.25rem 0.6rem; font-size: 0.78rem; white-space: nowrap; }
 .roster-save .save-btn { padding: 0.45rem 1.2rem; white-space: nowrap; }
 
+.students-table th, .students-table td { padding-top: 0.32rem; padding-bottom: 0.32rem; }
+.attendance-btn { padding: 0.28rem 0.7rem; }
 @media (min-width: 769px) and (max-width: 1024px) {
   .attendance-sidebar { max-height: calc(125vh - 15.9rem); }
 }
 @media (max-width: 768px) {
-  .attendance-main { height: auto; min-height: 0; }
-  .students-table-container { max-height: 70vh; }
+  .attendance-main { height: auto; min-height: 0; overflow: visible; }
+  .roster-toolbar { position: static; }
+  .students-table th { top: 0; }
 }
