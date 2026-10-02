@@ -1214,3 +1214,47 @@
 .date-selector .date-input { height: 2.1rem; margin: 0; }
 .quick-actions, .quick-actions-top { margin: 0; padding-top: 0; align-self: center; }
 .quick-action-buttons .btn-quick { height: 2.1rem; margin: 0; }
+
+/* ---------- the roster fills the screen ----------
+   The page used to spend about half its height above the list (big count cards, a separate search row, date and slot on two
+   rows, a footer for Save) with a fixed allowance below it, so on a laptop only a handful of students showed and the rest
+   needed scrolling in a small window. Now the panel is as tall as the screen, the date and slots share a row, search, counts
+   and Save share another, and the list takes whatever is left. 125vh, not 100vh: the app renders at zoom 0.8
+   (global.css), so vh units come out 20% short. */
+.attendance-header { margin-bottom: 0.6rem; padding-bottom: 0.5rem; }
+.attendance-header .header-content { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.9rem; }
+.attendance-header .header-content h1, .attendance-header .header-content p { margin: 0; }
+.attendance-container { min-height: calc(125vh - 9rem); padding-bottom: 0; }
+.attendance-content { min-height: 0; align-items: flex-start; }
+.attendance-main { height: calc(125vh - 15.9rem); min-height: 32rem; }
+.attendance-sidebar { max-height: calc(125vh - 15.9rem); }
+.section-list { max-height: calc(125vh - 24rem); }
+.students-table-container { flex: 1 1 auto; min-height: 12rem; max-height: none; }
+
+/* date, quick actions and slots on one row when there is room */
+.attendance-controls { flex: none; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.55rem 0.8rem; }
+.attendance-controls-top { flex: 0 1 auto; }
+.attendance-controls .slotbar { flex: 1 1 20rem; margin-left: auto; }
+
+/* search, counts and Save: one row, flat */
+.roster-toolbar { flex: none; display: flex; align-items: center; gap: 0.5rem 0.8rem; flex-wrap: wrap; }
+.roster-toolbar .search-container { flex: 1 1 14rem; min-width: 11rem; margin: 0; padding: 0; background: none; }
+.roster-toolbar .search-input { width: 100%; box-sizing: border-box; }
+.roster-toolbar .attendance-stats { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0; background: none; border-radius: 0; grid-template-columns: none; }
+.attendance-stats .stat-card { display: inline-flex; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 0.4rem; width: auto; min-width: 0; height: auto; margin: 0; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer; font: inherit; box-shadow: none; transform: none; }
+.attendance-stats .stat-card:hover { transform: none; box-shadow: none; filter: brightness(0.96); }
+.attendance-stats .stat-value { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
+.attendance-stats .stat-label { margin: 0; font-size: 0.78rem; text-align: left; }
+.attendance-stats .stat-card.is-on { box-shadow: 0 0 0 2px var(--primary-color); }
+.attendance-stats .stat-card:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.roster-save { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; }
+.roster-save .unsaved-indicator { padding: 0.25rem 0.6rem; font-size: 0.78rem; white-space: nowrap; }
+.roster-save .save-btn { padding: 0.45rem 1.2rem; white-space: nowrap; }
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .attendance-sidebar { max-height: calc(125vh - 15.9rem); }
+}
+@media (max-width: 768px) {
+  .attendance-main { height: auto; min-height: 0; }
+  .students-table-container { max-height: 70vh; }
+}
