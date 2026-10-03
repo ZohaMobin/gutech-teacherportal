@@ -4,6 +4,7 @@ import axios from 'axios';
 import { showToast, TOAST_TYPES } from '../../Components/Toast/Toast';
 import './ClassSchedule.css';
 import { buildPeriods, periodIndexOf, to12Hour } from '../../utils/timetablePeriods';
+import { assignCardColors } from '../../utils/scheduleColors';
 
 const ClassSchedule = () => {
   const [schedule, setSchedule] = useState({});
@@ -14,37 +15,6 @@ const ClassSchedule = () => {
   const MAX_RETRIES = 3;
 
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
-
-  // Generate a consistent color for each section
-  const generateSectionColor = (sectionId) => {
-    // Predefined very light pastel colors
-    const distinctColors = [
-      'hsl(0, 60%, 95%)',     // Very light red
-      'hsl(120, 60%, 95%)',   // Very light green
-      'hsl(240, 60%, 95%)',   // Very light blue
-      'hsl(60, 60%, 95%)',    // Very light yellow
-      'hsl(300, 60%, 95%)',   // Very light purple
-      'hsl(180, 60%, 95%)',   // Very light cyan
-      'hsl(30, 60%, 95%)',    // Very light orange
-      'hsl(270, 60%, 95%)',   // Very light indigo
-      'hsl(150, 60%, 95%)',   // Very light teal
-      'hsl(330, 60%, 95%)',   // Very light pink
-      'hsl(90, 60%, 95%)',    // Very light lime
-      'hsl(210, 60%, 95%)',   // Very light sky blue
-      'hsl(0, 50%, 90%)',     // Extra light red
-      'hsl(120, 50%, 90%)',   // Extra light green
-      'hsl(240, 50%, 90%)',   // Extra light blue
-    ];
-    
-    // Use a hash of the section ID to select a color
-    const hash = sectionId.split('').reduce((acc, char) => {
-      return char.charCodeAt(0) + ((acc << 5) - acc);
-    }, 0);
-    
-    // Select a color from the predefined palette
-    const colorIndex = Math.abs(hash) % distinctColors.length;
-    return distinctColors[colorIndex];
-  };
 
   // Get section color for a schedule
   const getSectionColor = (schedule) => {
@@ -72,16 +42,10 @@ const ClassSchedule = () => {
         throw new Error('No data received from server');
       }
 
-      // Generate colors for sections
-      const newSectionColors = {...sectionColors};
-      Object.values(response.data).forEach(daySchedules => {
-        daySchedules.forEach(schedule => {
-          const sectionId = schedule.sectionId._id;
-          if (!newSectionColors[sectionId]) {
-            newSectionColors[sectionId] = generateSectionColor(sectionId);
-          }
-        });
-      });
+      // One colour per section, handed out in order so no two sections on the timetable share one.
+      const newSectionColors = assignCardColors(
+        Object.values(response.data).flatMap(daySchedules => daySchedules.map(schedule => ({ key: schedule.sectionId?._id, code: schedule.courseId?.code })))
+      );
       setSectionColors(newSectionColors);
 
       setSchedule(response.data);
