@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 import Loading, { BusyLabel } from "../../Components/Loading/Loading";
+import SectionLabel from "../../Components/SectionLabel/SectionLabel";
 import "./Attendance.css";
 
 const Attendance = () => {
@@ -26,6 +27,7 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [slotBusy, setSlotBusy] = useState("");   // "copy" | "delete" | "export": a slot action or the export is running
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const mainRef = useRef(null);
@@ -403,7 +405,7 @@ const Attendance = () => {
     );
   };
 
-  const deleteSelectedSlot = async () => {
+  const deleteSelectedSlotWork = async () => {
     if (!activeSection) return;
     const sectionId = activeSection._id || activeSection.id;
     const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
@@ -450,7 +452,7 @@ const Attendance = () => {
     }
   };
 
-  const copyAttendanceFromSlot = async () => {
+  const copyAttendanceFromSlotWork = async () => {
     if (!activeSection || !copyFromSlotNumber) return;
 
     const sourceSlot = Number(copyFromSlotNumber);
@@ -632,7 +634,7 @@ const Attendance = () => {
   };
 
   // Export to CSV
-  const exportToCSV = async () => {
+  const exportToCSVWork = async () => {
     if (!activeSection || students.length === 0) {
       toast.error("No attendance data to export");
       return;
@@ -762,6 +764,16 @@ const Attendance = () => {
     return { total, present, absent, late, unmarked };
   };
 
+  // Slot actions and the export talk to the server: while one runs its button is disabled and says so, and the others wait.
+  const runSlotAction = async (kind, work) => {
+    if (slotBusy) return;
+    setSlotBusy(kind);
+    try { await work(); } finally { setSlotBusy(""); }
+  };
+  const deleteSelectedSlot = () => runSlotAction("delete", deleteSelectedSlotWork);
+  const copyAttendanceFromSlot = () => runSlotAction("copy", copyAttendanceFromSlotWork);
+  const exportToCSV = () => runSlotAction("export", exportToCSVWork);
+
   // Filter students by search query and, when one of the counts is chosen, by how they are marked
   const statusOf = (student) => attendanceData[student.id] || attendanceData[student.id?.toString()] || "unmarked";
   const filteredStudents = students.filter(
@@ -864,9 +876,9 @@ const Attendance = () => {
           <p>Mark and manage student attendance{activeAcademicTerm ? ` - ${activeAcademicTerm.displayName || `${activeAcademicTerm.semesterType} ${activeAcademicTerm.year}`}` : ""}</p>
         </div>
         {activeSection && attendanceData && Object.keys(attendanceData).length > 0 && (
-          <button className="export-btn" onClick={exportToCSV}>
+          <button className="export-btn" onClick={exportToCSV} disabled={Boolean(slotBusy)}>
             <Download size={18} />
-            Export to Excel
+            <BusyLabel busy={slotBusy === "export"} busyText="Exporting…" idle="Export to Excel" />
           </button>
         )}
       </div>
@@ -892,10 +904,7 @@ const Attendance = () => {
                 {sections.map((section) => (
                   <div key={section._id} className={`section-item ${activeSection?._id === section._id ? "active" : ""}`} onClick={() => handleSectionChange(section)}>
                     <div className="section-info">
-                      <div className="section-name">{section.courseId?.name || "Unknown Course"}</div>
-                      <div className="section-code">
-                        Section {section.section} - {section.courseId?.code || ""}
-                      </div>
+                      <SectionLabel section={section} />
                     </div>
                   </div>
                 ))}
@@ -988,10 +997,10 @@ const Attendance = () => {
                             <option value="" disabled>{availableSourceSlots.length === 0 ? "No other slot yet" : "Choose a slot"}</option>
                             {availableSourceSlots.map((slotNumber) => <option key={slotNumber} value={slotNumber}>Slot {slotNumber}</option>)}
                           </select>
-                          <button type="button" className="slotbar-btn" onClick={copyAttendanceFromSlot} disabled={!copyFromSlotNumber || availableSourceSlots.length === 0}>Copy to S{selectedSlotNumber}</button>
+                          <button type="button" className="slotbar-btn" onClick={copyAttendanceFromSlot} disabled={!copyFromSlotNumber || availableSourceSlots.length === 0 || Boolean(slotBusy)}><BusyLabel busy={slotBusy === "copy"} busyText="Copying…" idle={`Copy to S${selectedSlotNumber}`} /></button>
                         </div>
                       </div>
-                      <button type="button" className="slotbar-btn slotbar-danger" onClick={deleteSelectedSlot}>Delete S{selectedSlotNumber}</button>
+                      <button type="button" className="slotbar-btn slotbar-danger" onClick={deleteSelectedSlot} disabled={Boolean(slotBusy)}><BusyLabel busy={slotBusy === "delete"} busyText="Deleting…" idle={`Delete S${selectedSlotNumber}`} /></button>
                     </div>
                   )}
                 </div>
