@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,6 +28,9 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const mainRef = useRef(null);
+  const toolbarRef = useRef(null);
+  const [statusFilter, setStatusFilter] = useState("");   // "" = everyone, else present | absent | late | unmarked
   const [activeAcademicTerm, setActiveAcademicTerm] = useState(null);
   const [showSlotOptions, setShowSlotOptions] = useState(false);
 
@@ -759,10 +762,27 @@ const Attendance = () => {
     return { total, present, absent, late, unmarked };
   };
 
-  // Filter students by search query
+  // Filter students by search query and, when one of the counts is chosen, by how they are marked
+  const statusOf = (student) => attendanceData[student.id] || attendanceData[student.id?.toString()] || "unmarked";
   const filteredStudents = students.filter(
-    (student) => student.name.toLowerCase().includes(searchQuery.toLowerCase()) || student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    (student) =>
+      (student.name.toLowerCase().includes(searchQuery.toLowerCase()) || student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (!statusFilter || statusOf(student) === statusFilter)
   );
+
+  // The table header pins itself just under the toolbar, whatever height the toolbar has (it wraps on narrow screens).
+  const hasToolbar = Boolean(activeSection);
+  useEffect(() => {
+    const main = mainRef.current;
+    const toolbar = toolbarRef.current;
+    if (!main || !toolbar) return undefined;
+    const pin = () => main.style.setProperty("--roster-toolbar-h", `${toolbar.offsetHeight}px`);
+    pin();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(pin);
+    observer.observe(toolbar);
+    return () => observer.disconnect();
+  }, [hasToolbar]);
 
   // Highlight marked dates in calendar
   const dayClassName = (date) => {
@@ -885,7 +905,7 @@ const Attendance = () => {
         </div>
 
         {/* Main Content */}
-        <div className="attendance-main">
+        <div className="attendance-main" ref={mainRef}>
           {activeSection ? (
             <>
               {/* Attendance Controls */}
@@ -977,39 +997,45 @@ const Attendance = () => {
                 </div>
               </div>
 
-              {/* Statistics */}
-              <div className="attendance-stats">
-                <div className="stat-card total">
-                  <div className="stat-value">{stats.total}</div>
-                  <div className="stat-label">Total</div>
+              {/* Search and counts, in one row. Choosing a count shows only those students. */}
+              <div className="roster-toolbar" ref={toolbarRef}>
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Search students by name or roll number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                    aria-label="Search students"
+                  />
                 </div>
-                <div className="stat-card present">
-                  <div className="stat-value">{stats.present}</div>
-                  <div className="stat-label">Present</div>
+                <div className="attendance-stats" role="group" aria-label="Show students by attendance">
+                  {[
+                    ["", "Total", stats.total, "total"],
+                    ["present", "Present", stats.present, "present"],
+                    ["absent", "Absent", stats.absent, "absent"],
+                    ["late", "Late", stats.late, "late"],
+                    ["unmarked", "Unmarked", stats.unmarked, "unmarked"],
+                  ].map(([key, label, count, tone]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className={`stat-card ${tone} ${statusFilter === key ? "is-on" : ""}`}
+                      aria-pressed={statusFilter === key}
+                      onClick={() => setStatusFilter(key === statusFilter ? "" : key)}
+                      title={key ? `Show only ${label.toLowerCase()} students` : "Show everyone"}
+                    >
+                      <span className="stat-value">{count}</span>
+                      <span className="stat-label">{label}</span>
+                    </button>
+                  ))}
                 </div>
-                <div className="stat-card absent">
-                  <div className="stat-value">{stats.absent}</div>
-                  <div className="stat-label">Absent</div>
+                <div className="roster-save">
+                  {hasUnsavedChanges && <span className="unsaved-indicator" role="status">Unsaved changes</span>}
+                  <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading}>
+                    <BusyLabel busy={saving} busyText="Saving…" idle="Save Attendance" />
+                  </button>
                 </div>
-                <div className="stat-card late">
-                  <div className="stat-value">{stats.late}</div>
-                  <div className="stat-label">Late</div>
-                </div>
-                <div className="stat-card unmarked">
-                  <div className="stat-value">{stats.unmarked}</div>
-                  <div className="stat-label">Unmarked</div>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search students by name or roll number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
               </div>
 
               {/* Students Table */}
@@ -1021,7 +1047,7 @@ const Attendance = () => {
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="empty-state">
-                  <p>No students found matching your search</p>
+                  <p>{statusFilter ? `No ${statusFilter} students${searchQuery ? " match your search" : ""}.` : "No students found matching your search"}</p>
                 </div>
               ) : (
                 <div className="students-table-container">
@@ -1070,17 +1096,6 @@ const Attendance = () => {
                 </div>
               )}
 
-              {/* Save Button */}
-              <div className="attendance-footer">
-                <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading}>
-                  <BusyLabel busy={saving} busyText="Saving…" idle="Save Attendance" />
-                </button>
-                {hasUnsavedChanges && (
-                  <div className="unsaved-indicator">
-                    <span>You have unsaved changes</span>
-                  </div>
-                )}
-              </div>
             </>
           ) : (
             loading && sections.length === 0 ? (
