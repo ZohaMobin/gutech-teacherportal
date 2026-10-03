@@ -11,6 +11,7 @@ import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
+import SectionLabel, { ProgramTags } from '../../Components/SectionLabel/SectionLabel';
 
 const sortStudentsAscending = (studentsList = []) =>
   [...studentsList].sort((a, b) =>
@@ -1381,7 +1382,7 @@ const Marks2 = () => {
                   className={`section-item ${activeSection?._id === section._id ? 'active' : ''}`}
                   onClick={() => handleSectionChange(section)}
                 >
-                  {section.courseId.name} - Section {section.section}
+                  <div className="sl-block"><SectionLabel section={section} /></div>
                 </div>
               ))}
             </div>
@@ -1443,7 +1444,7 @@ const Marks2 = () => {
           ) : activeMarksView === 'workspace' ? (
             <>
               <div className="workspace-header">
-                <h2>{activeSection.courseId?.name || 'Selected Course'} <span>Section {activeSection.section || activeSection.name || '-'}</span></h2>
+                <h2>{activeSection.courseId?.name || 'Selected Course'} <span>Section {activeSection.section || activeSection.name || '-'}</span> <span className="workspace-programs"><ProgramTags section={activeSection} max={3} /></span></h2>
                 <div className="workspace-actions">
                   <button
                     className="btn btn-secondary"
