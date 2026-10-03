@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { showToast, TOAST_TYPES } from '../../Components/Toast/Toast';
 import './ClassSchedule.css';
+import { buildPeriods, periodIndexOf, to12Hour } from '../../utils/timetablePeriods';
 
 const ClassSchedule = () => {
   const [schedule, setSchedule] = useState({});
@@ -123,28 +124,8 @@ const ClassSchedule = () => {
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   
-  // Define time slots with start and end times
-  const timeSlots = [
-    { start: '08:00', end: '09:00', label: '8:00 AM - 9:00 AM' },
-    { start: '09:00', end: '10:00', label: '9:00 AM - 10:00 AM' },
-    { start: '10:00', end: '11:00', label: '10:00 AM - 11:00 AM' },
-    { start: '11:00', end: '12:00', label: '11:00 AM - 12:00 PM' },
-    { start: '12:00', end: '13:00', label: '12:00 PM - 1:00 PM' },
-    { start: '13:00', end: '14:00', label: '1:00 PM - 2:00 PM' },
-    { start: '14:00', end: '15:00', label: '2:00 PM - 3:00 PM' },
-    { start: '15:00', end: '16:00', label: '3:00 PM - 4:00 PM' },
-    { start: '16:00', end: '17:00', label: '4:00 PM - 5:00 PM' },
-    { start: '17:00', end: '18:00', label: '5:00 PM - 6:00 PM' }
-  ];
-
-  // Function to format time in 12-hour format
-  const formatTime = (time) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
+  // The rows are this teacher's real class windows (8:30 - 9:55, ...), not whole hours.
+  const formatTime = to12Hour;
 
   if (loading) {
     return (
@@ -184,6 +165,8 @@ const ClassSchedule = () => {
     );
   }
 
+  const periods = buildPeriods(days.flatMap(day => schedule[day] || []));
+
   return (
     <div className="schedule-container">
       <h2 className="heading">My Class Schedule</h2>
@@ -198,60 +181,40 @@ const ClassSchedule = () => {
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map((timeSlot, index) => (
-              <tr key={timeSlot.start}>
+            {periods.map((period, rowIndex) => (
+              <tr key={`${period.start}-${period.end}`}>
                 <td className="time-cell">
-                  <div className="time-slot-label">{timeSlot.label}</div>
+                  <div className="time-slot-label">{`${formatTime(period.start)} - ${formatTime(period.end)}`}</div>
                 </td>
                 {days.map(day => {
-                  const daySchedules = schedule[day] || [];
-                  const scheduleForTime = daySchedules.find(s => 
-                    s.timeSlot.startTime === timeSlot.start || 
-                    (index > 0 && s.timeSlot.startTime === timeSlots[index - 1].start)
-                  );
-
-                  // Calculate rowspan for multi-hour classes
-                  const rowSpan = scheduleForTime && scheduleForTime.timeSlot.startTime === timeSlot.start ? 
-                    timeSlots.filter((ts, i) => 
-                      i >= index && 
-                      ts.start >= timeSlot.start && 
-                      ts.end <= scheduleForTime.timeSlot.endTime
-                    ).length : 1;
-
-                  // Skip rendering if this cell is part of a longer class
-                  if (index > 0 && scheduleForTime && 
-                      scheduleForTime.timeSlot.startTime === timeSlots[index - 1].start) {
-                    return null;
-                  }
+                  // Every class of this day that belongs in this row, each showing its own times.
+                  const classes = (schedule[day] || []).filter(item => periodIndexOf(item, periods) === rowIndex);
 
                   return (
-                    <td 
-                      key={`${day}-${timeSlot.start}`} 
-                      className="schedule-cell"
-                      rowSpan={rowSpan}
-                    >
-                      {scheduleForTime && scheduleForTime.timeSlot.startTime === timeSlot.start && (
-                        <div 
+                    <td key={`${day}-${period.start}`} className="schedule-cell">
+                      {classes.map(item => (
+                        <div
+                          key={item._id}
                           className="class-item"
-                          style={{ backgroundColor: getSectionColor(scheduleForTime) }}
+                          style={{ backgroundColor: getSectionColor(item) }}
                         >
                           <div className="course-info">
-                            <span className="course-code">{scheduleForTime.courseId.code}</span>
-                            <span className="course-name">{scheduleForTime.courseId.name}</span>
+                            <span className="course-code">{item.courseId?.code}</span>
+                            <span className="course-name">{item.courseId?.name}</span>
                           </div>
                           <div className="schedule-details">
                             <div className="room-info">
-                              Room: {scheduleForTime.timeSlot.room}
+                              Room: {item.timeSlot.room}
                             </div>
                             <div className="section-info">
-                              Section {scheduleForTime.sectionId.section}
+                              Section {item.sectionId?.section}
                             </div>
                             <div className="time-info">
-                              {formatTime(scheduleForTime.timeSlot.startTime)} - {formatTime(scheduleForTime.timeSlot.endTime)}
+                              {formatTime(item.timeSlot.startTime)} - {formatTime(item.timeSlot.endTime)}
                             </div>
                           </div>
                         </div>
-                      )}
+                      ))}
                     </td>
                   );
                 })}
