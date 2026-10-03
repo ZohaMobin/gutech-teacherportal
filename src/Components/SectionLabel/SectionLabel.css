@@ -1,8 +1,9 @@
 .sl-name { display: block; }
 .sl-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; margin-top: 0.25rem; }
-.sl-program { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(153, 29, 32, 0.1); color: var(--primary-color, #991D20); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1.3; white-space: nowrap; }
-.sl-program.sl-more { background: #eef0f4; color: #4b5563; }
+.sl-program { display: inline-block; padding: 0.02rem 0.45rem; border-radius: 999px; background: #f1f3f6; color: #6b7280; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em; line-height: 1.35; white-space: nowrap; }
+.sl-program.sl-more { background: transparent; color: #9aa1ad; padding-left: 0.1rem; padding-right: 0.1rem; }
 .sl-section { font-size: 0.75rem; color: var(--text-secondary, #757575); }
-.section-item.active .sl-program { background: rgba(153, 29, 32, 0.16); }
+.section-item.active .sl-program { background: rgba(153, 29, 32, 0.08); color: rgba(153, 29, 32, 0.8); }
+.section-item.active .sl-program.sl-more { background: transparent; }
 .workspace-programs { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: 0.35rem; vertical-align: middle; }
 .sl-block { display: block; min-width: 0; flex: 1; }
