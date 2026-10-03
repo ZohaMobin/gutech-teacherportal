@@ -4,7 +4,7 @@ import axios from 'axios';
 import { showToast, TOAST_TYPES } from '../../Components/Toast/Toast';
 import './ClassSchedule.css';
 import { buildPeriods, periodIndexOf, to12Hour } from '../../utils/timetablePeriods';
-import { assignCardColors } from '../../utils/scheduleColors';
+import { assignCardColors, cardStyle } from '../../utils/scheduleColors';
 
 const ClassSchedule = () => {
   const [schedule, setSchedule] = useState({});
@@ -160,7 +160,7 @@ const ClassSchedule = () => {
                         <div
                           key={item._id}
                           className="class-item"
-                          style={{ backgroundColor: getSectionColor(item) }}
+                          style={cardStyle(getSectionColor(item))}
                         >
                           <div className="course-info">
                             <span className="course-code">{item.courseId?.code}</span>
