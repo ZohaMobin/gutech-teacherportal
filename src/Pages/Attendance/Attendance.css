@@ -1231,7 +1231,10 @@
 .section-list { max-height: calc(125vh - 24rem); }
 /* Like the Marks page: the panel scrolls as one, so the list is not boxed into a small window of its own. The search / counts /
    Save row and the table header stay pinned, so the top controls scroll away and the students get the whole panel. */
-.attendance-main { overflow-y: auto; overflow-x: hidden; }
+.attendance-main { overflow-y: auto; overflow-x: hidden; padding-top: 0; }
+/* No padding above the scrolling content: a pinned toolbar sits at the padding edge, so padding there would let scrolled rows
+   show through above it. The space comes from a margin on the first block instead, which scrolls away with it. */
+.attendance-main > :first-child { margin-top: var(--spacing-md); }
 .students-table-container { flex: none; overflow: visible; max-height: none; min-height: 0; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
 .students-table th { top: calc(var(--roster-toolbar-h, 3.1rem) - 2px); }   /* tucked 2px under the toolbar so no sliver shows between them */
 
@@ -1241,7 +1244,7 @@
 .attendance-controls .slotbar { flex: 1 1 20rem; margin-left: auto; }
 
 /* search, counts and Save: one row, flat */
-.roster-toolbar { flex: none; display: flex; align-items: center; gap: 0.5rem 0.8rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 12; padding: 0.4rem 0; background: var(--background-white); }
+.roster-toolbar { flex: none; display: flex; align-items: center; gap: 0.5rem 0.8rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 12; padding: 0.55rem 0 0.4rem; background: var(--background-white); }
 .roster-toolbar .search-container { flex: 1 1 14rem; min-width: 11rem; margin: 0; padding: 0; background: none; }
 .roster-toolbar .search-input { width: 100%; box-sizing: border-box; margin: 0; }
 .roster-toolbar .attendance-stats { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0; background: none; border-radius: 0; grid-template-columns: none; }
