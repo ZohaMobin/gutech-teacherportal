@@ -1268,3 +1268,7 @@
   .roster-toolbar { position: static; }
   .students-table th { top: 0; }
 }
+
+/* The pinned toolbar (z-index 12) and table header (10) sit in the same scrolling panel as the date picker. Without this the
+   calendar opens underneath them and its top rows are hidden. */
+.react-datepicker-popper { z-index: 30; }
