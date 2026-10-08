@@ -5,11 +5,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
-import Loading, { BusyLabel } from "../../Components/Loading/Loading";
+import Loading, { BusyLabel, Skeleton } from "../../Components/Loading/Loading";
+import { useConfirm } from "../../Components/ConfirmDialog/ConfirmDialog";
 import SectionLabel from "../../Components/SectionLabel/SectionLabel";
 import "./Attendance.css";
 
 const Attendance = () => {
+  const [confirm, confirmDialog] = useConfirm();
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
   // State management
@@ -25,6 +27,9 @@ const Attendance = () => {
   const [copyFromSlotNumber, setCopyFromSlotNumber] = useState("");
   const [markedDates, setMarkedDates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dateLoading, setDateLoading] = useState(false);
+  const dateRequestRef = useRef(0);
+  const rosterLoading = dateLoading && !loading;
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [slotBusy, setSlotBusy] = useState("");   // "copy" | "delete" | "export": a slot action or the export is running
@@ -270,6 +275,8 @@ const Attendance = () => {
       return;
     }
 
+    const requestId = ++dateRequestRef.current;
+    setDateLoading(true);
     try {
       const dateStr = getDateKey(date);
       const response = await axios.get(`${apiUrl}/api/teachers/attendance`, {
@@ -280,6 +287,8 @@ const Attendance = () => {
         },
         headers: requestHeaders(),
       });
+      // A newer date was picked while this was in flight: drop the stale answer.
+      if (requestId !== dateRequestRef.current) return;
 
       if (response.data && response.data.attendance && Array.isArray(response.data.attendance)) {
         const sectionData = response.data.attendance.find((item) => {
@@ -329,11 +338,14 @@ const Attendance = () => {
         setHasUnsavedChanges(false);
       }
     } catch (error) {
+      if (requestId !== dateRequestRef.current) return;
       console.error("Error fetching existing attendance:", error);
       setAttendanceData({});
       setSlotsForSelectedDate([]);
       setLocalSlotNumbers([]);
       setHasUnsavedChanges(false);
+    } finally {
+      if (requestId === dateRequestRef.current) setDateLoading(false);
     }
   };
 
@@ -416,8 +428,7 @@ const Attendance = () => {
       ? `Delete Slot ${selectedSlotNumber} for ${dateStr}? This will remove saved attendance records for this slot.`
       : `Remove Slot ${selectedSlotNumber}? (Not saved yet)`;
 
-    // eslint-disable-next-line no-restricted-globals
-    const ok = window.confirm(confirmText);
+    const ok = await confirm({ title: isSavedSlot ? "Delete slot?" : "Remove slot?", message: confirmText, confirmText: isSavedSlot ? "Delete" : "Remove", danger: true });
     if (!ok) return;
 
     // Unsaved: just remove locally
@@ -465,10 +476,7 @@ const Attendance = () => {
     const destinationHasMarks = Boolean(destinationSavedSlot && destinationSavedSlot.students?.length > 0) || Object.keys(attendanceData).length > 0;
 
     if (destinationHasMarks) {
-      // eslint-disable-next-line no-restricted-globals
-      const ok = window.confirm(
-        `Slot ${selectedSlotNumber} already has attendance. Copying will replace it. Continue?`
-      );
+      const ok = await confirm({ title: "Replace attendance?", message: `Slot ${selectedSlotNumber} already has attendance. Copying will replace it. Continue?`, confirmText: "Replace", danger: true });
       if (!ok) return;
     }
 
@@ -566,8 +574,7 @@ const Attendance = () => {
           setSaving(false);
           return;
         }
-        // eslint-disable-next-line no-restricted-globals
-        const ok = window.confirm(`You've cleared everyone. Remove the saved attendance for Slot ${selectedSlotNumber} on ${dateStr}? Students will show as not marked for that slot.`);
+        const ok = await confirm({ title: "Remove saved attendance?", message: `You've cleared everyone. Remove the saved attendance for Slot ${selectedSlotNumber} on ${dateStr}? Students will show as not marked for that slot.`, confirmText: "Remove", danger: true });
         if (!ok) {
           setSaving(false);
           return;
@@ -965,13 +972,13 @@ const Attendance = () => {
                   <div className="quick-actions quick-actions-top">
                     <span className="quick-actions-label quick-actions-title"></span>
                     <div className="slot-inline-group quick-action-buttons">
-                      <button className="btn-quick present" onClick={markAllPresent}>
+                      <button className="btn-quick present" onClick={markAllPresent} disabled={rosterLoading}>
                         Mark All Present
                       </button>
-                      <button className="btn-quick absent" onClick={markAllAbsent}>
+                      <button className="btn-quick absent" onClick={markAllAbsent} disabled={rosterLoading}>
                         Mark All Absent
                       </button>
-                      <button className="btn-quick clear" onClick={clearAll}>
+                      <button className="btn-quick clear" onClick={clearAll} disabled={rosterLoading}>
                         Clear All
                       </button>
                     </div>
@@ -1053,20 +1060,21 @@ const Attendance = () => {
                       onClick={() => setStatusFilter(key === statusFilter ? "" : key)}
                       title={key ? `Show only ${label.toLowerCase()} students` : "Show everyone"}
                     >
-                      <span className="stat-value">{count}</span>
+                      <span className="stat-value">{rosterLoading ? <Skeleton width="1.4rem" /> : count}</span>
                       <span className="stat-label">{label}</span>
                     </button>
                   ))}
                 </div>
                 <div className="roster-save">
                   {hasUnsavedChanges && <span className="unsaved-indicator" role="status">Unsaved changes</span>}
-                  <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading}>
+                  <button className="btn btn-primary save-btn" onClick={saveAttendance} disabled={saving || loading || dateLoading}>
                     <BusyLabel busy={saving} busyText="Saving…" idle="Save Attendance" />
                   </button>
                 </div>
               </div>
 
               {/* Students Table */}
+              {rosterLoading && <span className="ld-sr" role="status" aria-live="polite">Loading attendance for {getDateKey(selectedDate)}…</span>}
               {loading ? (
                 <Loading variant="table" rows={8} label="Loading students" />
               ) : students.length === 0 ? (
@@ -1079,7 +1087,7 @@ const Attendance = () => {
                 </div>
               ) : (
                 <div className="students-table-container">
-                  <table className="students-table">
+                  <table className={`students-table ${rosterLoading ? "is-loading" : ""}`} aria-busy={rosterLoading || undefined}>
                     <thead>
                       <tr>
                         <th>Roll Number</th>
@@ -1093,6 +1101,11 @@ const Attendance = () => {
                           <td className="roll-number">{student.rollNumber}</td>
                           <td className="student-name">{student.name}{student.suspended && <span className="tp-suspended" title="Suspended by the administration: can't sign in, keeps this course">Suspended</span>}</td>
                           <td className="attendance-actions-cell">
+                            {rosterLoading ? (
+                              <div className="attendance-actions" aria-hidden="true">
+                                {[0, 1, 2].map((i) => <span key={i} className="ld-bar att-skel" />)}
+                              </div>
+                            ) : (
                             <div className="attendance-actions">
                               <button
                                 onClick={() => handleAttendanceChange(student.id, "present")}
@@ -1116,6 +1129,7 @@ const Attendance = () => {
                                 Late
                               </button>
                             </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1138,6 +1152,7 @@ const Attendance = () => {
           )}
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 };

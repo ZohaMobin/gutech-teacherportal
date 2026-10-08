@@ -1,0 +1,10 @@
+/* Self-contained so it looks right on any page, matching the Marks dialogs. */
+.confirm-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(2px); }
+.confirm-dialog { background: #fff; width: 90%; max-width: 440px; border-radius: 14px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28); display: flex; flex-direction: column; overflow: hidden; }
+.confirm-dialog .modal-header { display: flex; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid #eef0f4; }
+.confirm-dialog .modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a; }
+.confirm-dialog .confirm-body { padding: 1.1rem 1.25rem; }
+.confirm-dialog .confirm-body p { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #475569; }
+.confirm-dialog .modal-footer { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.8rem 1.25rem; background: #fafbfc; border-top: 1px solid #eef0f4; }
+.confirm-dialog .btn-danger { background: #dc2626; color: #fff; border: 1px solid #dc2626; }
+.confirm-dialog .btn-danger:hover { background: #b91c1c; border-color: #b91c1c; }
