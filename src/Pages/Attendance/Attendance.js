@@ -553,16 +553,35 @@ const Attendance = () => {
         })
         .filter((item) => item !== null); // Remove null entries (unmarked students)
 
-      // Check if at least one student is marked
-      if (attendanceDataArray.length === 0) {
-        toast.error("Please mark at least one student before saving");
-        setSaving(false);
-        return;
-      }
-
       const dateStr = getDateKey(selectedDate);
       const sectionId = activeSection._id || activeSection.id;
       const courseId = activeSection.courseId?._id || activeSection.courseId?.id || activeSection.courseId;
+
+      // Nobody marked. If this slot was saved before (e.g. attendance taken on the wrong day, then "Clear all"), saving
+      // means removing it; otherwise there is simply nothing to save.
+      if (attendanceDataArray.length === 0) {
+        const isSavedSlot = slotsForSelectedDate.some((slot) => slot.slotNumber === selectedSlotNumber);
+        if (!isSavedSlot) {
+          toast.error("Mark at least one student first. There's nothing to save for this slot yet.");
+          setSaving(false);
+          return;
+        }
+        // eslint-disable-next-line no-restricted-globals
+        const ok = window.confirm(`You've cleared everyone. Remove the saved attendance for Slot ${selectedSlotNumber} on ${dateStr}? Students will show as not marked for that slot.`);
+        if (!ok) {
+          setSaving(false);
+          return;
+        }
+        await axios.delete(`${apiUrl}/api/teachers/attendance`, {
+          params: { sectionId, courseId, date: dateStr, slotNumber: selectedSlotNumber },
+          headers: requestHeaders(),
+        });
+        toast.success(`Attendance for Slot ${selectedSlotNumber} on ${dateStr} removed`);
+        setHasUnsavedChanges(false);
+        fetchMarkedDates(sectionId);
+        loadDateAttendance(sectionId, selectedDate, 1);
+        return;
+      }
 
       const response = await axios.post(
         `${apiUrl}/api/teachers/attendance`,
