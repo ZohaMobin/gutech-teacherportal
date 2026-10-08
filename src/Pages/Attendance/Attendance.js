@@ -1072,7 +1072,7 @@ const Attendance = () => {
                       {filteredStudents.map((student) => (
                         <tr key={student.id}>
                           <td className="roll-number">{student.rollNumber}</td>
-                          <td className="student-name">{student.name}</td>
+                          <td className="student-name">{student.name}{student.suspended && <span className="tp-suspended" title="Suspended by the administration: can't sign in, keeps this course">Suspended</span>}</td>
                           <td className="attendance-actions-cell">
                             <div className="attendance-actions">
                               <button

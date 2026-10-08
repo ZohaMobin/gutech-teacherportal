@@ -1547,7 +1547,7 @@ const Marks2 = () => {
                         gradebookRows.map((student) => (
                           <tr key={student.id}>
                             <td className="sticky-col roll-col">{student.rollNumber || '-'}</td>
-                            <td className="sticky-col name-col">{student.name || 'Unnamed Student'}</td>
+                            <td className="sticky-col name-col">{student.name || 'Unnamed Student'}{student.suspended && <span className="tp-suspended" title="Suspended by the administration: can't sign in, keeps this course">Suspended</span>}</td>
                             {assessments.map((assessment) => {
                               const mark = studentMarks[student.id]?.[assessment._id] ?? '';
                               const weightedScore = calculateWeightedScore(student.id, assessment);
@@ -1694,7 +1694,7 @@ const Marks2 = () => {
                       filteredStudents.map(student => (
                         <tr key={student.id}>
                           <td>{student.rollNumber}</td>
-                          <td>{student.name}</td>
+                          <td>{student.name}{student.suspended && <span className="tp-suspended" title="Suspended by the administration: can't sign in, keeps this course">Suspended</span>}</td>
                           <td>
                             <input 
                               type="number" 
