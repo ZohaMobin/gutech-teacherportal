@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import "./ForgotPassword.css";
 
 // Emailed reset codes are off until the sending domain is verified. Set REACT_APP_EMAIL_PASSWORD_RESET=true to bring the
@@ -82,7 +83,7 @@ const ForgotPassword = () => {
         code: otp,
         newPassword: pass
       });
-      alert("Password reset successfully!");
+      toast.success("Password reset successfully. Please sign in.");
       navigate("/");
     } catch (error) {
       setErrorMessage(error.response?.data?.message || "Failed to reset password. Please try again.");

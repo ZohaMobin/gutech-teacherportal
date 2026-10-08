@@ -1,6 +1,7 @@
 import { BusyLabel } from '../../Components/Loading/Loading';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Components/AuthContext'; // ✅ Import the auth context
 import './Signup.css';
@@ -119,7 +120,7 @@ const Signup = () => {
 
       setSignupForm({ name: '', email: '', employeeId: '', department: '', password: '' });
       setIsSignupActive(false);
-      alert('Registration received. An administrator must approve your account before you can log in.');
+      toast.success('Registration received. An administrator must approve your account before you can log in.', { duration: 8000 });
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);

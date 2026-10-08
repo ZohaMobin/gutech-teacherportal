@@ -1275,3 +1275,12 @@
 
 /* A student suspended by the administration: still enrolled, can't sign in */
 .tp-suspended { display: inline-block; margin-left: 0.45rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: #fff4dc; color: #8a5a00; font-size: 0.7rem; font-weight: 650; vertical-align: middle; white-space: nowrap; }
+
+/* While a picked date's saved attendance loads, the roster stays on screen: names stay, marks and counts shimmer. */
+.students-table.is-loading { position: relative; }
+.students-table.is-loading::before { content: ""; position: absolute; top: 0; left: 0; width: 35%; height: 3px; border-radius: 3px; background: #8b1538; z-index: 2; animation: att-slide 1.1s ease-in-out infinite; }
+@keyframes att-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
+.att-skel { display: inline-block; width: 4.4rem; height: 2rem; border-radius: 8px; }
+.stat-value .ld-chip { vertical-align: -0.1em; }
+.students-table.is-loading .attendance-actions { display: flex; gap: 0.5rem; }
+@media (prefers-reduced-motion: reduce) { .students-table.is-loading::before { animation: none; width: 100%; opacity: 0.4; } }

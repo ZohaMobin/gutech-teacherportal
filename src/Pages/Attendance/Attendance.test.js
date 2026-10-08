@@ -45,11 +45,12 @@ afterEach(() => { act(() => root.unmount()); container.remove(); sessionStorage.
 
 test("attendance saved on the wrong day: Clear all, then Save, removes it after a confirm", async () => {
   await mount({ savedToday: true });
-  const confirm = jest.spyOn(window, "confirm").mockReturnValue(true);
   await click(clearAll());
   await click(save());
   await wait(20);
-  expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/You've cleared everyone. Remove the saved attendance for Slot 1/));
+  expect(document.querySelector(".confirm-dialog").textContent).toMatch(/You've cleared everyone. Remove the saved attendance for Slot 1/);
+  await click(document.querySelector(".confirm-dialog .btn-danger"));
+  await wait(20);
   expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining("/api/teachers/attendance"), expect.objectContaining({ params: { sectionId: "sec1", courseId: "c1", date: today, slotNumber: 1 } }));
   expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/removed/));
   expect(toast.error).not.toHaveBeenCalled();
@@ -57,20 +58,21 @@ test("attendance saved on the wrong day: Clear all, then Save, removes it after 
 
 test("cancelling the confirm keeps the saved attendance", async () => {
   await mount({ savedToday: true });
-  jest.spyOn(window, "confirm").mockReturnValue(false);
   await click(clearAll());
   await click(save());
   await wait(20);
+  await click(document.querySelector(".confirm-dialog .btn-secondary"));
+  await wait(20);
+  expect(document.querySelector(".confirm-dialog")).toBeNull();
   expect(axios.delete).not.toHaveBeenCalled();
 });
 
 test("nothing saved and nobody marked: Save explains there's nothing to save", async () => {
   await mount({ savedToday: false });
-  const confirm = jest.spyOn(window, "confirm");
   await click(save());
   await wait(20);
   expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/nothing to save/));
-  expect(confirm).not.toHaveBeenCalled();
+  expect(document.querySelector(".confirm-dialog")).toBeNull();
   expect(axios.delete).not.toHaveBeenCalled();
   expect(axios.post).not.toHaveBeenCalled();
 });
