@@ -5,6 +5,7 @@ import WeightMeter from './WeightMeter';
 import LockedNotice, { lockText } from './LockedNotice';
 import { messageOf } from './apiMessage';
 import GradeGenerator from './GradeGenerator';
+import { useConfirm } from '../../Components/ConfirmDialog/ConfirmDialog';
 import Loading, { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -38,6 +39,7 @@ const getSectionFileLabel = (section) => {
 };
 
 const Marks2 = () => {
+  const [confirm, confirmDialog] = useConfirm();
   // State variables
   const [sections, setSections] = useState([]);
   const [activeSection, setActiveSection] = useState(null);
@@ -530,7 +532,7 @@ const Marks2 = () => {
 
   // Delete assessment
   const deleteAssessment = async (assessmentId) => {
-    if (!window.confirm('Are you sure you want to delete this assessment?')) return;
+    if (!(await confirm({ title: 'Delete assessment?', message: 'Are you sure you want to delete this assessment?', confirmText: 'Delete', danger: true }))) return;
     
     setSaving(true);
     setError(null);
@@ -1968,6 +1970,7 @@ const Marks2 = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

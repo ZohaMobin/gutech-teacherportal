@@ -10,6 +10,7 @@ import ClassSchedule from './Pages/ClassSchedule/ClassSchedule';
 import Attendance from './Pages/Attendance/Attendance';
 import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
 import Settings from './Pages/Settings/Settings';
+import AppToaster from './Components/Toast/AppToaster';
 import './styles/global.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="app">
+          <AppToaster />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Signup />} />
