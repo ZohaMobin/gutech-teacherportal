@@ -1272,3 +1272,6 @@
 /* The pinned toolbar (z-index 12) and table header (10) sit in the same scrolling panel as the date picker. Without this the
    calendar opens underneath them and its top rows are hidden. */
 .react-datepicker-popper { z-index: 30; }
+
+/* A student suspended by the administration: still enrolled, can't sign in */
+.tp-suspended { display: inline-block; margin-left: 0.45rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: #fff4dc; color: #8a5a00; font-size: 0.7rem; font-weight: 650; vertical-align: middle; white-space: nowrap; }

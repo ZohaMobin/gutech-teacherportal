@@ -1299,3 +1299,6 @@
 .section-list, .assessment-list { scrollbar-gutter: stable; }
 .marks2-sidebar .weight-summary { margin-right: calc(var(--spacing-xs, 0.25rem) + 4px); }
 .marks2-content:not(.is-generator) .assessment-list { max-height: 30rem; }
+
+/* A student suspended by the administration: still enrolled, can't sign in */
+.tp-suspended { display: inline-block; margin-left: 0.45rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: #fff4dc; color: #8a5a00; font-size: 0.7rem; font-weight: 650; vertical-align: middle; white-space: nowrap; }
