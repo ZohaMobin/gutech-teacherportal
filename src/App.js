@@ -7,6 +7,7 @@ import MainLayout from './Pages/MainLayout/MainLayout';
 import Signup from './Pages/LoginSignUp/Signup';
 import Marks2 from './Pages/Marks2/Marks2';
 import ClassSchedule from './Pages/ClassSchedule/ClassSchedule';
+import Dashboard from './Pages/Dashboard/Dashboard';
 import Attendance from './Pages/Attendance/Attendance';
 import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
 import Settings from './Pages/Settings/Settings';
@@ -27,8 +28,7 @@ function App() {
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>
-                {/* There is no dashboard page yet (see BACKLOG); keeps old links and bookmarks working. */}
-                <Route path="dashboard" element={<Navigate to="/attendance" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="marks" element={<Marks2 />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="timetable" element={<ClassSchedule />} />

@@ -10,6 +10,15 @@ import { useConfirm } from "../../Components/ConfirmDialog/ConfirmDialog";
 import SectionLabel from "../../Components/SectionLabel/SectionLabel";
 import "./Attendance.css";
 
+// The dashboard can open a page on a particular section; the hint is read once and cleared.
+const takeSectionHint = (sections) => {
+  try {
+    const id = sessionStorage.getItem("dashboard:section");
+    sessionStorage.removeItem("dashboard:section");
+    return (id && sections.find((section) => String(section._id) === id)) || null;
+  } catch { return null; }
+};
+
 const Attendance = () => {
   const [confirm, confirmDialog] = useConfirm();
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -137,7 +146,7 @@ const Attendance = () => {
 
         // Set the first section as active if available
         if (response.data.length > 0 && !activeSection) {
-          const firstSection = response.data[0];
+          const firstSection = takeSectionHint(response.data) || response.data[0];
           setActiveSection(firstSection);
           fetchStudents(firstSection._id, firstSection);
         }

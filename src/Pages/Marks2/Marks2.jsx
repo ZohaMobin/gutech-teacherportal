@@ -38,6 +38,15 @@ const getSectionFileLabel = (section) => {
     .replace(/[\\/?*[\]:]/g, '');
 };
 
+// The dashboard can open a page on a particular section; the hint is read once and cleared.
+const takeSectionHint = (sections) => {
+  try {
+    const id = sessionStorage.getItem('dashboard:section');
+    sessionStorage.removeItem('dashboard:section');
+    return (id && sections.find((section) => String(section._id) === id)) || null;
+  } catch { return null; }
+};
+
 const Marks2 = () => {
   const [confirm, confirmDialog] = useConfirm();
   // State variables
@@ -155,8 +164,9 @@ const Marks2 = () => {
         
         // Set the first section as active if available
         if (response.data.length > 0 && !activeSection) {
-          setActiveSection(response.data[0]);
-          fetchStudents(response.data[0]._id);
+          const first = takeSectionHint(response.data) || response.data[0];
+          setActiveSection(first);
+          fetchStudents(first._id);
         }
       }
     } catch (error) {
