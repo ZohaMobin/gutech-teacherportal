@@ -1302,3 +1302,17 @@
 
 /* A student suspended by the administration: still enrolled, can't sign in */
 .tp-suspended { display: inline-block; margin-left: 0.45rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: #fff4dc; color: #8a5a00; font-size: 0.7rem; font-weight: 650; vertical-align: middle; white-space: nowrap; }
+
+/* Import marks: what the file would do, before it does it */
+.import-summary { margin: 0 0 0.6rem; font-size: 0.9rem; line-height: 1.5; color: #334155; }
+.import-notes { margin: 0 0 0.75rem; padding-left: 1.1rem; font-size: 0.84rem; line-height: 1.5; color: #64748b; }
+.modal .import-preview .dialog-error { margin: 0 0 0.75rem; }
+.marks2-menu-list button:disabled { opacity: 0.5; cursor: not-allowed; }
+/* The import review fills the dialog instead of one column of the form grid */
+.modal-grid .import-preview { grid-column: 1 / -1; min-width: 0; }
+.import-preview h4 { display: none; }
+.import-preview .table-container { overflow-x: auto; max-height: 15rem; overflow-y: auto; border: 1px solid #eef0f4; border-radius: 8px; }
+.import-preview table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.import-preview th, .import-preview td { padding: 0.4rem 0.65rem; text-align: left; white-space: nowrap; border-bottom: 1px solid #eef0f4; }
+.import-preview th { position: sticky; top: 0; background: #f8fafc; font-weight: 600; color: #475569; }
+.import-notes { list-style: disc; }
