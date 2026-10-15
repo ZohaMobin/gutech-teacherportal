@@ -153,7 +153,7 @@ const Signup = () => {
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
       login(response.data.user, response.data.token); // Pass both user data and token
 
-      navigate("/attendance");
+      navigate("/dashboard");
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
       setError(errorMessage);

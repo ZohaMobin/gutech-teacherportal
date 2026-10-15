@@ -6,7 +6,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 
 const MainLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('attendance');
+  const [activePage, setActivePage] = useState('dashboard');
   const location = useLocation();
   
   // Update activePage when the route changes
@@ -16,7 +16,7 @@ const MainLayout = ({ children }) => {
     if (currentPath) {
       setActivePage(currentPath);
     } else {
-      setActivePage('attendance');
+      setActivePage('dashboard');
     }
   }, [location]);
   
