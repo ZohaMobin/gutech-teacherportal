@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
+import { planImport } from './importMarks';
 import SectionLabel, { ProgramTags } from '../../Components/SectionLabel/SectionLabel';
 
 const sortStudentsAscending = (studentsList = []) =>
@@ -61,6 +62,8 @@ const Marks2 = () => {
   const [error, setError] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
+  const [importPlan, setImportPlan] = useState(null);   // what the chosen file would do, worked out before anything changes
+  const importInputRef = useRef(null);                   // lives outside the Import / Export menu: the menu closes on click, and a file input inside it would go with it
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
   const [showTools, setShowTools] = useState(false);
   // What the server has for each assessment, as last loaded or saved: { assessmentId: { studentId: mark } }. Saving sends only
@@ -571,14 +574,18 @@ const Marks2 = () => {
   // Handle file import
   const handleFileImport = (e) => {
     const file = e.target.files[0];
+    e.target.value = '';             // so choosing the same file again (after fixing it) still counts as a new choice
     if (!file) return;
     
     // Validate file type
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    if (!/\.xlsx?$/i.test(file.name)) {
       toast.error('Please upload an Excel file (.xlsx or .xls)');
       return;
     }
-    
+    if (!activeAssessment) {
+      toast.error('Choose the assessment these marks are for first');
+      return;
+    }
     
     // Preview the file
     const reader = new FileReader();
@@ -593,6 +600,7 @@ const Marks2 = () => {
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         
         setImportPreview(jsonData);
+        setImportPlan(planImport(jsonData, students, activeAssessment));
         setShowImportModal(true);
       } catch (error) {
         console.error('Error reading file:', error);
@@ -603,56 +611,23 @@ const Marks2 = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  // Process imported data
+  const closeImport = () => {
+    setShowImportModal(false);
+    setImportPreview(null);
+    setImportPlan(null);
+  };
+
+  // Put the reviewed marks into the table. They are not on the server until the teacher presses Save.
   const processImportData = () => {
-    if (!importPreview || !activeAssessment) return;
-    
-    try {
-      // Update student marks with imported data
-      setStudentMarks(prevMarks => {
-        const updatedMarks = { ...prevMarks };
-        
-        importPreview.forEach(row => {
-          const rollNumber = row['Roll Number'];
-          const mark = row['Obtained Marks'];
-          
-          // Find student by roll number
-          const student = students.find(s => s.rollNumber === rollNumber);
-          
-          if (student && mark !== undefined) {
-            if (!updatedMarks[student.id]) {
-              updatedMarks[student.id] = {};
-            }
-            
-            // Convert to number and validate
-            const numValue = mark === '' ? '' : Number(mark);
-            
-            // Validate against max marks
-            if (numValue !== '' && (isNaN(numValue) || numValue < 0 || numValue > activeAssessment.maxMarks)) {
-              toast.error(`Invalid mark for student ${student.name} (${rollNumber}): ${mark}`);
-              return prevMarks;
-            }
-            
-            updatedMarks[student.id][activeAssessment._id] = numValue;
-          } else {
-            toast.error(`Student with Roll Number ${rollNumber} not found`);
-          }
-        });
-        
-        return updatedMarks;
-      });
-      
-      // Save marks to localStorage for persistence
-      const storageKey = `marks_${activeSection.name}_${activeAssessment._id}`;
-      localStorage.setItem(storageKey, JSON.stringify(studentMarks));
-      
-      setShowImportModal(false);
-      setImportPreview(null);
-      toast.success('Data imported successfully');
-    } catch (error) {
-      console.error('Error processing import data:', error);
-      toast.error('Error processing import data');
-    }
+    if (!importPlan || !activeAssessment || importPlan.matches.length === 0) return;
+    const { matches } = importPlan;
+    setStudentMarks((prev) => {
+      const next = { ...prev };
+      for (const { studentId, mark } of matches) next[studentId] = { ...(next[studentId] || {}), [activeAssessment._id]: mark };
+      return next;
+    });
+    closeImport();
+    toast.success(`${matches.length} ${matches.length === 1 ? 'mark' : 'marks'} added to ${activeAssessment.title}. Press Save to keep them.`);
   };
 
   const fetchAssessmentMarksMap = async (assessmentId) => {
@@ -1336,10 +1311,9 @@ const Marks2 = () => {
                 <button type="button" role="menuitem" onClick={exportAllAssessments} disabled={!activeSection || !assessments.length || !students.length}><Download size={15} /> Export all assessments</button>
                 <button type="button" role="menuitem" onClick={exportAllSectionData} disabled={!activeSection || !students.length}><FileSpreadsheet size={15} /> Export full data</button>
                 <hr />
-                <label role="menuitem" className={locked ? 'is-disabled' : ''} title={locked ? `${lockedTitle}: marks cannot be imported` : undefined}>
+                <button type="button" role="menuitem" onClick={() => importInputRef.current?.click()} disabled={locked || !activeAssessment} title={locked ? `${lockedTitle}: marks cannot be imported` : !activeAssessment ? 'Choose an assessment first' : undefined}>
                   <Upload size={15} /> Import marks
-                  <input type="file" accept=".xlsx,.xls" onChange={handleFileImport} disabled={locked} style={{ display: 'none' }} />
-                </label>
+                </button>
                 <button type="button" role="menuitem" onClick={downloadTemplate} disabled={!activeAssessment}><FileSpreadsheet size={15} /> Download template</button>
               </div>
             )}
@@ -1823,26 +1797,31 @@ const Marks2 = () => {
         </div>
       )}
 
+      <input ref={importInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileImport} style={{ display: 'none' }} aria-label="Choose a marks spreadsheet" />
+
       {/* Import Modal */}
-      {showImportModal && (
+      {showImportModal && importPlan && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Import Marks</h3>
-              <button 
-                className="btn-icon"
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportPreview(null);
-                }}
-              >
-                <X size={16} />
-              </button>
+              <h3>Import marks</h3>
+              <button className="btn-icon" onClick={closeImport} aria-label="Close"><X size={16} /></button>
             </div>
             <div className="modal-body modal-grid">
               <div className="import-preview">
-                <h4>Preview</h4>
-                <p>Review the data before importing. Make sure the student IDs match.</p>
+                {importPlan.missingColumns.length > 0 ? (
+                  <div className="dialog-error" role="alert">This file has no {importPlan.missingColumns.map((name) => `"${name}"`).join(' or ')} column. Download the template from the Import / Export menu and fill that in.</div>
+                ) : (
+                  <>
+                    <p className="import-summary"><strong>{importPlan.matches.length} {importPlan.matches.length === 1 ? 'mark' : 'marks'}</strong> will be added to <strong>{activeAssessment?.title}</strong> (out of {activeAssessment?.maxMarks}). You can review them in the table, then press Save.</p>
+                    {importPlan.mismatch && <div className="dialog-error" role="alert">This file looks like it was made for “{importPlan.mismatch}”, not {activeAssessment?.title}. Cancel if you chose the wrong assessment.</div>}
+                    <ul className="import-notes">
+                      {importPlan.blank > 0 && <li>{importPlan.blank} {importPlan.blank === 1 ? 'row has' : 'rows have'} no mark and will be left as they are.</li>}
+                      {importPlan.notFound.length > 0 && <li>{importPlan.notFound.length} roll {importPlan.notFound.length === 1 ? 'number was' : 'numbers were'} not found in this section: {importPlan.notFound.slice(0, 5).join(', ')}{importPlan.notFound.length > 5 ? '…' : ''}</li>}
+                      {importPlan.invalid.length > 0 && <li>{importPlan.invalid.length} {importPlan.invalid.length === 1 ? 'mark is' : 'marks are'} not a number from 0 to {activeAssessment?.maxMarks}: {importPlan.invalid.slice(0, 3).map((i) => `${i.name} (${i.mark})`).join(', ')}{importPlan.invalid.length > 3 ? '…' : ''}</li>}
+                    </ul>
+                  </>
+                )}
                 <div className="table-container">
                   <table>
                     <thead>
@@ -1869,20 +1848,9 @@ const Marks2 = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportPreview(null);
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={processImportData}
-              >
-                Import Data
+              <button className="btn btn-secondary" onClick={closeImport}>Cancel</button>
+              <button className="btn btn-primary" onClick={processImportData} disabled={importPlan.matches.length === 0}>
+                {importPlan.matches.length > 0 ? `Add ${importPlan.matches.length} ${importPlan.matches.length === 1 ? 'mark' : 'marks'}` : 'Nothing to add'}
               </button>
             </div>
           </div>
