@@ -9,6 +9,8 @@ import Loading, { BusyLabel, Skeleton } from "../../Components/Loading/Loading";
 import { useConfirm } from "../../Components/ConfirmDialog/ConfirmDialog";
 import SectionLabel from "../../Components/SectionLabel/SectionLabel";
 import "./Attendance.css";
+import { isNetworkError, NETWORK_MESSAGE } from "../../utils/apiMessage";
+import ErrorState, { InlineAlert } from "../../Components/ErrorState/ErrorState";
 
 // The dashboard can open a page on a particular section; the hint is read once and cleared.
 const takeSectionHint = (sections) => {
@@ -99,9 +101,8 @@ const Attendance = () => {
       const message = error.response.data?.message || "An error occurred";
       toast.error(message);
       setError(message);
-    } else if (error.request) {
-      toast.error("Network error. Please check your connection.");
-      setError("Network error. Please check your connection.");
+    } else if (isNetworkError(error)) {
+      setError(NETWORK_MESSAGE);   // the banner (or the page's error state) says it once; a toast on top would repeat it
     } else {
       toast.error("An unexpected error occurred. Please try again.");
       setError("An unexpected error occurred. Please try again.");
@@ -918,12 +919,7 @@ const Attendance = () => {
         )}
       </div>
 
-      {error && (
-        <div className="error-message" role="alert">
-          <span>{error}</span>
-          <button type="button" className="error-dismiss" onClick={() => setError(null)} aria-label="Dismiss">×</button>
-        </div>
-      )}
+      <InlineAlert message={sections.length > 0 || loading ? error : null} onDismiss={() => setError(null)} />
 
       <div className="attendance-content">
         {/* Sidebar - Section Selection */}
@@ -933,7 +929,7 @@ const Attendance = () => {
             {loading && sections.length === 0 ? (
               <Loading variant="list" rows={4} label="Loading sections" />
             ) : sections.length === 0 ? (
-              <div className="empty-text">No enrolled sections for the active semester</div>
+              error ? null : <div className="empty-text">No enrolled sections for the active semester</div>
             ) : (
               <div className="section-list">
                 {sections.map((section) => (
@@ -1151,6 +1147,8 @@ const Attendance = () => {
           ) : (
             loading && sections.length === 0 ? (
               <Loading variant="page" rows={4} label="Loading attendance" />
+            ) : sections.length === 0 && error ? (
+              <ErrorState message={error} onRetry={fetchSections} />
             ) : (
               <div className="empty-state">
                 <p>{sections.length === 0

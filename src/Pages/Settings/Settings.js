@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react';
 import './Settings.css';
+import { formMessageOf } from '../../utils/apiMessage';
+import { InlineAlert } from '../../Components/ErrorState/ErrorState';
 
 const Settings = () => {
   const [formData, setFormData] = useState({
@@ -86,7 +88,7 @@ const Settings = () => {
       });
       setMessage('Password changed successfully.');
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Unable to change password. Please try again.');
+      setError(formMessageOf(requestError, 'Unable to change password. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -136,7 +138,7 @@ const Settings = () => {
           </div>
 
           {message && <div className="settings-alert success">{message}</div>}
-          {error && <div className="settings-alert error">{error}</div>}
+          <InlineAlert message={error} />
 
           <label>
             Current Password
