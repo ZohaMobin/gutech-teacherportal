@@ -3,6 +3,10 @@
   --d-brand: rgb(153, 29, 32);
   --d-brand-tint: rgba(153, 29, 32, 0.06);
   --d-brand-track: rgba(153, 29, 32, 0.1);
+  --d-gold: #f5c32c;
+  --d-gold-line: #ecd07a;
+  --d-gold-tint: #fffbea;
+  --d-gold-ink: #5c4400;
   --d-text: #1e293b;
   --d-muted: #64748b;
   --d-line: #e2e8f0;
@@ -63,15 +67,16 @@
 .dash-class::before { content: ""; position: absolute; left: -1.1rem; top: 1.05rem; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #fff; border: 1.5px solid #cbd5e1; }
 .dash-class { transition: border-color 0.15s, box-shadow 0.15s; }
 .dash-class:hover { border-color: #cbd5e1; }
-.dash-class.is-live { border-color: var(--d-brand); background: var(--d-brand-tint); }
-.dash-class.is-live::before { background: var(--d-brand); border-color: var(--d-brand); }
+.dash-class.is-live { border-color: var(--d-gold-line); background: var(--d-gold-tint); }
+.dash-class.is-live::before { background: var(--d-gold); border-color: var(--d-gold); animation: dash-pulse 1.8s ease-out infinite; }
+@keyframes dash-pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 195, 44, 0.55); } 100% { box-shadow: 0 0 0 7px rgba(245, 195, 44, 0); } }
 .dash-class.is-done { background: var(--d-soft); }
 .dash-class.is-done > .dash-class-top strong, .dash-class.is-done > .dash-note { opacity: 0.7; }
 .dash-class-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .dash-class-top strong { font-size: 0.92rem; font-weight: 600; }
 
 .dash-pill { flex: none; padding: 0.15rem 0.6rem; border-radius: 999px; background: #f1f5f9; color: var(--d-muted); font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
-.dash-pill.is-live { background: var(--d-brand); color: #fff; }
+.dash-pill.is-live { background: var(--d-gold); color: var(--d-gold-ink); }
 .dash-pill.is-ok { background: var(--d-ok-tint); color: var(--d-ok); }
 .dash-pill.is-warn { background: var(--d-warn-tint); color: var(--d-warn); }
 
@@ -145,4 +150,4 @@
     .dash-row { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
   .dash-row-head { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .dash-bar i { transition: none; } .is-spinning { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .dash-bar i { transition: none; } .is-spinning, .dash-class.is-live::before { animation: none; } }
