@@ -9,6 +9,8 @@ import {
   overdueAttendance, percent, slotCountsFrom, todaysClasses,
 } from "../../utils/dashboardData";
 import "./Dashboard.css";
+import { messageOf } from "../../utils/apiMessage";
+import ErrorState from "../../Components/ErrorState/ErrorState";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 const SECTION_HINT = "dashboard:section";   // the section to open first on Attendance or Marks, read once
@@ -53,7 +55,7 @@ const useDashboard = () => {
       }));
       setState({ status: "ready", user, term, sections, schedule, mine, details, updatedAt: new Date() });
     } catch (error) {
-      const message = error.response?.data?.message || error.message || "The dashboard could not be loaded.";
+      const message = messageOf(error, "The dashboard could not be loaded.");
       setState((current) => (soft && current.status === "ready" ? { ...current, refreshing: false, refreshFailed: true } : { status: "error", message }));
     }
   }, []);
@@ -130,10 +132,7 @@ const Dashboard = () => {
   if (state.status === "error") {
     return (
       <div className="dash">
-        <div className="dash-card dash-error" role="alert">
-          <p>{state.message}</p>
-          <button type="button" className="dash-btn" onClick={reload}>Try again</button>
-        </div>
+        <ErrorState message={state.message} onRetry={() => reload()} />
       </div>
     );
   }

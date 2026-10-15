@@ -95,7 +95,7 @@ test("a failed load shows a retry, and retrying loads again", async () => {
   await mount({ fail: "/getSections/" });
   expect(container.querySelector('[role="alert"]').textContent).toMatch(/Server is down/);
   axios.get.mockClear();
-  await click(container.querySelector(".dash-error button"));
+  await click(container.querySelector(".es-btn"));
   await wait(10);
   expect(axios.get).toHaveBeenCalled();
 });
@@ -131,4 +131,17 @@ test("the timetable is shown as the Timetable page shows it, even a class from a
   expect(text()).not.toMatch(/Not marked/);
   expect(text()).toMatch(/Attendance to mark0Nothing overdue/);
   expect(container.querySelector(".dash-timeline .dash-link")).toBeNull();     // no "Take attendance" for a section this page can't judge
+});
+
+test("with no internet the dashboard says so in plain words, not 'Network Error'", async () => {
+  await mount({});
+  axios.get.mockImplementation(async () => { throw Object.assign(new Error("Network Error"), { request: {}, code: "ERR_NETWORK" }); });
+  await click([...container.querySelectorAll(".dash-foot .dash-link")][0]);
+  await wait(30);
+  act(() => root.unmount());
+  root = createRoot(container);
+  await act(async () => { root.render(<Dashboard />); });
+  await wait(30);
+  expect(container.querySelector('[role="alert"]').textContent).toMatch(/Couldn't reach the server\. Check your internet connection and try again\./);
+  expect(text()).not.toMatch(/Network Error/);
 });

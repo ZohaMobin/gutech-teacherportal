@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Components/AuthContext'; // ✅ Import the auth context
 import './Signup.css';
+import { formMessageOf } from '../../utils/apiMessage';
+import { InlineAlert } from '../../Components/ErrorState/ErrorState';
 
 const Signup = () => {
   const [isSignupActive, setIsSignupActive] = useState(false);
@@ -13,6 +15,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [departments, setDepartments] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [departmentsFailed, setDepartmentsFailed] = useState(false);   // so a failed load is not described as "no departments"
   
   const [signupForm, setSignupForm] = useState({
     name: '',
@@ -35,6 +38,7 @@ const Signup = () => {
     const fetchDepartments = async () => {
       try {
         setDepartmentsLoading(true);
+        setDepartmentsFailed(false);
         const apiUrl = process.env.REACT_APP_BACKEND_URL;
         const response = await axios.get(`${apiUrl}/api/departments`, {
           headers: {
@@ -50,6 +54,7 @@ const Signup = () => {
         console.error('Error fetching departments:', error);
         // Fallback to empty array if API fails
         setDepartments([]);
+        setDepartmentsFailed(true);
       } finally {
         setDepartmentsLoading(false);
       }
@@ -122,7 +127,7 @@ const Signup = () => {
       setIsSignupActive(false);
       toast.success('Registration received. An administrator must approve your account before you can log in.', { duration: 8000 });
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+      const errorMessage = formMessageOf(error, 'Registration failed. Please try again.');
       setError(errorMessage);
       console.error('Registration error:', errorMessage);
     } finally {
@@ -155,7 +160,7 @@ const Signup = () => {
 
       navigate("/dashboard");
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      const errorMessage = formMessageOf(error, 'Login failed. Please check your credentials.');
       setError(errorMessage);
       console.error('Login error:', errorMessage);
     } finally {
@@ -175,14 +180,14 @@ const Signup = () => {
         <div className="form-container sign-up">
           <form onSubmit={handleSignup}>
             <h1 className="form-title">Create Account</h1>
-            {error && <div className="error-message">{error}</div>}
+            <InlineAlert message={error} />
             <input type="text" name="name" placeholder="Full Name" value={signupForm.name} onChange={handleSignupChange} disabled={isSubmitting} />
             <input type="email" name="email" placeholder="Institutional Email" value={signupForm.email} onChange={handleSignupChange} disabled={isSubmitting} />
             <input type="text" name="employeeId" placeholder="Employee ID" value={signupForm.employeeId} onChange={handleSignupChange} disabled={isSubmitting} />
             <select name="department" value={signupForm.department} onChange={handleSignupChange} disabled={isSubmitting || departmentsLoading}>
               <option value="">{departmentsLoading ? 'Loading departments...' : 'Select Department'}</option>
               {departments.length === 0 && !departmentsLoading && (
-                <option value="" disabled>No departments available</option>
+                <option value="" disabled>{departmentsFailed ? "Couldn't load departments. Check your connection and reload." : 'No departments available'}</option>
               )}
               {departments.map((dept) => (
                 <option key={dept._id || dept.id} value={dept.name}>
@@ -204,7 +209,7 @@ const Signup = () => {
         <div className="form-container sign-in">
           <form onSubmit={handleLogin}>
             <h1 className="form-title">Sign In</h1>
-            {error && <div className="error-message">{error}</div>}
+            <InlineAlert message={error} />
             <input type="text" name="identifier" placeholder="Email or Employee ID" value={loginForm.identifier} onChange={handleLoginChange} disabled={isSubmitting} />
             <div className="password-field">
               <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={loginForm.password} onChange={handleLoginChange} disabled={isSubmitting} />

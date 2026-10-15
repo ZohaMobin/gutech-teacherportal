@@ -9,11 +9,12 @@ import { useConfirm } from '../../Components/ConfirmDialog/ConfirmDialog';
 import Loading, { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, AlertCircle, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 import { planImport } from './importMarks';
 import SectionLabel, { ProgramTags } from '../../Components/SectionLabel/SectionLabel';
+import { InlineAlert } from '../../Components/ErrorState/ErrorState';
 
 const sortStudentsAscending = (studentsList = []) =>
   [...studentsList].sort((a, b) =>
@@ -1350,12 +1351,7 @@ const Marks2 = () => {
 
       {activeSection && activeMarksView !== 'generator' && <LockedNotice status={sectionStatus} />}
 
-      {error && (
-        <div className="error-message">
-          <AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
+      <InlineAlert message={error} />
 
       <div className={`marks2-content ${activeMarksView === 'generator' || activeMarksView === 'workspace' ? 'is-generator' : ''}`}>
         <div className="marks2-sidebar">
