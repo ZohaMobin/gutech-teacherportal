@@ -26,8 +26,29 @@ export const classesOn = (schedule, date) => {
     .filter((item) => item?.timeSlot?.startTime && item?.timeSlot?.endTime)
     .sort((a, b) => minutesOf(a.timeSlot.startTime) - minutesOf(b.timeSlot.startTime));
   const seen = {};
-  // `ordinal` is which class of that section this is on the day (0 = first), to match against the slots saved that day.
+  // A section can have several timetable rows on one day (a lab printed as two periods, say) and the teacher usually takes ONE
+  // attendance for the whole session, so attendance is judged per section per day, never per row.
   return list.map((item) => { const key = idOf(item.sectionId); const ordinal = seen[key] || 0; seen[key] = ordinal + 1; return { item, sectionId: key, ordinal }; });
+};
+
+// Back-to-back periods of one section (a lab printed as 8:30 and 10:10) are one session, which needs at least one attendance. Periods
+// with a real gap between them (morning and afternoon) are separate sessions, each needing its own. A teacher may also take a separate
+// attendance for each period of a session; that is allowed, it is just not required.
+const SAME_SESSION_GAP = 30;   // minutes: the break between consecutive periods is 10-15
+export const sessionsOn = (schedule, date) => {
+  const bySection = {};
+  for (const row of classesOn(schedule, date)) (bySection[row.sectionId] = bySection[row.sectionId] || []).push(row);
+  const sessions = [];
+  for (const [sectionId, rows] of Object.entries(bySection)) {
+    let index = -1; let lastEnd = -Infinity;
+    for (const row of rows) {
+      const start = minutesOf(row.item.timeSlot.startTime); const end = minutesOf(row.item.timeSlot.endTime);
+      if (start - lastEnd > SAME_SESSION_GAP) { sessions.push({ sectionId, index: ++index, item: row.item, start, end, rowIds: [row.item._id] }); }
+      else { const current = sessions[sessions.length - 1]; current.end = Math.max(current.end, end); current.rowIds.push(row.item._id); }
+      lastEnd = Math.max(lastEnd, end);
+    }
+  }
+  return sessions.sort((a, b) => a.start - b.start);
 };
 
 export const hasAnyClass = (schedule) => Object.values(schedule || {}).some((list) => Array.isArray(list) && list.length > 0);
@@ -61,27 +82,30 @@ export const slotCountsFrom = (attendanceResponse) => {
 export const todaysClasses = (schedule, slotCounts, now) => {
   const today = dateKey(now);
   const minutes = nowMinutes(now);
-  const classes = classesOn(schedule, now).map(({ item, sectionId, ordinal }) => {
+  const sessionOf = new Map();
+  for (const session of sessionsOn(schedule, now)) for (const id of session.rowIds) sessionOf.set(id, session);
+  const classes = classesOn(schedule, now).map(({ item, sectionId }) => {
     const start = minutesOf(item.timeSlot.startTime);
     const end = minutesOf(item.timeSlot.endTime);
     const state = minutes >= end ? "done" : minutes >= start ? "live" : "later";
-    return { item, sectionId, state, marked: (slotCounts[sectionId]?.[today] || 0) > ordinal, minutesUntil: start - minutes };
+    return { item, sectionId, state, marked: (slotCounts[sectionId]?.[today] || 0) > sessionOf.get(item._id).index, minutesUntil: start - minutes };
   });
   const firstLater = classes.findIndex((entry) => entry.state === "later");
   return classes.map((entry, index) => ({ ...entry, next: index === firstLater }));
 };
 
-// Classes in the last week that have finished and have no saved attendance. Today counts only once the class has ended.
+// Class days in the last week that have finished with no saved attendance for the section. Today counts only once a class has ended.
 export const overdueAttendance = (schedule, slotCounts, now, { termStart = null, studentCounts = {} } = {}) => {
   const overdue = [];
   for (let back = 0; back < OVERDUE_DAYS; back += 1) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
     const key = dateKey(day);
     if (termStart && key < termStart) continue;
-    for (const { item, sectionId, ordinal } of classesOn(schedule, day)) {
-      if (back === 0 && nowMinutes(now) < minutesOf(item.timeSlot.endTime)) continue;
-      if (studentCounts[sectionId] === 0) continue;
-      if ((slotCounts[sectionId]?.[key] || 0) <= ordinal) overdue.push({ date: key, day, item, sectionId });
+    // A session counts once it has finished (its last period ended), and one missing attendance is reported once, not once per period.
+    for (const session of sessionsOn(schedule, day)) {
+      if (back === 0 && nowMinutes(now) < session.end) continue;
+      if (studentCounts[session.sectionId] === 0) continue;
+      if ((slotCounts[session.sectionId]?.[key] || 0) <= session.index) overdue.push({ date: key, day, item: session.item, sectionId: session.sectionId });
     }
   }
   return overdue;   // most recent first

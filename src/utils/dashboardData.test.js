@@ -1,4 +1,4 @@
-import { attendanceStats, attentionItems, classesOn, dateKey, firstNameOf, greetingFor, marksProgress, nextClassAfter, overdueAttendance, percent, slotCountsFrom, todaysClasses } from "./dashboardData";
+import { sessionsOn, attendanceStats, attentionItems, classesOn, dateKey, firstNameOf, greetingFor, marksProgress, nextClassAfter, overdueAttendance, percent, slotCountsFrom, todaysClasses } from "./dashboardData";
 
 const cls = (id, section, start, end, name = "Web Tech") => ({ _id: id, sectionId: { _id: section }, courseId: { name, code: "CS" }, timeSlot: { startTime: start, endTime: end, room: "SL" } });
 // Thursday 15 October 2026, 11:20
@@ -18,10 +18,10 @@ test("names and greetings", () => {
   expect(greetingFor(new Date(2026, 0, 1, 20))).toBe("Good evening");
 });
 
-test("a day's classes are in time order and numbered per section", () => {
+test("a day's classes are in time order", () => {
   const list = classesOn(schedule, now);
   expect(list.map((c) => c.item._id)).toEqual(["c1", "c2", "c4", "c3"]);
-  expect(list.map((c) => [c.sectionId, c.ordinal])).toEqual([["wt", 0], ["wt", 1], ["db", 0], ["db", 1]]);
+  expect(list.map((c) => c.sectionId)).toEqual(["wt", "wt", "db", "db"]);
 });
 
 test("today's classes are done, live or later, with the next one marked", () => {
@@ -29,22 +29,34 @@ test("today's classes are done, live or later, with the next one marked", () => 
   const list = todaysClasses(schedule, counts, now);
   expect(list.map((c) => c.state)).toEqual(["done", "live", "later", "later"]);
   expect(list.map((c) => c.next)).toEqual([false, false, true, false]);
-  expect(list.map((c) => c.marked)).toEqual([true, false, false, false]);
+  expect(list.map((c) => c.marked)).toEqual([true, true, false, false]);   // one saved attendance covers the section's whole day
   expect(list[2].minutesUntil).toBe(25);
 });
 
-test("overdue attendance: finished classes with nothing saved, never today's unfinished ones", () => {
+test("overdue attendance: finished days with nothing saved, never today's unfinished classes", () => {
   const counts = { wt: { "2026-10-15": 1, "2026-10-12": 1 }, db: {} };
-  const overdue = overdueAttendance(schedule, counts, now);
-  // Today: c1 is saved, c2 is still running, DB classes (11:45, 14:00) have not finished. Monday 12 Oct: m1 is saved.
-  expect(overdue).toEqual([]);
+  // Today: the wt section is saved, and the db classes (11:45, 14:00) have not finished. Monday 12 Oct: m1 is saved.
+  expect(overdueAttendance(schedule, counts, now)).toEqual([]);
   const later = new Date(2026, 9, 15, 16, 0);
-  expect(overdueAttendance(schedule, counts, later).map((o) => o.item._id)).toEqual(["c2", "c4", "c3"]);
+  // db has a late-morning class and an afternoon class (a real gap between them): two sessions, so two attendances are expected
+  expect(overdueAttendance(schedule, counts, later).map((o) => o.item._id)).toEqual(["c4", "c3"]);
+  expect(overdueAttendance(schedule, { ...counts, db: { "2026-10-15": 1 } }, later).map((o) => o.item._id)).toEqual(["c3"]);   // the morning one is done
+  expect(overdueAttendance(schedule, { ...counts, db: { "2026-10-15": 2 } }, later)).toEqual([]);
+});
+
+test("one attendance taken for a section that has two timetable rows that day is not reported as missing for the second row", () => {
+  // The case that was wrong: a lab printed as two periods, attendance taken once.
+  const twoRows = { Thursday: [cls("p1", "lab", "08:30", "09:55", "Web Tech Lab"), cls("p2", "lab", "10:10", "11:35", "Web Tech Lab")] };
+  const afterBoth = new Date(2026, 9, 15, 12, 0);
+  expect(overdueAttendance(twoRows, { lab: { "2026-10-15": 1 } }, afterBoth)).toEqual([]);
+  expect(todaysClasses(twoRows, { lab: { "2026-10-15": 1 } }, afterBoth).map((c) => c.marked)).toEqual([true, true]);
+  // and when nothing was taken it is one alert, not two
+  expect(overdueAttendance(twoRows, {}, afterBoth).map((o) => o.item._id)).toEqual(["p1"]);
 });
 
 test("overdue ignores dates before the term and sections with no students", () => {
   const later = new Date(2026, 9, 15, 16, 0);
-  expect(overdueAttendance(schedule, {}, later, { termStart: "2026-10-15" }).map((o) => o.item._id)).toEqual(["c1", "c2", "c4", "c3"]);
+  expect(overdueAttendance(schedule, {}, later, { termStart: "2026-10-15" }).map((o) => o.item._id)).toEqual(["c1", "c4", "c3"]);
   expect(overdueAttendance(schedule, {}, later, { studentCounts: { wt: 0 } }).map((o) => o.sectionId)).not.toContain("wt");
 });
 
@@ -91,4 +103,23 @@ test("the next class is found today, or on a later day", () => {
   expect(next.daysAhead).toBe(4);
   expect(dateKey(next.date)).toBe("2026-10-19");
   expect(nextClassAfter({}, now)).toBeNull();
+});
+
+test("back-to-back periods of one section are one session; a real gap makes a new one", () => {
+  const sessions = sessionsOn(schedule, now);
+  expect(sessions.map((s) => [s.sectionId, s.index, s.rowIds])).toEqual([["wt", 0, ["c1", "c2"]], ["db", 0, ["c4"]], ["db", 1, ["c3"]]]);
+  expect(sessions[0]).toMatchObject({ start: 8 * 60 + 30, end: 11 * 60 + 35 });
+});
+
+test("a teacher who takes a separate attendance for each period of a session is also fine", () => {
+  const twoRows = { Thursday: [cls("p1", "lab", "08:30", "09:55", "Lab"), cls("p2", "lab", "10:10", "11:35", "Lab")] };
+  const afterBoth = new Date(2026, 9, 15, 12, 0);
+  expect(overdueAttendance(twoRows, { lab: { "2026-10-15": 2 } }, afterBoth)).toEqual([]);
+  expect(overdueAttendance(twoRows, { lab: { "2026-10-15": 1 } }, afterBoth)).toEqual([]);
+});
+
+test("a session is not reported while its second period is still running", () => {
+  const twoRows = { Thursday: [cls("p1", "lab", "08:30", "09:55", "Lab"), cls("p2", "lab", "10:10", "11:35", "Lab")] };
+  expect(overdueAttendance(twoRows, {}, new Date(2026, 9, 15, 10, 30)).map((o) => o.item._id)).toEqual([]);
+  expect(overdueAttendance(twoRows, {}, new Date(2026, 9, 15, 11, 40)).map((o) => o.item._id)).toEqual(["p1"]);
 });
