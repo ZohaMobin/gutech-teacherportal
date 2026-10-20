@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  /* The app renders at zoom: 0.8, so 100vh only reaches 80% of the screen; 125vh fills it. */
+  min-height: 125vh;
   padding: 20px;
   box-sizing: border-box;
   background-color: #f8f8f8;
@@ -343,4 +344,87 @@
 
 .department-select option {
   padding: 10px;
+}
+
+
+/* Maroon panel text: same quiet type as the student and admin portals. Shape and flip are unchanged. */
+.toggle-panel {
+  align-items: flex-start;
+  padding: 0 48px;
+  text-align: left;
+}
+
+.toggle-panel .eyebrow {
+  margin-bottom: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.toggle-panel h1 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.toggle-panel p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.toggle-panel .toggle-message {
+  margin: 24px 0 4px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13.5px;
+  font-weight: 400;
+}
+
+.auth-container .toggle-button {
+  margin-top: 16px;
+  padding: 10px 32px;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+.auth-container .toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: none;
+}
+
+/* Form-side type: same sizes and weights as the student and admin portals. */
+.form-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.auth-container button[type="submit"] {
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+.auth-container .forgot-password {
+  color: #8f1b1e;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.auth-container input,
+.auth-container select {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.auth-container input::placeholder {
+  color: #aaa6a2;
 }
