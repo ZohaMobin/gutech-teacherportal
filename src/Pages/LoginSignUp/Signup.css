@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 125vh;
+  min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
   background-color: #f8f8f8;
@@ -114,18 +114,33 @@
   padding-right: 40px;
 }
 
-.password-toggle {
+.auth-container .password-toggle {
   position: absolute;
   right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
   padding: 8px;
-  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 6px;
   font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
   color: #666;
+  cursor: pointer;
   transition: color 0.3s ease;
 }
 
-.password-toggle:hover {
+.auth-container .password-toggle:hover {
+  background: none;
+  transform: translateY(-50%);
   color: #991D20;
+}
+
+.auth-container .password-toggle:focus-visible {
+  outline: 2px solid #991D20;
+  outline-offset: 1px;
 }
 
 .auth-container input {
