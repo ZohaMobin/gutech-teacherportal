@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  /* The app renders at zoom: 0.8, so 100vh only reaches 80% of the screen; 125vh fills it. */
+  min-height: 125vh;
   padding: 20px;
   box-sizing: border-box;
   background-color: #f8f8f8;
@@ -343,4 +344,121 @@
 
 .department-select option {
   padding: 10px;
+}
+
+/* ---- Refined look: flat maroon panel, hairline borders, quiet type (matches the student and admin portals) ---- */
+.auth-page { background-color: #f6f5f3; }
+
+.auth-container {
+  border: 1px solid #ebe9e6;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(40, 20, 20, 0.08);
+  color: #2b2b2b;
+}
+
+.toggle-container,
+.auth-container.active .toggle-container { border-radius: 0; }
+
+.toggle { background: #8f1b1e; }
+
+.toggle-panel { padding: 0 44px; }
+
+.toggle-panel h1 {
+  font-size: 22px;
+  letter-spacing: -0.2px;
+}
+
+.toggle-panel p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13.5px;
+  margin: 8px 0;
+}
+
+.toggle-panel .toggle-message {
+  margin-top: 22px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-container .toggle-button {
+  padding: 10px 32px;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+.form-title {
+  margin: 0 0 24px;
+  color: #1f1f1f;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  align-self: flex-start;
+}
+
+.auth-container form { padding: 0 48px; }
+
+.auth-container input,
+.auth-container select {
+  height: 44px;
+  margin: 7px 0;
+  padding: 0 14px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border: 1px solid #dedcd9;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #222;
+}
+
+.auth-container input::placeholder { color: #aaa6a2; }
+.auth-container input:hover,
+.auth-container select:hover { border-color: #c9c6c2; }
+
+.auth-container input:focus,
+.auth-container select:focus {
+  border-color: #8f1b1e;
+  box-shadow: 0 0 0 3px rgba(143, 27, 30, 0.12);
+  outline: none;
+}
+
+.password-field input { padding-right: 44px; }
+
+.auth-container .password-toggle { right: 6px; color: #8a8680; }
+.auth-container .password-toggle:hover { color: #8f1b1e; }
+
+.auth-container button[type="submit"] {
+  width: 100%;
+  height: 46px;
+  margin-top: 18px;
+  padding: 0 20px;
+  background-color: #8f1b1e;
+  border-radius: 10px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+.auth-container button[type="submit"]:hover { background-color: #a52225; }
+.auth-container button[type="submit"]:disabled { background-color: #cfa0a2; }
+
+.auth-container .forgot-password {
+  align-self: flex-end;
+  margin: 4px 0 0;
+  color: #8f1b1e;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.error-message {
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  background-color: #fdf0f0;
+  border: 1px solid #f3d0d1;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: left;
 }
