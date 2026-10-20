@@ -240,13 +240,15 @@ const Signup = () => {
         <div className="toggle-container">
           <div className="toggle">
             <div className="toggle-panel toggle-left">
+              <span className="eyebrow">Teacher portal</span>
               <h1>Welcome</h1>
               <p>Create an account to access all features and services</p>
               <p className="toggle-message">Already have an account?<br />Sign in to continue.</p>
               <button className="toggle-button" onClick={() => setIsSignupActive(false)}>Sign In</button>
             </div>
             <div className="toggle-panel toggle-right">
-              <h1>Welcome Back</h1>
+              <span className="eyebrow">Teacher portal</span>
+              <h1>Welcome back</h1>
               <p>Access your account to use all features and services</p>
               <p className="toggle-message">Don't have an account?<br />Register to get started.</p>
               <button className="toggle-button" onClick={() => setIsSignupActive(true)}>Register</button>
