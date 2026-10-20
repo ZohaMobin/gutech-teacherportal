@@ -59,3 +59,46 @@ test("if the departments cannot be loaded, the register form says so instead of 
   expect(options.join(" | ")).toMatch(/Couldn't load departments/);
   expect(options.join(" | ")).not.toMatch(/No departments available/);
 });
+
+test("a sign-in error appears only in the sign-in form, not the register form", async () => {
+  await signIn({ response: { status: 401, data: { message: "Invalid credentials" } } });
+  expect(container.querySelector(".sign-in").textContent).toContain("Invalid credentials");
+  expect(container.querySelector(".sign-up").textContent).not.toContain("Invalid credentials");
+});
+
+test("each password field has its own show/hide button", async () => {
+  const [registerToggle, signInToggle] = [".sign-up", ".sign-in"].map((s) => container.querySelector(`${s} button.password-toggle`));
+  expect(signInToggle.getAttribute("aria-label")).toBe("Show password");
+  await act(async () => { signInToggle.click(); });
+  expect(container.querySelector('.sign-in input[name="password"]').type).toBe("text");
+  expect(container.querySelector('.sign-up input[name="password"]').type).toBe("password");
+  expect(signInToggle.getAttribute("aria-label")).toBe("Hide password");
+  expect(registerToggle.getAttribute("aria-label")).toBe("Show password");
+});
+
+test.each(["a@.", "a@b", "a b@c.com", "a@b..com"])("register rejects the malformed email %s", async (email) => {
+  axios.get.mockResolvedValue({ data: [{ _id: "d1", name: "Computing" }] });
+  act(() => root.unmount());
+  root = createRoot(container);
+  await act(async () => { root.render(<Signup />); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  const f = container.querySelector(".sign-up form");
+  await type(f.querySelector('[name="name"]'), "Ada");
+  await type(f.querySelector('[name="email"]'), email);
+  await type(f.querySelector('[name="employeeId"]'), "E1");
+  await act(async () => {
+    const sel = f.querySelector("select");
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(sel, "Computing");
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await type(f.querySelector('[name="password"]'), "secret1");
+  await act(async () => { f.requestSubmit(); });
+  expect(f.textContent).toContain("Please enter a valid email address");
+  expect(axios.post).not.toHaveBeenCalled();
+});
+
+test("sign in tells the server this is the teacher portal, and shows its refusal for other roles", async () => {
+  await signIn({ response: { status: 403, data: { message: "Access denied. This portal is for teachers only." } } });
+  expect(axios.post).toHaveBeenCalledWith(expect.stringContaining("/api/auth/login"), expect.objectContaining({ portal: "teacher" }));
+  expect(container.querySelector(".sign-in").textContent).toContain("This portal is for teachers only.");
+});
