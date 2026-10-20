@@ -2,17 +2,23 @@ import { BusyLabel } from '../../Components/Loading/Loading';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Components/AuthContext'; // ✅ Import the auth context
 import './Signup.css';
 import { formMessageOf } from '../../utils/apiMessage';
 import { InlineAlert } from '../../Components/ErrorState/ErrorState';
 
+// Something@something.tld, no spaces: catches typos like "a@." without rejecting real addresses.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
 const Signup = () => {
   const [isSignupActive, setIsSignupActive] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signupError, setSignupError] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [departments, setDepartments] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [departmentsFailed, setDepartmentsFailed] = useState(false);   // so a failed load is not described as "no departments"
@@ -31,7 +37,7 @@ const Signup = () => {
   });
 
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ Use auth context login function
+  const { login, isAuthenticated } = useAuth(); // ✅ Use auth context login function
 
   // Fetch departments from API
   useEffect(() => {
@@ -66,26 +72,26 @@ const Signup = () => {
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
     setSignupForm({ ...signupForm, [name]: value });
-    setError('');
+    setSignupError('');
   };
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setLoginForm({ ...loginForm, [name]: value });
-    setError('');
+    setLoginError('');
   };
 
   const validateSignupForm = () => {
     if (!signupForm.name || !signupForm.email || !signupForm.employeeId || !signupForm.department || !signupForm.password) {
-      setError('All fields are required');
+      setSignupError('All fields are required');
       return false;
     }
-    if (!signupForm.email.includes('@') || !signupForm.email.includes('.')) {
-      setError('Please enter a valid email address');
+    if (!EMAIL_PATTERN.test(signupForm.email.trim())) {
+      setSignupError('Please enter a valid email address');
       return false;
     }
     if (signupForm.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setSignupError('Password must be at least 6 characters long');
       return false;
     }
     return true;
@@ -93,7 +99,7 @@ const Signup = () => {
 
   const validateLoginForm = () => {
     if (!loginForm.identifier || !loginForm.password) {
-      setError('All fields are required');
+      setLoginError('All fields are required');
       return false;
     }
     return true;
@@ -104,8 +110,8 @@ const Signup = () => {
     if (!validateSignupForm()) return;
 
     try {
-      setIsSubmitting(true);
-      setError('');
+      setIsRegistering(true);
+      setSignupError('');
       const apiUrl = process.env.REACT_APP_BACKEND_URL;
       
       // Find the department ID from the selected department name
@@ -128,10 +134,10 @@ const Signup = () => {
       toast.success('Registration received. An administrator must approve your account before you can log in.', { duration: 8000 });
     } catch (error) {
       const errorMessage = formMessageOf(error, 'Registration failed. Please try again.');
-      setError(errorMessage);
+      setSignupError(errorMessage);
       console.error('Registration error:', errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setIsRegistering(false);
     }
   };
 
@@ -140,16 +146,17 @@ const Signup = () => {
     if (!validateLoginForm()) return;
 
     try {
-      setIsSubmitting(true);
-      setError('');
+      setIsSigningIn(true);
+      setLoginError('');
       const apiUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await axios.post(`${apiUrl}/api/auth/login`, {
         email: loginForm.identifier,
         password: loginForm.password,
+        portal: 'teacher', // the server refuses other roles here; the check below covers an older server
       });
 
       if (response.data.user.role !== 'teacher') {
-        setError('Access denied. This portal is for teachers only.');
+        setLoginError('Access denied. This portal is for teachers only.');
         return;
       }
 
@@ -161,16 +168,27 @@ const Signup = () => {
       navigate("/dashboard");
     } catch (error) {
       const errorMessage = formMessageOf(error, 'Login failed. Please check your credentials.');
-      setError(errorMessage);
+      setLoginError(errorMessage);
       console.error('Login error:', errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setIsSigningIn(false);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  // Already signed in: no reason to show the login page again.
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+
+  const passwordToggle = (shown, setShown) => (
+    <button
+      type="button"
+      className="password-toggle"
+      onClick={() => setShown(!shown)}
+      aria-label={shown ? 'Hide password' : 'Show password'}
+      aria-pressed={shown}
+    >
+      <i className={shown ? 'fas fa-eye-slash' : 'fas fa-eye'} aria-hidden="true"></i>
+    </button>
+  );
 
   return (
     <div className="auth-page">
@@ -180,11 +198,11 @@ const Signup = () => {
         <div className="form-container sign-up">
           <form onSubmit={handleSignup}>
             <h1 className="form-title">Create Account</h1>
-            <InlineAlert message={error} />
-            <input type="text" name="name" placeholder="Full Name" value={signupForm.name} onChange={handleSignupChange} disabled={isSubmitting} />
-            <input type="email" name="email" placeholder="Institutional Email" value={signupForm.email} onChange={handleSignupChange} disabled={isSubmitting} />
-            <input type="text" name="employeeId" placeholder="Employee ID" value={signupForm.employeeId} onChange={handleSignupChange} disabled={isSubmitting} />
-            <select name="department" value={signupForm.department} onChange={handleSignupChange} disabled={isSubmitting || departmentsLoading}>
+            <InlineAlert message={signupError} />
+            <input type="text" name="name" placeholder="Full Name" value={signupForm.name} onChange={handleSignupChange} disabled={isRegistering} />
+            <input type="email" name="email" placeholder="Institutional Email" value={signupForm.email} onChange={handleSignupChange} disabled={isRegistering} />
+            <input type="text" name="employeeId" placeholder="Employee ID" value={signupForm.employeeId} onChange={handleSignupChange} disabled={isRegistering} />
+            <select name="department" value={signupForm.department} onChange={handleSignupChange} disabled={isRegistering || departmentsLoading}>
               <option value="">{departmentsLoading ? 'Loading departments...' : 'Select Department'}</option>
               {departments.length === 0 && !departmentsLoading && (
                 <option value="" disabled>{departmentsFailed ? "Couldn't load departments. Check your connection and reload." : 'No departments available'}</option>
@@ -196,12 +214,10 @@ const Signup = () => {
               ))}
             </select>
             <div className="password-field">
-              <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={signupForm.password} onChange={handleSignupChange} disabled={isSubmitting} />
-              <div className="password-toggle" onClick={togglePasswordVisibility}>
-                {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
-              </div>
+              <input type={showSignupPassword ? 'text' : 'password'} name="password" placeholder="Password" value={signupForm.password} onChange={handleSignupChange} disabled={isRegistering} />
+              {passwordToggle(showSignupPassword, setShowSignupPassword)}
             </div>
-            <button type="submit" disabled={isSubmitting}><BusyLabel busy={isSubmitting} busyText="Registering…" idle="Register" /></button>
+            <button type="submit" disabled={isRegistering}><BusyLabel busy={isRegistering} busyText="Registering…" idle="Register" /></button>
           </form>
         </div>
 
@@ -209,16 +225,14 @@ const Signup = () => {
         <div className="form-container sign-in">
           <form onSubmit={handleLogin}>
             <h1 className="form-title">Sign In</h1>
-            <InlineAlert message={error} />
-            <input type="text" name="identifier" placeholder="Email or Employee ID" value={loginForm.identifier} onChange={handleLoginChange} disabled={isSubmitting} />
+            <InlineAlert message={loginError} />
+            <input type="text" name="identifier" placeholder="Email" value={loginForm.identifier} onChange={handleLoginChange} disabled={isSigningIn} />
             <div className="password-field">
-              <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={loginForm.password} onChange={handleLoginChange} disabled={isSubmitting} />
-              <div className="password-toggle" onClick={togglePasswordVisibility}>
-                {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
-              </div>
+              <input type={showLoginPassword ? 'text' : 'password'} name="password" placeholder="Password" value={loginForm.password} onChange={handleLoginChange} disabled={isSigningIn} />
+              {passwordToggle(showLoginPassword, setShowLoginPassword)}
             </div>
             <Link to="/forgot-password" className="forgot-password">Forgot Your Password?</Link>
-            <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing In...' : 'Sign In'}</button>
+            <button type="submit" disabled={isSigningIn}><BusyLabel busy={isSigningIn} busyText="Signing in…" idle="Sign In" /></button>
           </form>
         </div>
 
