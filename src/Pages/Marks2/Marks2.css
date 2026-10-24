@@ -2,9 +2,9 @@
 
 :root {
   /* Color Palette */
-  --primary-color: rgb(153, 29, 32);
+  --primary-color: #991D20;
   --primary-light: rgba(153, 29, 32, 0.1);
-  --primary-dark: rgb(120, 23, 25);
+  --primary-dark: #991D20;
   --secondary-color: #2A6592;
   --secondary-light: rgba(42, 101, 146, 0.1);
   --accent-color: #F5C32C;
@@ -154,9 +154,8 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-}
+  background-color: var(--primary-color);
+  transform: translateY(-1px); filter: brightness(0.9);}
 
 .btn-secondary {
   background-color: var(--background-white);
@@ -937,7 +936,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: rgb(153, 29, 32);
+  border-color: #991D20;
   box-shadow: 0 0 0 2px rgba(153, 29, 32, 0.1);
 }
 
@@ -973,7 +972,7 @@
 
 .filter-input:focus {
   outline: none;
-  border-color: rgb(153, 29, 32);
+  border-color: #991D20;
   box-shadow: 0 0 0 2px rgba(153, 29, 32, 0.1);
 }
 
@@ -1187,7 +1186,7 @@
 .weight-meter-bonus { background: #fffbeb; border-color: #fde68a; }
 .weight-meter-bar { display: flex; height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
 .weight-meter-bar .wm-others { background: #94a3b8; }
-.weight-meter-bar .wm-mine { background: var(--primary-color, #991d20); }
+.weight-meter-bar .wm-mine { background: var(--primary-color, #991D20); }
 .weight-meter-over .wm-mine { background: #dc2626; }
 .weight-meter-rows { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 5px; color: #64748b; }
 .weight-meter-rows b { color: #1e293b; font-variant-numeric: tabular-nums; }

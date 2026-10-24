@@ -81,7 +81,7 @@ export const breaksOf = (items) => items.slice(1).map((item, index) => ({ before
 // "now". Each course gets the next tone in order of course code, so the result does not depend on the order the rows arrived in; a lab
 // (CS-301L) shares its theory course's tone, a little deeper. [accent edge, ink for text]
 const TONES = [
-  ["#991d20", "#6b1416"],   // maroon
+  ["#991d20", "#991d20"],   // maroon
   ["#0f766e", "#0b4f4a"],   // teal
   ["#4f5bb5", "#2f3880"],   // indigo
   ["#5f8f3e", "#37591f"],   // sage

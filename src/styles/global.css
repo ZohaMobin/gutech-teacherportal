@@ -5,8 +5,8 @@
 
   /* Primary Colors */
   --primary-color: #991D20;
-  --primary-light: #c62828;
-  --primary-dark: #6a1b1b;
+  --primary-light: rgba(153, 29, 32, 0.1);
+  --primary-dark: #991D20;
   
   /* Secondary Colors */
   --secondary-color: #ff4081;
@@ -221,3 +221,8 @@ input, select, textarea {
 @media (max-width: 767px) {
   main.p-5 { padding: 0.5rem; }
 }
+
+/* Sidebar brand colour (#991D20) */
+.sb-brand { background: #991D20; }
+.sb-nav-active { background: rgba(153, 29, 32, 0.08); color: #991D20; border-left-color: #991D20; }
+.sb-nav:hover { color: #991D20; }
