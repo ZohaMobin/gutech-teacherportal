@@ -1369,3 +1369,10 @@
   .marks2-content:not(.is-generator) .marks2-sidebar { width: 100%; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
   .marks2-content:not(.is-generator) .marks2-main { min-width: 0; overflow: visible; }
 }
+
+/* Phone: Save Marks / Save Workspace stay on screen as a bar at the bottom, so a teacher who has entered marks down a long list does not have
+   to scroll back to the top to save them. */
+@media (max-width: 768px) {
+  .marks2-container { padding-bottom: 5.5rem; }
+  .marks2-main .assessment-header .save-btn, .marks2-main .workspace-actions .save-btn { position: fixed; left: 0.75rem; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); z-index: 40; width: auto; min-height: 2.9rem; margin: 0; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28); }
+}
