@@ -702,7 +702,7 @@ const Marks2 = () => {
       });
     } catch (error) {
       console.error('Error loading gradebook workspace:', error);
-      toast.error('Unable to load complete gradebook workspace');
+      toast.error(`Couldn't load the gradebook. ${messageOf(error, { notFound: 'The server has no marks for this section yet: it may need updating.' })}`);
     }
   };
 
