@@ -28,7 +28,7 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
       {/* Sidebar Header */}
       <div className="h-16 flex items-center px-5 border-b border-gray-200">
         <div className="flex items-center">
-          <div className="w-6 h-6 bg-red-700 text-white rounded flex items-center justify-center font-bold mr-2">
+          <div className="w-6 h-6 sb-brand text-white rounded flex items-center justify-center font-bold mr-2">
             P
           </div>
           <span className="font-semibold text-gray-800">Portal</span>
@@ -43,8 +43,8 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
             href="#"
             className={`flex items-center py-3 px-5 text-gray-600 transition-all duration-200 border-l-3 ${
               activePage === item.id 
-                ? 'bg-red-50 text-red-700 font-medium border-l-red-700' 
-                : 'border-l-transparent hover:bg-gray-50 hover:text-red-700'
+                ? 'sb-nav-active font-medium' 
+                : 'sb-nav border-l-transparent hover:bg-gray-50'
             }`}
             onClick={(e) => {
               e.preventDefault();
@@ -61,7 +61,7 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
       {/* User Profile */}
       <div className="p-5 border-t border-gray-200">
         <div className="flex items-center">
-          <div className="w-8 h-8 flex-shrink-0 bg-red-700 text-white rounded-full flex items-center justify-center font-bold mr-3">
+          <div className="w-8 h-8 flex-shrink-0 sb-brand text-white rounded-full flex items-center justify-center font-bold mr-3">
             {getInitial()}
           </div>
           <div className="min-w-0">

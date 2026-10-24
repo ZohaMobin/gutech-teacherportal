@@ -64,9 +64,8 @@
 }
 
 .auth-container button:hover {
-  background-color: #b52427;
-  transform: translateY(-2px);
-}
+  background-color: #991D20;
+  transform: translateY(-2px); filter: brightness(0.9);}
 
 .auth-container button:disabled {
   background-color: #d99496;
@@ -221,7 +220,7 @@
 }
 
 .toggle {
-  background: linear-gradient(135deg, #b52427, #991D20);
+  background: #991D20;
   color: #fff;
   position: relative;
   left: -100%;
@@ -414,7 +413,7 @@
 }
 
 .auth-container .forgot-password {
-  color: #8f1b1e;
+  color: #991D20;
   font-size: 12.5px;
   font-weight: 500;
 }

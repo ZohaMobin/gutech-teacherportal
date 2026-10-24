@@ -1,7 +1,7 @@
 /* Grade generator. Same design language as the rest of Marks: maroon accent, soft shadows, 8-12px radii. */
 
 .gg {
-  --gg-accent: var(--primary-color, #991d20);
+  --gg-accent: var(--primary-color, #991D20);
   --gg-accent-soft: var(--primary-light, rgba(153, 29, 32, 0.08));
   --gg-ink: var(--text-primary, #1e293b);
   --gg-muted: var(--text-secondary, #64748b);
@@ -245,7 +245,7 @@
 .gg-gate-text { margin-top: 6px !important; max-width: 52ch; color: var(--gg-ink); font-size: 0.98rem; line-height: 1.55; }
 .gg-gate-meter { display: flex; align-items: center; gap: 12px; width: min(360px, 100%); margin: 10px 0 2px; }
 .gg-gate-track { flex: 1; height: 9px; border-radius: 999px; background: #eceef2; overflow: hidden; }
-.gg-gate-track i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--gg-accent), #b5294f); transition: width 0.3s ease; }
+.gg-gate-track i { display: block; height: 100%; border-radius: 999px; background: #991D20; transition: width 0.3s ease; }
 .gg-gate-track i.over { background: #dc2626; }
 .gg-gate-meter span { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
 .gg-gate-note { color: var(--gg-muted); font-size: 0.82rem; }

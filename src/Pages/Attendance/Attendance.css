@@ -2,9 +2,9 @@
 
 :root {
   /* Color Palette */
-  --primary-color: rgb(153, 29, 32);
+  --primary-color: #991D20;
   --primary-light: rgba(153, 29, 32, 0.1);
-  --primary-dark: rgb(120, 23, 25);
+  --primary-dark: #991D20;
   --secondary-color: #2a6592;
   --secondary-light: rgba(42, 101, 146, 0.1);
   --accent-color: #f5c32c;
@@ -139,10 +139,9 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-dark);
+  background-color: var(--primary-color);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
+  box-shadow: var(--shadow-md); filter: brightness(0.9);}
 
 .save-btn {
   background-color: var(--success-color);

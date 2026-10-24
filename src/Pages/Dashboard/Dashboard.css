@@ -1,6 +1,6 @@
 /* Teacher dashboard. Same visual language as Attendance and Marks: maroon headings, hairline cards, 0.75rem corners. */
 .dash {
-  --d-brand: rgb(153, 29, 32);
+  --d-brand: #991D20;
   --d-brand-tint: rgba(153, 29, 32, 0.06);
   --d-brand-track: rgba(153, 29, 32, 0.1);
   --d-gold: #f5c32c;
