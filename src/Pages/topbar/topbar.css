@@ -233,9 +233,15 @@
 
 .profile-menu-item {
   display: block;
+  width: 100%;
   padding: 10px 15px;
+  border: 0;
+  background: none;
   color: var(--text-color);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -252,6 +258,7 @@
 
 .profile-menu-item.logout {
   color: var(--primary-color);
+  border-top: 1px solid var(--border-color);
 }
 
 /* Media queries */

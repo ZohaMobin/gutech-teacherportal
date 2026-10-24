@@ -5,7 +5,8 @@ import Topbar from '../topbar/topbar';
 import { Outlet, useLocation } from 'react-router-dom';
 
 const MainLayout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Open beside the page on a computer; closed on a phone, where it is a drawer over the page (it used to cover every page on load).
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
   const [activePage, setActivePage] = useState('dashboard');
   const location = useLocation();
   
