@@ -10,7 +10,7 @@ import { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
 import { MarksSkeleton, SidebarListSkeleton } from '../../Components/Loading/Skeletons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown, Lock, LockOpen } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 import { planImport } from './importMarks';
@@ -78,6 +78,10 @@ const Marks2 = () => {
   // What the server has for each assessment, as last loaded or saved: { assessmentId: { studentId: mark } }. Saving sends only
   // the marks that differ from it, and needs no reload afterwards.
   const savedMarks = useRef({});           // the Import / Export menu
+  // Marks that are already saved open read-only, so a stray keystroke cannot change them: the teacher presses Edit marks to unlock.
+  // An assessment with no marks yet opens ready to type in. { 'assessmentId' | 'workspace': true|false } once the teacher (or a save) decides.
+  const [unlocked, setUnlocked] = useState({});
+  const [, setSavedTick] = useState(0);        // savedMarks is a ref: bumped after a save so 'changed' is worked out again
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     type: 'quiz',
@@ -302,7 +306,9 @@ const Marks2 = () => {
   };
 
   // Handle section change
-  const handleSectionChange = (section) => {
+  const handleSectionChange = async (section) => {
+    if (!(await confirmLeave())) return;
+    setUnlocked({});
     // Reset states when changing sections
     setActiveSection(section);
     setActiveAssessment(null);
@@ -319,7 +325,9 @@ const Marks2 = () => {
   };
 
   // Handle assessment change
-  const handleAssessmentChange = (assessment) => {
+  const handleAssessmentChange = async (assessment) => {
+    if (assessment._id === activeAssessment?._id) return;
+    if (!(await confirmLeave())) return;
     setActiveAssessment(assessment);
     fetchAssessmentMarks(assessment._id);
   };
@@ -482,6 +490,8 @@ const Marks2 = () => {
           const student = students.find((x) => x.registrationId === g.registrationId);
           if (student) savedMarks.current[activeAssessment._id][student.id] = g.obtainedMarks;
         });
+        setUnlocked((u) => ({ ...u, [activeAssessment._id]: false }));
+        setSavedTick((n) => n + 1);
       }
     } catch (error) {
       console.error('Error saving marks:', error.response?.data || error.message);
@@ -637,6 +647,7 @@ const Marks2 = () => {
       for (const { studentId, mark } of matches) next[studentId] = { ...(next[studentId] || {}), [activeAssessment._id]: mark };
       return next;
     });
+    setUnlocked((u) => ({ ...u, [activeAssessment._id]: true }));
     closeImport();
     toast.success(`${matches.length} ${matches.length === 1 ? 'mark' : 'marks'} added to ${activeAssessment.title}. Press Save to keep them.`);
   };
@@ -691,7 +702,7 @@ const Marks2 = () => {
       });
     } catch (error) {
       console.error('Error loading gradebook workspace:', error);
-      toast.error('Unable to load complete gradebook workspace');
+      toast.error(`Couldn't load the gradebook. ${messageOf(error, { notFound: 'The server has no marks for this section yet: it may need updating.' })}`);
     }
   };
 
@@ -909,6 +920,7 @@ const Marks2 = () => {
       await Promise.all(saveRequests);
       toast.success('Gradebook workspace saved successfully');
       await loadGradebookMarks();
+      setUnlocked((u) => ({ ...u, workspace: false }));
     } catch (error) {
       console.error('Error saving gradebook workspace:', error.response?.data || error.message);
       handleApiError(error, { notify: true });
@@ -1294,6 +1306,49 @@ const Marks2 = () => {
   }, [activeMarksView, students.length, assessments.length, activeSection?._id]);
 
   const locked = sectionStatus?.marksFrozen === true;
+
+  // Which marks differ from what is saved: { studentId: savedValue } for an assessment. Only entered marks count (clearing a box does not delete a saved mark).
+  const markKey = (v) => (v === undefined || v === null || v === '' ? '' : String(Number(v)));
+  const changesIn = (assessmentId) => {
+    const saved = savedMarks.current[assessmentId];
+    if (!saved) return [];                                 // not loaded yet: nothing to compare with
+    return students.filter((s) => {
+      const now = markKey(studentMarks[s.id]?.[assessmentId]);
+      return now !== '' && now !== markKey(saved[s.id]);
+    }).map((s) => s.id);
+  };
+  const hasSavedMarks = (ids) => ids.some((id) => Object.values(savedMarks.current[id] || {}).some((v) => markKey(v) !== ''));
+  const entryId = activeAssessment?._id;
+  const entryOpen = locked ? false : (unlocked[entryId] ?? !hasSavedMarks([entryId]));
+  const workspaceOpen = locked ? false : (unlocked.workspace ?? !hasSavedMarks(assessments.map((a) => a._id)));
+  const entryChanged = entryId ? changesIn(entryId) : [];
+  const workspaceChangedCount = assessments.reduce((n, a) => n + changesIn(a._id).length, 0);
+  const anyChanged = assessments.some((a) => changesIn(a._id).length > 0);
+  const changeLabel = (n, idle) => (n > 0 ? `Save ${n} ${n === 1 ? 'change' : 'changes'}` : idle);
+
+  // Put the given assessments' marks back to what is saved.
+  const discardChanges = (ids) => {
+    setStudentMarks((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => changesIn(id).forEach((sid) => {
+        next[sid] = { ...(next[sid] || {}) };
+        const was = savedMarks.current[id]?.[sid];
+        if (was === undefined || was === null) delete next[sid][id]; else next[sid][id] = was;
+      }));
+      return next;
+    });
+  };
+  // Leaving this section or assessment drops the marks that were typed but not saved: ask first.
+  async function confirmLeave() {
+    if (!anyChanged) return true;
+    return confirm({ title: 'Discard unsaved changes?', message: 'Some marks you changed have not been saved.', confirmText: 'Discard', danger: true });
+  }
+  useEffect(() => {
+    if (!anyChanged) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [anyChanged]);
   const lockedTitle = lockText(sectionStatus)?.title;
 
   return (
@@ -1449,14 +1504,29 @@ const Marks2 = () => {
                   >
                     <Download size={16} /> Export
                   </button>
-                  <button
-                    className="btn btn-primary save-btn"
-                    onClick={saveGradebookWorkspace}
-                    disabled={!assessments.length || !students.length || locked || saving}
-                    title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
-                  >
-                    <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> Save Workspace</>} />
-                  </button>
+                  {workspaceChangedCount > 0 && (
+                    <span className="mk-dirty" role="status">
+                      <i>{workspaceChangedCount}</i> unsaved {workspaceChangedCount === 1 ? 'change' : 'changes'}
+                      <button type="button" className="mk-link" onClick={() => discardChanges(assessments.map((a) => a._id))}>Discard</button>
+                    </span>
+                  )}
+                  {!locked && !workspaceOpen ? (
+                    <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, workspace: true }))}>
+                      <Lock size={15} /> Edit marks
+                    </button>
+                  ) : (<>
+                    {!locked && workspaceChangedCount === 0 && hasSavedMarks(assessments.map((a) => a._id)) && (
+                      <button type="button" className="btn btn-secondary mk-edit is-on" title="Lock marks" onClick={() => setUnlocked((u) => ({ ...u, workspace: false }))}><LockOpen size={15} /> Editing</button>
+                    )}
+                    <button
+                      className="btn btn-primary save-btn"
+                      onClick={saveGradebookWorkspace}
+                      disabled={!assessments.length || !students.length || locked || saving}
+                      title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
+                    >
+                      <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> {changeLabel(workspaceChangedCount, 'Save Workspace')}</>} />
+                    </button>
+                  </>)}
                 </div>
               </div>
 
@@ -1495,7 +1565,7 @@ const Marks2 = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="workspace-note">Marks are editable; totals and grades update as you type.</div>
+                <div className="workspace-note">{!locked && !workspaceOpen ? 'Press Edit marks to change a mark.' : 'Totals and grades update as you type.'}</div>
               </div>
 
               {!assessments.length ? (
@@ -1504,7 +1574,7 @@ const Marks2 = () => {
                 </div>
               ) : (
                 <div className="gradebook-table-shell">
-                  <table className="gradebook-table">
+                  <table className={`gradebook-table${!locked && !workspaceOpen ? ' mk-guard' : ''}`}>
                     <thead>
                       <tr>
                         <th className="sticky-col roll-col" rowSpan="2">Roll No</th>
@@ -1559,7 +1629,9 @@ const Marks2 = () => {
                                       min="0"
                                       max={assessment.maxMarks}
                                       value={mark}
-                                      readOnly={locked}
+                                      readOnly={locked || !workspaceOpen}
+                                      className={changesIn(assessment._id).includes(student.id) ? 'mk-changed' : undefined}
+                                      title={changesIn(assessment._id).includes(student.id) ? `Was ${markKey(savedMarks.current[assessment._id]?.[student.id]) || 'empty'}` : undefined}
                                       onChange={(e) => handleWorkspaceMarkChange(student.id, assessment, e.target.value)}
                                       onKeyDown={handleGradebookCellKeyDown}
                                       onFocus={(e) => e.target.select()}
@@ -1616,14 +1688,29 @@ const Marks2 = () => {
                   </span>
                   {activeAssessment.isBonus ? <span className="bonus-pill">Bonus</span> : null}
                 </div>
-                <button 
-                  className="btn btn-primary save-btn"
-                  onClick={saveMarks}
-                  disabled={locked || saving}
-                  title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
-                >
-                  <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> Save Marks</>} />
-                </button>
+                {entryChanged.length > 0 && (
+                  <span className="mk-dirty" role="status">
+                    <i>{entryChanged.length}</i> unsaved {entryChanged.length === 1 ? 'change' : 'changes'}
+                    <button type="button" className="mk-link" onClick={() => discardChanges([entryId])}>Discard</button>
+                  </span>
+                )}
+                {!locked && !entryOpen ? (
+                  <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: true }))}>
+                    <Lock size={15} /> Edit marks
+                  </button>
+                ) : (<>
+                  {!locked && entryChanged.length === 0 && hasSavedMarks([entryId]) && (
+                    <button type="button" className="btn btn-secondary mk-edit is-on" title="Lock marks" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: false }))}><LockOpen size={15} /> Editing</button>
+                  )}
+                  <button 
+                    className="btn btn-primary save-btn"
+                    onClick={saveMarks}
+                    disabled={locked || saving}
+                    title={locked ? `${lockedTitle}: marks cannot be changed` : undefined}
+                  >
+                    <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> {changeLabel(entryChanged.length, 'Save Marks')}</>} />
+                  </button>
+                </>)}
               </div>
 
               {/* Search and Filter Section */}
@@ -1677,7 +1764,7 @@ const Marks2 = () => {
 
               <Refreshing active={saving}>
               <div className="marks-table-container">
-                <table className="marks-table">
+                <table className={`marks-table${!locked && !entryOpen ? ' mk-guard' : ''}`}>
                   <thead>
                     <tr>
                       <th>Roll Number</th>
@@ -1697,10 +1784,12 @@ const Marks2 = () => {
                               min="0" 
                               max={activeAssessment.maxMarks}
                               value={studentMarks[student.id]?.[activeAssessment._id] ?? ''}
-                              readOnly={locked || saving}
+                              readOnly={locked || saving || !entryOpen}
+                              className={entryChanged.includes(student.id) ? 'mk-changed' : undefined}
                               onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                              placeholder={locked ? '' : 'Enter marks'}
+                              placeholder={locked || !entryOpen ? '' : 'Enter marks'}
                             />
+                            {entryChanged.includes(student.id) && <span className="mk-was">was {markKey(savedMarks.current[entryId]?.[student.id]) || 'empty'}</span>}
                           </td>
                         </tr>
                       ))
