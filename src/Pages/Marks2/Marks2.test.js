@@ -175,3 +175,27 @@ test('saving marks keeps the table on screen and shows the button working, then 
   expect(container.querySelector('.marks-table input').readOnly).toBe(false);
   expect(toast.success).toHaveBeenCalledWith('Marks saved successfully');
 });
+
+test('the first load shows placeholders in the lists, not an empty "Select a section" prompt, and ends when the sections arrive', async () => {
+  let release;
+  axios.get.mockImplementation((url) => {
+    if (url.includes('/academic-years/current')) return new Promise((resolve) => { release = () => resolve({ data: { _id: 't1' } }); });
+    return Promise.resolve({ data: [] });
+  });
+  await act(async () => { root.render(<Marks2 />); });
+  await wait(20);
+  expect(container.querySelectorAll('.sk-list').length).toBe(2);              // sections and assessments
+  expect(container.querySelector('.sk-roster')).not.toBeNull();               // and the panel
+  expect(container.textContent).not.toContain('Select a section to view and manage marks');
+  axios.get.mockImplementation((url) => {
+    if (url.includes('/getSections/')) return Promise.resolve({ data: [{ _id: 's1', section: 'A', courseId: { name: 'Linear Algebra' } }] });
+    if (url.includes('/students')) return Promise.resolve({ data: [{ id: 'r1', rollNumber: 'R-1', name: 'Ayesha' }] });
+    if (url.includes('/assessments/section/')) return Promise.resolve({ data: { assessments } });
+    if (url.includes('/status')) return Promise.resolve({ data: { workflowEnabled: true, state: 'OPEN', marksFrozen: false } });
+    return Promise.resolve({ data: [] });
+  });
+  await act(async () => { release(); });
+  await wait(60);
+  expect(container.querySelector('.sk-list')).toBeNull();
+  expect(container.querySelector('.section-item')).not.toBeNull();
+});

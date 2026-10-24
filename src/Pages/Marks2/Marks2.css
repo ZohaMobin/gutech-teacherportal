@@ -1222,7 +1222,7 @@
 .search-filter-container .filter-box { flex: 1 1 auto; display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .search-filter-container .search-input, .search-filter-container .filter-input { height: 2.2rem; padding: 0 0.7rem; font-size: 0.88rem; width: 100%; border-radius: 8px; margin: 0; }
 .search-filter-container .filter-group { flex: 0 0 5.5rem; min-width: 0; gap: 0.2rem; }
-.search-filter-container .filter-group label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #64748b; }
+.search-filter-container .filter-group label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #64748b; }
 .search-filter-container .clear-filters { height: 2.2rem; padding: 0 0.85rem; font-size: 0.82rem; border-radius: 8px; }
 
 /* gradebook workspace: one header row, one row of figures, one slim toolbar */
@@ -1316,3 +1316,56 @@
 .import-preview th, .import-preview td { padding: 0.4rem 0.65rem; text-align: left; white-space: nowrap; border-bottom: 1px solid #eef0f4; }
 .import-preview th { position: sticky; top: 0; background: #f8fafc; font-weight: 600; color: #475569; }
 .import-notes { list-style: disc; }
+
+/* ---- Phones --------------------------------------------------------------------------------------------------------------------
+   Below 768px the page is one column: the three views scroll sideways as tabs, the info badges wrap instead of stretching, the filters
+   sit in a plain block, and each student in the entry view is a card (name, roll number, then the mark box) instead of a table that ran
+   off the right edge. The Gradebook Workspace is a wide matrix by nature; it scrolls sideways inside its own card. */
+@media (max-width: 768px) {
+  .marks2-container { padding: 0.75rem; min-height: 0; }
+  .marks2-actions { flex-wrap: nowrap; }
+  .marks2-actions .btn, .marks2-menu > .btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+  .marks2-menu { flex: 1 1 0; }
+
+  .marks-view-tabs { display: flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .marks-view-tabs::-webkit-scrollbar { display: none; }
+  .marks-view-tab { flex: 0 0 auto; white-space: nowrap; padding: 0.65rem 0.9rem; min-height: 2.5rem; }
+
+  .marks2-content { gap: 0.75rem; }
+  .marks2-sidebar, .marks2-main { width: 100%; min-width: 0; box-sizing: border-box; }
+  .marks2-main { padding: 0.9rem; overflow: visible; }
+
+  .assessment-header { align-items: stretch; margin-bottom: var(--spacing-sm); padding-bottom: var(--spacing-sm); }
+  .assessment-header h2 { font-size: 1.2rem; }
+  .assessment-header > * { flex: 0 0 auto; }
+  .assessment-header .assessment-details { flex: 0 0 auto; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 0.4rem; }       /* the desktop rule gives it a 16rem basis, which in a column became a 16rem-TALL gap */
+  .assessment-details span { white-space: nowrap; padding: 0.3rem 0.6rem; }
+
+  .search-filter-container { padding: 0.6rem; }
+  .search-filter-container .search-box { flex: 1 1 100%; }
+  .search-filter-container .filter-box { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem; padding-bottom: 0; position: static; }
+  .search-filter-container .filter-group { flex: 1 1 6rem; width: auto; }
+  .search-filter-container .clear-filters { position: static; width: auto; flex: 1 1 100%; margin: 0; }
+
+  /* the entry view: a card per student */
+  .marks-table-container { border: 0; border-radius: 0; overflow: visible; }
+  .marks-table, .marks-table tbody, .marks-table tr, .marks-table td { display: block; }
+  .marks-table { width: 100%; }
+  .marks-table thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .marks-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) 7rem; grid-template-areas: "name input" "roll input"; align-items: center; gap: 0.1rem 0.75rem; margin-bottom: 0.5rem; padding: 0.7rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fff; }
+  .marks-table tbody tr:hover { background: #fff; }
+  .marks-table td { padding: 0; border: 0; text-align: left; min-width: 0; }
+  .marks-table tbody td:nth-child(1) { grid-area: roll; font-size: 0.78rem; color: var(--text-secondary); }
+  .marks-table tbody td:nth-child(2) { grid-area: name; font-size: 0.95rem; font-weight: 600; }
+  .marks-table tbody td:nth-child(3) { grid-area: input; }
+  .marks-table td input { width: 100%; min-height: 2.5rem; box-sizing: border-box; text-align: center; }
+  .marks-table td[colspan] { grid-column: 1 / -1; grid-area: auto; padding: 1rem 0; }
+}
+
+/* Small laptops and tablets held upright (769-1000px): the page area is only about 650px wide once the menu takes its share, too little for
+   a 300px side panel beside a table. The two panels stack, and the sections and assessments sit side by side above the marks. */
+@media (min-width: 769px) and (max-width: 1000px) {
+  .marks2-content:not(.is-generator) { flex-direction: column; height: auto; min-height: 0; gap: 0.75rem; }
+  .marks2-content:not(.is-generator) .marks2-sidebar { width: 100%; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .marks2-content:not(.is-generator) .marks2-main { min-width: 0; overflow: visible; }
+}

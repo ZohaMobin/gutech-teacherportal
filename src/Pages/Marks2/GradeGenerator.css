@@ -205,13 +205,13 @@
   .gg-step-now { display: block; font-size: 0.82rem; color: var(--gg-muted); margin: -6px 0 -8px !important; }
   .gg-step-now strong { color: var(--gg-ink); }
   .gg-tile-value strong { font-size: 1.3rem; }
-  .gg-tile-label { font-size: 0.68rem; }
+  .gg-tile-label { font-size: 0.72rem; }
   .gg-row.gg-head { display: none; }
   .gg-row { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; grid-template-areas: 'student student student grade' 'entered added final final'; row-gap: 8px; }
   .gg-row .gg-student { grid-area: student; }
   .gg-row .grade { grid-area: grade; }
   .gg-row .num { align-items: flex-start; text-align: left; }
-  .gg-row .num::before { content: attr(data-label); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gg-muted); font-weight: 600; }
+  .gg-row .num::before { content: attr(data-label); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gg-muted); font-weight: 600; }
   .gg-row .num:nth-of-type(2) { grid-area: entered; }
   .gg-row .num:nth-of-type(3) { grid-area: added; }
   .gg-row .num:nth-of-type(4) { grid-area: final; }
@@ -286,7 +286,7 @@
 .gg-tiles { gap: 8px; margin-bottom: 12px; }
 .gg-tile { padding: 8px 10px; gap: 2px; }
 .gg-tile-value strong { font-size: 1.25rem; }
-.gg-tile-label { font-size: 0.68rem; }
+.gg-tile-label { font-size: 0.72rem; }
 .gg-dist { gap: 3px; }
 .gg-dist-row { grid-template-columns: 26px minmax(0, 1fr) 52px; gap: 8px; }
 .gg-bar { height: 5px; }

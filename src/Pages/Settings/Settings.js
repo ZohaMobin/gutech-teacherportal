@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Circle, Eye, EyeOff } from 'lucide-react';
 import './Settings.css';
 import { formMessageOf } from '../../utils/apiMessage';
 import { InlineAlert } from '../../Components/ErrorState/ErrorState';
@@ -94,6 +94,16 @@ const Settings = () => {
     }
   };
 
+  const { currentPassword, newPassword, confirmPassword } = formData;
+  const rules = [
+    { ok: newPassword.length >= 6, text: 'At least 6 characters' },
+    { ok: newPassword.length > 0 && newPassword !== currentPassword, text: 'To differ from your current one' },
+    { ok: confirmPassword.length > 0 && newPassword === confirmPassword, text: 'Both new fields to match' },
+  ];
+  // How strong the new password is, as 0-4 filled segments: length, more length, mixed case, a digit or symbol.
+  const strength = [newPassword.length >= 6, newPassword.length >= 10, /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword), /[0-9\W_]/.test(newPassword)].filter(Boolean).length;
+  const strengthLabel = newPassword ? ['Weak', 'Weak', 'Fair', 'Good', 'Strong'][strength] : '';
+
   const field = (name, label, autoComplete, placeholder) => (
     <label className="st-field">
       <span>{label}</span>
@@ -128,25 +138,46 @@ const Settings = () => {
         </div>
       </div>
 
-      <div className="st-grid">
-        <section className="st-card st-account" aria-label="Account">
-          <div className="st-avatar">{getInitial()}</div>
-          <div className="st-who">
-            <strong>{user?.name || 'Teacher'}</strong>
-            <span>{user?.email || 'Teacher account'}</span>
-          </div>
-        </section>
+      <div className="st-layout">
+        <aside className="st-side">
+          <section className="st-card st-account" aria-label="Account">
+            <div className="st-avatar">{getInitial()}</div>
+            <div className="st-who">
+              <strong>{user?.name || 'Teacher'}</strong>
+              <span>{user?.email || 'Teacher account'}</span>
+              <em className="st-role">Teacher</em>
+            </div>
+          </section>
+
+          <section className="st-card st-rules" aria-label="Password rules">
+            <strong>Your password needs</strong>
+            {rules.map((rule) => (
+              <div key={rule.text} className={rule.ok ? 'is-ok' : ''}>
+                {rule.ok ? <CheckCircle2 size={16} aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}
+                <span>{rule.text}</span>
+              </div>
+            ))}
+          </section>
+        </aside>
 
         <form className="st-card st-password" onSubmit={handleSubmit} aria-label="Change password">
           <h2>Change password</h2>
-          <p className="st-hint">Use at least 6 characters, different from your current or temporary password. Keep it private.</p>
+          <p className="st-hint">Choose something only you know. You'll stay signed in on this device.</p>
 
           {message && <div className="st-success" role="status">{message}</div>}
           <InlineAlert message={error} />
 
-          {field('currentPassword', 'Current password', 'current-password', 'Your current or temporary password')}
-          {field('newPassword', 'New password', 'new-password', 'At least 6 characters')}
-          {field('confirmPassword', 'Confirm new password', 'new-password', 'Type the new password again')}
+          <div className="st-fields">
+            <div className="st-wide">{field('currentPassword', 'Current password', 'current-password', 'Your current or temporary password')}</div>
+            <div>
+              {field('newPassword', 'New password', 'new-password', 'At least 6 characters')}
+              <div className="st-strength" aria-live="polite">
+                <div className="st-bars" aria-hidden="true">{[1, 2, 3, 4].map((n) => <i key={n} className={n <= strength ? `is-on s${strength}` : ''} />)}</div>
+                <small>{strengthLabel && `Strength: ${strengthLabel}`}</small>
+              </div>
+            </div>
+            <div>{field('confirmPassword', 'Confirm new password', 'new-password', 'Type the new password again')}</div>
+          </div>
 
           <div className="st-actions">
             <button className="st-save" type="submit" disabled={isSubmitting}>

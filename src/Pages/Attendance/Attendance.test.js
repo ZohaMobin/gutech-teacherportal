@@ -8,7 +8,7 @@ import Attendance from "./Attendance";
 jest.mock("axios");
 jest.mock("react-hot-toast", () => ({ __esModule: true, default: { success: jest.fn(), error: jest.fn() } }));
 jest.mock("react-datepicker", () => () => null);
-jest.mock("lucide-react", () => ({ Download: () => null }));
+jest.mock("lucide-react", () => new Proxy({ __esModule: true }, { get: (target, name) => (name in target ? target[name] : () => null) }));
 jest.mock("react-datepicker/dist/react-datepicker.css", () => ({}), { virtual: true });
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -75,4 +75,34 @@ test("nothing saved and nobody marked: Save explains there's nothing to save", a
   expect(document.querySelector(".confirm-dialog")).toBeNull();
   expect(axios.delete).not.toHaveBeenCalled();
   expect(axios.post).not.toHaveBeenCalled();
+});
+
+test("on the very first load the page shows placeholders, not 'no enrolled sections', while the term is still being asked for", async () => {
+  sessionStorage.setItem("token", "t");
+  sessionStorage.setItem("user", JSON.stringify({ teacherId: "teacher1", name: "Dr. M. Shahzad" }));
+  axios.get.mockImplementation(() => new Promise(() => {}));            // nothing has answered yet
+  const box = document.createElement("div");
+  document.body.appendChild(box);
+  const tree = createRoot(box);
+  await act(async () => { tree.render(<Attendance />); });
+  await wait(30);
+  expect(box.querySelector(".sk-roster")).not.toBeNull();
+  expect(box.textContent).not.toContain("No enrolled sections");
+  expect(box.textContent).not.toContain("administrator enrolls students");
+  act(() => tree.unmount());
+  box.remove();
+});
+
+test("if the term cannot be read, the loading ends with the error instead of loading forever", async () => {
+  sessionStorage.setItem("token", "t");
+  sessionStorage.setItem("user", JSON.stringify({ teacherId: "teacher1" }));
+  axios.get.mockImplementation(() => Promise.reject(Object.assign(new Error("Network Error"), { request: {}, code: "ERR_NETWORK" })));
+  const box = document.createElement("div");
+  document.body.appendChild(box);
+  const tree = createRoot(box);
+  await act(async () => { tree.render(<Attendance />); });
+  await wait(50);
+  expect(box.querySelector(".sk-roster")).toBeNull();
+  act(() => tree.unmount());
+  box.remove();
 });

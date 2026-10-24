@@ -1,5 +1,8 @@
 /* CSS Variables */
 :root {
+  /* the height that fills the screen: 125vh under the 80% zoom (100vh only reaches 80% of it), 100vh without */
+  --fill-vh: 100vh;
+
   /* Primary Colors */
   --primary-color: #991D20;
   --primary-light: #c62828;
@@ -56,7 +59,11 @@ body {
      reflows and text stays sharp, the same way real browser zoom works. The sidebar's h-screen (100vh) had to
      change to a bottom-anchored fixed box below, for the same reason as the admin portal's sidebar fix: a box
      sized with 100vh stops short of the real, zoomed bottom of the screen. */
-  zoom: 0.8;
+  /* Computers and tablets only: on a phone the app renders at its true size (at 80% every label, button and icon would be a
+     fifth smaller than designed). */
+}
+@media (min-width: 768px) {
+  body { zoom: 0.8; }
 }
 
 /* App Layout */
@@ -64,7 +71,7 @@ body {
    bottom of the screen and show the grey body behind it. (Tailwind here is the CDN build, which has no arbitrary
    values like min-h-[125vh], hence a plain class.) */
 .app-shell {
-  min-height: 125vh;
+  min-height: var(--fill-vh);
 }
 
 .App {
@@ -200,3 +207,17 @@ input, select, textarea {
     padding: var(--spacing-md);
   }
 } 
+
+@media (min-width: 768px) {
+  :root { --fill-vh: 125vh; }
+}
+
+/* A form field under 16px makes iPhones zoom the page in when it is tapped, and the page then has to be zoomed back out by hand. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px; }
+}
+
+/* The page area is padded 2rem all round; on a phone that is a fifth of the screen on each side before any page begins. */
+@media (max-width: 767px) {
+  main.p-5 { padding: 0.5rem; }
+}

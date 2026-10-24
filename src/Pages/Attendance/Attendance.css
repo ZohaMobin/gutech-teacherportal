@@ -1224,11 +1224,11 @@
 .attendance-header { margin-bottom: 0.6rem; padding-bottom: 0.5rem; }
 .attendance-header .header-content { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.9rem; }
 .attendance-header .header-content h1, .attendance-header .header-content p { margin: 0; }
-.attendance-container { min-height: calc(125vh - 9rem); padding-bottom: 0; }
+.attendance-container { min-height: calc(var(--fill-vh) - 9rem); padding-bottom: 0; }
 .attendance-content { min-height: 0; align-items: flex-start; }
-.attendance-main { height: calc(125vh - 15.9rem); min-height: 32rem; }
-.attendance-sidebar { max-height: calc(125vh - 15.9rem); }
-.section-list { max-height: calc(125vh - 24rem); }
+.attendance-main { height: calc(var(--fill-vh) - 15.9rem); min-height: 32rem; }
+.attendance-sidebar { max-height: calc(var(--fill-vh) - 15.9rem); }
+.section-list { max-height: calc(var(--fill-vh) - 24rem); }
 /* Like the Marks page: the panel scrolls as one, so the list is not boxed into a small window of its own. The search / counts /
    Save row and the table header stay pinned, so the top controls scroll away and the students get the whole panel. */
 .attendance-main { overflow-y: auto; overflow-x: hidden; padding-top: 0; }
@@ -1261,7 +1261,7 @@
 .students-table th, .students-table td { padding-top: 0.32rem; padding-bottom: 0.32rem; }
 .attendance-btn { padding: 0.28rem 0.7rem; }
 @media (min-width: 769px) and (max-width: 1024px) {
-  .attendance-sidebar { max-height: calc(125vh - 15.9rem); }
+  .attendance-sidebar { max-height: calc(var(--fill-vh) - 15.9rem); }
 }
 @media (max-width: 768px) {
   .attendance-main { height: auto; min-height: 0; overflow: visible; }
@@ -1282,3 +1282,36 @@
 .att-skel { display: inline-block; width: 4.4rem; height: 2rem; border-radius: 8px; }
 .stat-value .ld-chip { vertical-align: -0.1em; }
 .students-table.is-loading .attendance-actions { display: flex; gap: 0.5rem; }
+
+/* ---- Phones ------------------------------------------------------------------------------------------------------------------
+   Stacked, the two cards must take the full width: align-items: flex-start (set for the side-by-side layout) sized them to their
+   content instead, so the roster ran past the right edge of the screen. */
+@media (max-width: 768px) {
+  .attendance-container { padding: 0.75rem; min-height: 0; }
+  .attendance-content { align-items: stretch; gap: 0.75rem; }
+  .attendance-main { width: 100%; min-width: 0; padding: 0.75rem; }
+  .attendance-sidebar { box-sizing: border-box; }
+  .section-list { scrollbar-width: none; }
+  .section-list::-webkit-scrollbar { display: none; }
+  .section-item { max-width: 80vw; }
+  .attendance-btn { min-height: 2.25rem; padding: 0.4rem 0.8rem; }
+  .btn-quick, .slotbar-pill, .slotbar-toggle, .attendance-stats .stat-card { min-height: 2.25rem; }
+}
+
+/* The roster on a phone: each student is a card (name, roll number, then Present / Absent / Late side by side). In a table the buttons were
+   pushed off the right edge of the screen, which left a teacher unable to mark anyone. */
+@media (max-width: 768px) {
+  .students-table-container { border: 0; border-radius: 0; background: none; overflow: visible; }
+  .students-table, .students-table tbody, .students-table tr, .students-table td { display: block; }
+  .students-table, .students-table tbody { width: 100%; }
+  .students-table thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .students-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.15rem; margin-bottom: 0.5rem; padding: 0.75rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fff; }
+  .students-table tbody tr:hover { background: #fff; }
+  .students-table td { min-width: 0; width: auto; padding: 0; border: 0; text-align: left; }      /* the desktop cells insist on a minimum width, which is what pushed the buttons off the card */
+  .students-table td.student-name { order: 1; font-size: 0.95rem; font-weight: 600; }
+  .students-table td.roll-number { order: 2; font-size: 0.78rem; color: var(--text-secondary); font-weight: 400; }
+  .students-table td.attendance-actions-cell { order: 3; margin-top: 0.5rem; }
+  .students-table .attendance-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+  .students-table .attendance-btn { width: 100%; min-height: 2.5rem; justify-content: center; }
+  .students-table td.no-results, .students-table td[colspan] { padding: 1rem 0; }
+}

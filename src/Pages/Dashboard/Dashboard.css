@@ -21,7 +21,7 @@
   color: var(--d-text);
   background: var(--d-soft);
   padding: 2rem 2rem 0;
-  min-height: calc(125vh - 9rem);
+  min-height: calc(var(--fill-vh) - 9rem);
 }
 .dash *, .dash *::before, .dash *::after { box-sizing: border-box; }
 
@@ -100,7 +100,7 @@
 .dash-steps li.is-done .dash-step-mark { color: var(--d-ok); }
 .dash-steps li .dash-link { margin: 0 0 0 0.25rem; }
 
-.dash-attention { list-style: none; margin: 0; padding: 0; display: grid; }
+.dash-attention { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); }     /* minmax(0,..): a long line wraps inside the card, not stretches the column past it */
 .dash-attention li { border-top: 1px solid var(--d-line); }
 .dash-attention li:first-child { border-top: 0; }
 .dash-attention button { position: relative; display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.65rem 0.4rem; margin: 0 -0.4rem; width: calc(100% + 0.8rem); border: 0; border-radius: 0.5rem; background: none; font: inherit; text-align: left; cursor: pointer; }
@@ -110,7 +110,7 @@
 .dash-attention button.is-danger::before { background: var(--d-bad); }
 .dash-attention-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .dash-attention-text strong { font-size: 0.9rem; font-weight: 600; }
-.dash-attention-text .dash-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-attention-text .dash-note { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
 .dash-chev { flex: none; color: #94a3b8; }
 .dash-ic { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; border-radius: 0.5rem; }
 .dash-ic.is-warn { background: var(--d-warn-tint); color: var(--d-warn); }
@@ -151,3 +151,8 @@
   .dash-row-head { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dash-bar i { transition: none; } .is-spinning, .dash-class.is-live::before { animation: none; } }
+
+/* A bigger tap area for the small text links on phones and touch screens; a mouse keeps them as they were. */
+@media (max-width: 767px), (pointer: coarse) {
+  .dash-link { min-height: 2.25rem; padding: 0 0.25rem; margin-left: -0.25rem; margin-right: -0.25rem; }
+}

@@ -111,3 +111,17 @@ test("with no internet it says so plainly and offers to try again", async () => 
   expect(text()).toContain("Couldn't reach the server");
   expect(button("Try again")).toBeTruthy();
 });
+
+test("while the timetable loads, a placeholder shaped like it stands in: the title, three cards and a week board", async () => {
+  window.matchMedia = jest.fn().mockImplementation(() => ({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() }));
+  sessionStorage.setItem("token", "t"); sessionStorage.setItem("user", JSON.stringify({ teacherId: "t1" }));
+  axios.get.mockImplementation(() => new Promise(() => {}));
+  container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => { root.render(<ClassSchedule />); });
+  await wait(20);
+  expect(container.querySelector(".tt h1").textContent).toBe("Timetable");
+  expect(container.querySelectorAll(".sk-stat").length).toBe(3);
+  expect(container.querySelector(".sk-board")).not.toBeNull();
+  expect(container.querySelector(".tt-week")).toBeNull();
+});
