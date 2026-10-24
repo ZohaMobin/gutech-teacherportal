@@ -434,7 +434,7 @@
    off, text one word per line). On a phone it is one column: a compact maroon header (which also holds the switch between Sign In and
    Register), then the one form that is active, full width. */
 @media (max-width: 767px) {
-  .auth-page { align-items: flex-start; padding: 12px; }
+  .auth-page { align-items: center; padding: 12px; }      /* centred on the screen like the desktop version; a taller form (Create Account) simply makes the page taller */
   .auth-container { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; min-height: 0; border-radius: 22px; }
 
   .toggle-container, .auth-container.active .toggle-container { position: static; order: -1; width: 100%; height: auto; overflow: visible; border-radius: 0; transform: none !important; transition: none; }
