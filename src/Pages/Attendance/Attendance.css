@@ -1315,3 +1315,12 @@
   .students-table .attendance-btn { width: 100%; min-height: 2.5rem; justify-content: center; }
   .students-table td.no-results, .students-table td[colspan] { padding: 1rem 0; }
 }
+
+/* Phone: Save stays on screen. The roster is one long list of cards, and Save sat at the top of it, so after marking thirty students a teacher
+   had to scroll all the way back up. It is now a bar fixed to the bottom of the screen (with the unsaved-changes note beside it). */
+@media (max-width: 768px) {
+  .attendance-container { padding-bottom: 5.5rem; }
+  .roster-save { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid var(--border-color); box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.1); justify-content: space-between; }
+  .roster-save .save-btn { flex: 1 1 auto; min-height: 2.75rem; padding: 0.5rem 1rem; font-size: 0.95rem; }
+  .roster-save .unsaved-indicator { flex: none; }
+}
