@@ -4,7 +4,7 @@ import { CalendarDays } from "lucide-react";
 import ErrorState from "../../Components/ErrorState/ErrorState";
 import { messageOf, NETWORK_MESSAGE } from "../../utils/apiMessage";
 import { to12Hour } from "../../utils/timetablePeriods";
-import Loading from "../../Components/Loading/Loading";
+import { TimetableSkeleton } from "../../Components/Loading/Skeletons";
 import {
   breaksOf, classesOfDay, courseColors, courseKey, dayAgenda, defaultDay, hasAnyClass, isSameDay, sectionOf, summaryOf, visibleDays, weekAxis, weekDates,
 } from "../../utils/timetableView";
@@ -65,9 +65,6 @@ const useTimetable = () => {
   return [state, load];
 };
 
-const Skeleton = () => (
-  <div className="tt"><Loading variant="table" rows={6} label="Loading your timetable" /></div>
-);
 
 const when = (summary, now) => {
   const { next } = summary;
@@ -92,7 +89,7 @@ const ClassSchedule = () => {
     return { days, dates, axis: weekAxis(schedule, days), colors: courseColors(schedule), any: hasAnyClass(schedule), summary: summaryOf(schedule, now) };
   }, [state, now]);
 
-  if (state.status === "loading") return <Skeleton />;
+  if (state.status === "loading") return <TimetableSkeleton />;
   if (state.status === "error") return <div className="tt"><div className="tt-card"><ErrorState message={state.message} title={state.message === NETWORK_MESSAGE ? undefined : "Your timetable could not be loaded"} onRetry={reload} /></div></div>;
 
   const { schedule, term } = state;

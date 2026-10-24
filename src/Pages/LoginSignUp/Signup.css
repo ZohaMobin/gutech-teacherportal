@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   /* The app renders at zoom: 0.8, so 100vh only reaches 80% of the screen; 125vh fills it. */
-  min-height: 125vh;
+  min-height: var(--fill-vh);
   padding: 20px;
   box-sizing: border-box;
   background-color: #f8f8f8;
