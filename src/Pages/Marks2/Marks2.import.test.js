@@ -79,7 +79,9 @@ test('importing puts the marks in the table without saving, and says to press Sa
   expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/2 marks added to Quiz 1\. Press Save to keep them\./));
   expect(axios.put).not.toHaveBeenCalled();
   expect(markInputs().map((i) => i.value)).toEqual(['8', '6', '4']);       // Chand's saved 4 is untouched
-  await click(button('Save Marks'));
+  expect(markInputs().every((i) => !i.readOnly)).toBe(true);               // the assessment had saved marks, so it opened locked: importing unlocks it
+  expect(document.querySelector('.mk-dirty').textContent).toMatch(/2\s*unsaved changes/);
+  await click(document.querySelector('button.save-btn'));
   await wait(20);
   expect(axios.put.mock.calls[0][1].grades).toEqual([
     { registrationId: 'g1', obtainedMarks: 8, feedback: '' },

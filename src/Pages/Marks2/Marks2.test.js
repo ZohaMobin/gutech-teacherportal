@@ -23,7 +23,7 @@ const type = async (el, value) => act(async () => {
   el.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
-const mount = async ({ status = { workflowEnabled: true, state: 'OPEN', marksFrozen: false }, putError = null, students = [{ id: 'r1', rollNumber: 'R-1', name: 'Ayesha' }], gradesPut = null } = {}) => {
+const mount = async ({ status = { workflowEnabled: true, state: 'OPEN', marksFrozen: false }, putError = null, students = [{ id: 'r1', rollNumber: 'R-1', name: 'Ayesha' }], gradesPut = null, marks = null } = {}) => {
   axios.isAxiosError = (e) => Boolean(e && (e.response || e.request));
   axios.get.mockImplementation((url) => {
     if (url.includes('/getSections/')) return Promise.resolve({ data: [{ _id: 's1', section: 'A', courseId: { name: 'Linear Algebra' } }] });
@@ -32,6 +32,7 @@ const mount = async ({ status = { workflowEnabled: true, state: 'OPEN', marksFro
     if (url.includes('/status')) return Promise.resolve({ data: status });
     if (url.includes('/students')) return Promise.resolve({ data: students });
     if (url.includes('/assessments/section/')) return Promise.resolve({ data: { assessments } });
+    if (marks && url.includes('/marks')) return Promise.resolve({ data: { marks } });
     return Promise.resolve({ data: [] });
   });
   axios.put.mockImplementation((url) => (url.includes('/grades') && gradesPut ? gradesPut() : putError ? Promise.reject(putError) : Promise.resolve({ data: { ...assessments[0], weightage: 30 } })));
@@ -123,16 +124,18 @@ test('saving sends only the marks that changed, and does not reload them afterwa
   await wait(30);
   const inputs = [...container.querySelectorAll('.marks-table input[type="number"], .students-table input[type="number"], input.mark-input')];
   expect(inputs.length).toBeGreaterThanOrEqual(2);
+  expect(inputs[0].readOnly).toBe(true);                                     // Ayesha's 7 is saved, so the list opens locked
+  await click(container.querySelector('.mk-edit'));
   await type(inputs[1], '9');
-  const save = () => click([...container.querySelectorAll('button')].find((b) => b.textContent.includes('Save Marks')));
+  const save = () => click(container.querySelector('button.save-btn'));
   const marksGets = () => axios.get.mock.calls.filter(([u]) => /assessment\/a1\/marks/.test(u)).length;
   const before = marksGets();
   await save(); await wait(20);
   expect(axios.put).toHaveBeenCalledTimes(1);
   expect(axios.put.mock.calls[0][1].grades).toEqual([{ registrationId: 'g2', obtainedMarks: 9, feedback: '' }]);   // Ayesha's 7 is already saved
   expect(marksGets()).toBe(before);                                          // no reload after saving
-  await save(); await wait(20);
-  expect(axios.put).toHaveBeenCalledTimes(1);                                // nothing changed since: nothing sent
+  expect(container.querySelector('button.save-btn')).toBeNull();             // saved marks lock again: nothing more to send until Edit marks
+  expect(axios.put).toHaveBeenCalledTimes(1);
 });
 
 test('opening the gradebook loads every mark with ONE request, however many assessments there are', async () => {
@@ -170,9 +173,9 @@ test('saving marks keeps the table on screen and shows the button working, then 
 
   await act(async () => { finish(); });
   await wait();
-  expect(saveButton().textContent).toContain('Save Marks');
-  expect(saveButton().disabled).toBe(false);
-  expect(container.querySelector('.marks-table input').readOnly).toBe(false);
+  expect(saveButton()).toBeUndefined();                                             // saved: the marks lock again...
+  expect(container.querySelector('.mk-edit').textContent).toContain('Edit marks');  // ...until the teacher chooses to edit
+  expect(container.querySelector('.marks-table input').readOnly).toBe(true);
   expect(toast.success).toHaveBeenCalledWith('Marks saved successfully');
 });
 
@@ -198,4 +201,85 @@ test('the first load shows placeholders in the lists, not an empty "Select a sec
   await wait(60);
   expect(container.querySelector('.sk-list')).toBeNull();
   expect(container.querySelector('.section-item')).not.toBeNull();
+});
+
+// Saved marks open read-only so a stray keystroke cannot change them; empty ones open ready for entry.
+describe('editing safeguards', () => {
+  const students = [{ id: 'r1', registrationId: 'g1', rollNumber: 'R-1', name: 'Ayesha' }, { id: 'r2', registrationId: 'g2', rollNumber: 'R-2', name: 'Bilal' }];
+  const inputs = () => [...container.querySelectorAll('.marks-table tbody input')];
+  const openQuiz = async (opts) => { await mount({ students, ...opts }); await click(container.querySelector('.assessment-item')); await wait(20); };
+  const button = (text) => [...document.querySelectorAll('.confirm-dialog button')].find((b) => b.textContent.trim() === text);
+
+  test('an assessment with no marks opens ready to type in, with no Edit button', async () => {
+    await openQuiz();
+    expect(inputs()[0].readOnly).toBe(false);
+    expect(container.querySelector('.mk-edit')).toBeNull();
+    expect(container.querySelector('.mk-dirty')).toBeNull();
+  });
+
+  test('saved marks open locked; Edit marks unlocks, and a changed mark shows what it was', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    expect(inputs().every((i) => i.readOnly)).toBe(true);
+    expect(container.querySelector('button.save-btn')).toBeNull();
+    await click(container.querySelector('.mk-edit'));
+    expect(inputs().every((i) => !i.readOnly)).toBe(true);
+    expect(container.querySelector('.mk-dirty')).toBeNull();                       // nothing changed yet: no nagging
+    await click([...container.querySelectorAll('.mk-edit')].find((b) => b.textContent.trim() === 'Editing'));   // changed your mind: lock again
+    expect(inputs().every((i) => i.readOnly)).toBe(true);
+    await click(container.querySelector('.mk-edit'));
+    await type(inputs()[0], '9');
+    expect(inputs()[0].classList.contains('mk-changed')).toBe(true);
+    expect(container.querySelector('.mk-was').textContent).toBe('was 7');
+    expect(container.querySelector('.mk-dirty').textContent).toMatch(/1\s*unsaved change/);
+    expect(container.querySelector('button.save-btn').textContent).toContain('Save 1 change');
+  });
+
+  test('Discard puts the saved marks back', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    await click(container.querySelector('.mk-edit'));
+    await type(inputs()[0], '9');
+    await type(inputs()[1], '5');                                                  // a brand-new mark counts as a change too
+    expect(container.querySelector('.mk-dirty').textContent).toMatch(/2\s*unsaved changes/);
+    await click(container.querySelector('.mk-link'));
+    expect(inputs().map((i) => i.value)).toEqual(['7', '']);
+    expect(container.querySelector('.mk-dirty')).toBeNull();
+  });
+
+  test('typing the same value that is saved is not a change', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    await click(container.querySelector('.mk-edit'));
+    await type(inputs()[0], '7');
+    expect(container.querySelector('.mk-dirty')).toBeNull();
+  });
+
+  test('switching assessment with unsaved changes asks first; cancelling keeps them', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    await click(container.querySelector('.mk-edit'));
+    await type(inputs()[0], '9');
+    await click(container.querySelectorAll('.assessment-item')[1]);
+    expect(document.querySelector('.confirm-dialog')).not.toBeNull();
+    await click(button('Cancel'));
+    expect(container.querySelector('.assessment-header h2').textContent).toBe('Quiz 1');
+    expect(inputs()[0].value).toBe('9');
+    await click(container.querySelectorAll('.assessment-item')[1]);
+    await click(button('Discard'));
+    await wait(20);
+    expect(container.querySelector('.assessment-header h2').textContent).toBe('Final');
+  });
+
+  test('switching with nothing changed does not ask', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    await click(container.querySelectorAll('.assessment-item')[1]);
+    expect(document.querySelector('.confirm-dialog')).toBeNull();
+    expect(container.querySelector('.assessment-header h2').textContent).toBe('Final');
+  });
+
+  test('closing the tab with unsaved changes is questioned by the browser, and not otherwise', async () => {
+    await openQuiz({ marks: { r1: 7 } });
+    const fire = () => { const e = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; };
+    expect(fire()).toBe(false);
+    await click(container.querySelector('.mk-edit'));
+    await type(inputs()[0], '9');
+    expect(fire()).toBe(true);
+  });
 });
