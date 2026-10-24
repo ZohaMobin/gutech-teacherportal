@@ -45,7 +45,9 @@ const mount = async ({ sections = [section, lab], schedule = {}, attendance = { 
 afterEach(() => { act(() => root.unmount()); container.remove(); sessionStorage.clear(); jest.clearAllMocks(); });
 
 test("a brand-new term: dashes instead of fake zeros, a setup checklist, and nothing overdue", async () => {
-  await mount({ schedule: { [todayName]: [klass("c1", "wt", "Web Technologies", "23:00", "23:30")] }, assessments: [] });
+  // A class that is still to come today, whatever the time of day: it starts a minute from now and lasts a minute (so this holds at 23:43 too).
+  const hhmm = (offsetMinutes) => { const d = new Date(Date.now() + offsetMinutes * 60000); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  await mount({ schedule: { [todayName]: [klass("c1", "wt", "Web Technologies", hhmm(1), hhmm(2))] }, assessments: [] });
   expect(text()).toMatch(/, Zoha/);                      // the title is skipped: "Dr." is not a first name
   expect(text()).toMatch(/Average attendance—/);        // no attendance yet: a dash, not 0%
   expect(text()).toMatch(/Marks entered—/);
