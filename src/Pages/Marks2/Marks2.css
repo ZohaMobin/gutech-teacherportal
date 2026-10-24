@@ -1375,3 +1375,20 @@
   .marks2-container { padding-bottom: 5.5rem; }
   .marks2-main .assessment-header .save-btn, .marks2-main .workspace-actions .save-btn { position: fixed; left: 0.75rem; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); z-index: 40; width: auto; min-height: 2.9rem; margin: 0; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28); }
 }
+
+/* ---- editing safeguards: saved marks open read-only; changed marks and the unsaved count are marked quietly ---- */
+.mk-guard input[readonly], .mk-guard input[readonly]:focus { background: transparent; border-color: transparent; box-shadow: none; color: inherit; cursor: default; }
+.marks-table input.mk-changed, .marks-entry-cell input.mk-changed { border-color: #991D20; box-shadow: 0 0 0 2px rgba(153, 29, 32, 0.12); }
+.mk-was { margin-left: 0.55rem; font-size: 0.75rem; color: #94a3b8; white-space: nowrap; }
+.mk-dirty { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: #64748b; white-space: nowrap; }
+.mk-dirty i { font-style: normal; font-weight: 600; color: #991D20; }
+.mk-link { background: none; border: 0; padding: 0.25rem 0.1rem; font: inherit; color: #475569; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.mk-link:hover { color: #991D20; }
+.mk-edit { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.4rem; }
+.assessment-header .mk-dirty { margin-left: auto; }
+.assessment-header .mk-dirty + .save-btn, .assessment-header .mk-dirty + .mk-edit { margin-left: 0; }
+@media (max-width: 768px) {
+  .assessment-header .mk-dirty, .workspace-actions .mk-dirty { margin-left: 0; white-space: normal; }
+  .mk-link { min-height: 2.75rem; padding: 0 0.5rem; }
+  .mk-edit { justify-content: center; min-height: 2.75rem; }
+}
