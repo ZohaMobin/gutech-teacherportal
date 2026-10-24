@@ -1,6 +1,6 @@
 /* Teacher timetable. Same frame as the Dashboard, Attendance and Marks: a light panel, a maroon title with its description beside it, white cards. */
 .tt {
-  --t-brand: rgb(153, 29, 32);
+  --t-brand: #991D20;
   --t-brand-tint: rgba(153, 29, 32, 0.06);
   --t-gold: #f5c32c;
   --t-gold-line: #ecd07a;
