@@ -6,7 +6,8 @@ import LockedNotice, { lockText } from './LockedNotice';
 import { messageOf } from './apiMessage';
 import GradeGenerator from './GradeGenerator';
 import { useConfirm } from '../../Components/ConfirmDialog/ConfirmDialog';
-import Loading, { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
+import { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
+import { MarksSkeleton, SidebarListSkeleton } from '../../Components/Loading/Skeletons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
@@ -58,7 +59,14 @@ const Marks2 = () => {
   const [assessments, setAssessments] = useState([]);
   const [activeAssessment, setActiveAssessment] = useState(null);
   const [studentMarks, setStudentMarks] = useState({});
-  const [loading, setLoading] = useState(false);   // reading data: the panel shows placeholders while it arrives
+  // Reading data: the panel shows placeholders while it arrives. Several reads run at once (students, assessments, marks), so this counts
+  // the ones in flight; one true/false flag flipped back when the FIRST finished, flashing half-loaded content. `booting` covers the very
+  // first moment, before the sections request has even been sent (the term is asked for first).
+  const [pending, setPending] = useState(0);
+  const [booting, setBooting] = useState(true);
+  const loading = pending > 0 || booting;
+  const beginLoad = () => setPending((n) => n + 1);
+  const endLoad = () => setPending((n) => Math.max(0, n - 1));
   const [saving, setSaving] = useState(false);       // writing data: the panel stays as it is, and the button says so
   const [error, setError] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -143,14 +151,13 @@ const Marks2 = () => {
 
   // Fetch teacher sections
   const fetchTeacherSections = async () => {
-    setLoading(true);
+    beginLoad();
     setError(null);
     
     try {
       const teacherId = getTeacherId();
       if (!teacherId) {
         setError("Teacher ID not found. Please log in again.");
-        setLoading(false);
         return;
       }
 
@@ -176,7 +183,8 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error);
     } finally {
-      setLoading(false);
+      endLoad();
+      setBooting(false);
     }
   };
 
@@ -186,15 +194,17 @@ const Marks2 = () => {
         headers: requestHeaders(),
       });
       setActiveAcademicTerm(response.data);
+      if (!response.data?._id) setBooting(false);        // no term to load sections for: nothing more is coming
     } catch (error) {
       handleApiError(error);
       setActiveAcademicTerm(null);
+      setBooting(false);
     }
   };
 
   // Fetch students for a section
   const fetchStudents = async (sectionId) => {
-    setLoading(true);
+    beginLoad();
     setError(null);
     
     try {
@@ -217,13 +227,13 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error);
     } finally {
-      setLoading(false);
+      endLoad();
     }
   };
 
   // Fetch assessments for a section
   const fetchAssessments = async (sectionId) => {
-    setLoading(true);
+    beginLoad();
     setError(null);
     
     try {
@@ -245,13 +255,13 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error);
     } finally {
-      setLoading(false);
+      endLoad();
     }
   };
 
   // Fetch marks for a specific assessment
   const fetchAssessmentMarks = async (assessmentId) => {
-    setLoading(true);
+    beginLoad();
     setError(null);
     
     try {
@@ -287,7 +297,7 @@ const Marks2 = () => {
     } catch (error) {
       handleApiError(error);
     } finally {
-      setLoading(false);
+      endLoad();
     }
   };
 
@@ -1357,6 +1367,7 @@ const Marks2 = () => {
         <div className="marks2-sidebar">
           <div className="section-selector">
             <h3>Sections</h3>
+            {loading && sections.length === 0 ? <SidebarListSkeleton rows={3} label="Loading sections" /> : (
             <div className="section-list">
               {sections.map(section => (
                 <div 
@@ -1368,11 +1379,13 @@ const Marks2 = () => {
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           <div className="assessment-selector">
             <h3>Assessments</h3>
             <WeightSummary assessments={assessments} />
+            {loading && assessments.length === 0 ? <SidebarListSkeleton rows={3} label="Loading assessments" /> : (
             <div className="assessment-list">
               {assessments.map(assessment => (
                 <div 
@@ -1411,12 +1424,13 @@ const Marks2 = () => {
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
 
         <div className="marks2-main">
           {loading ? (
-            <Loading variant="table" rows={8} label="Loading marks" />
+            <MarksSkeleton />
           ) : !activeSection ? (
             <div className="empty-state">
               <p>Select a section to view and manage marks</p>

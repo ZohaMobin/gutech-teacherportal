@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 import Loading, { BusyLabel, Skeleton } from "../../Components/Loading/Loading";
+import { RosterSkeleton } from "../../Components/Loading/Skeletons";
 import { useConfirm } from "../../Components/ConfirmDialog/ConfirmDialog";
 import SectionLabel from "../../Components/SectionLabel/SectionLabel";
 import "./Attendance.css";
@@ -38,6 +39,9 @@ const Attendance = () => {
   const [copyFromSlotNumber, setCopyFromSlotNumber] = useState("");
   const [markedDates, setMarkedDates] = useState([]);
   const [loading, setLoading] = useState(false);
+  // True from the first moment until the sections are known: the term is asked first, then the sections, so without this the page
+  // claimed "no enrolled sections" while its very first request was still on its way.
+  const [booting, setBooting] = useState(true);
   const [dateLoading, setDateLoading] = useState(false);
   const dateRequestRef = useRef(0);
   const rosterLoading = dateLoading && !loading;
@@ -156,6 +160,7 @@ const Attendance = () => {
       handleApiError(error);
     } finally {
       setLoading(false);
+      setBooting(false);
     }
   };
 
@@ -165,9 +170,11 @@ const Attendance = () => {
         headers: requestHeaders(),
       });
       setActiveAcademicTerm(response.data);
+      if (!response.data?._id) setBooting(false);          // no term to load sections for: nothing more is coming
     } catch (error) {
       handleApiError(error);
       setActiveAcademicTerm(null);
+      setBooting(false);
     }
   };
 
@@ -919,14 +926,14 @@ const Attendance = () => {
         )}
       </div>
 
-      <InlineAlert message={sections.length > 0 || loading ? error : null} onDismiss={() => setError(null)} />
+      <InlineAlert message={sections.length > 0 || loading || booting ? error : null} onDismiss={() => setError(null)} />
 
       <div className="attendance-content">
         {/* Sidebar - Section Selection */}
         <div className="attendance-sidebar">
           <div className="section-selector">
             <h3>Select Section</h3>
-            {loading && sections.length === 0 ? (
+            {(loading || booting) && sections.length === 0 ? (
               <Loading variant="list" rows={4} label="Loading sections" />
             ) : sections.length === 0 ? (
               error ? null : <div className="empty-text">No enrolled sections for the active semester</div>
@@ -1081,7 +1088,7 @@ const Attendance = () => {
               {/* Students Table */}
               {rosterLoading && <span className="ld-sr" role="status" aria-live="polite">Loading attendance for {getDateKey(selectedDate)}…</span>}
               {loading ? (
-                <Loading variant="table" rows={8} label="Loading students" />
+                <RosterSkeleton rows={8} bare />
               ) : students.length === 0 ? (
                 <div className="empty-state">
                   <p>No students enrolled in this course</p>
@@ -1145,8 +1152,8 @@ const Attendance = () => {
 
             </>
           ) : (
-            loading && sections.length === 0 ? (
-              <Loading variant="page" rows={4} label="Loading attendance" />
+            (loading || booting) && sections.length === 0 ? (
+              <RosterSkeleton />
             ) : sections.length === 0 && error ? (
               <ErrorState message={error} onRetry={fetchSections} />
             ) : (
