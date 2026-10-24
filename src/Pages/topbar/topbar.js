@@ -22,6 +22,11 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
     setIsProfileMenuOpen(!isProfileMenuOpen);
   };
 
+  const goToPassword = () => {
+    setIsProfileMenuOpen(false);
+    navigate('/settings');
+  };
+
   const handleLogout = () => {
     logout();                           // clears the session AND tells the app, so no signed-in page is left on screen
     navigate('/', { replace: true });   // Back must not return to a page of the ended session
@@ -46,9 +51,6 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
 
         {/* Right navigation */}
         <nav className="header-nav">
-          <a href="#" className="header-nav-item">Help</a>
-          <a href="#" className="header-nav-item">Support</a>
-          
           {/* User profile */}
           <div className="user-profile">
             <div className="user-avatar" onClick={toggleProfileMenu}>
@@ -62,9 +64,12 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
                   <span className="profile-name">{user?.name}</span>
                   <span className="profile-email">{user?.email}</span>
                 </div>
-                  <a href="#" className="profile-menu-item logout" onClick={handleLogout}>
+                  <button type="button" className="profile-menu-item" onClick={goToPassword}>
+                    Change password
+                  </button>
+                  <button type="button" className="profile-menu-item logout" onClick={handleLogout}>
                     Logout
-                  </a>
+                  </button>
                 </div>
             )}
           </div>

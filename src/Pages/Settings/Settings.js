@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import './Settings.css';
 import { formMessageOf } from '../../utils/apiMessage';
 import { InlineAlert } from '../../Components/ErrorState/ErrorState';
@@ -44,7 +44,7 @@ const Settings = () => {
 
   const validateForm = () => {
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      setError('All password fields are required.');
+      setError('Fill in all three password fields.');
       return false;
     }
 
@@ -94,127 +94,68 @@ const Settings = () => {
     }
   };
 
-  return (
-    <section className="settings-page">
-      <div className="settings-hero">
-        <div>
-          <p className="settings-eyebrow">Account Settings</p>
-          <h1>Security</h1>
-          <p>Update your password</p>
-        </div>
+  const field = (name, label, autoComplete, placeholder) => (
+    <label className="st-field">
+      <span>{label}</span>
+      <div className="st-input">
+        <input
+          type={visibleFields[name] ? 'text' : 'password'}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          className="st-eye"
+          onClick={() => toggleFieldVisibility(name)}
+          aria-label={`${visibleFields[name] ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
+        >
+          {visibleFields[name] ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </label>
+  );
 
-        <div className="settings-account-card">
-          <div className="settings-avatar">{getInitial()}</div>
-          <div>
-            <span>{user?.name || 'Teacher'}</span>
-            <p>{user?.email || 'Teacher account'}</p>
-          </div>
+  return (
+    <div className="st-page">
+      <div className="st-header">
+        <div>
+          <h1>Settings</h1>
+          <p>Your account and password</p>
         </div>
       </div>
 
-      <div className="settings-grid">
-        <aside className="settings-info-panel">
-          <div className="settings-info-icon">
-            <ShieldCheck size={24} />
+      <div className="st-grid">
+        <section className="st-card st-account" aria-label="Account">
+          <div className="st-avatar">{getInitial()}</div>
+          <div className="st-who">
+            <strong>{user?.name || 'Teacher'}</strong>
+            <span>{user?.email || 'Teacher account'}</span>
           </div>
-          <h2>Password Guidelines</h2>
-          <p>Choose a password that is private to you and different from the temporary password shared by admin.</p>
-          <ul>
-            <li><CheckCircle2 size={16} /> Minimum 6 characters</li>
-            <li><CheckCircle2 size={16} /> Different from current password</li>
-            <li><CheckCircle2 size={16} /> Avoid sharing it with anyone</li>
-          </ul>
-        </aside>
+        </section>
 
-        <form className="password-reset-panel" onSubmit={handleSubmit}>
-          <div className="panel-title-row">
-            <div className="panel-title-icon">
-              <LockKeyhole size={22} />
-            </div>
-            <div>
-              <h2>Reset Password</h2>
-              <p>Enter your current password first, then create a new one.</p>
-            </div>
-          </div>
+        <form className="st-card st-password" onSubmit={handleSubmit} aria-label="Change password">
+          <h2>Change password</h2>
+          <p className="st-hint">Use at least 6 characters, different from your current or temporary password. Keep it private.</p>
 
-          {message && <div className="settings-alert success">{message}</div>}
+          {message && <div className="st-success" role="status">{message}</div>}
           <InlineAlert message={error} />
 
-          <label>
-            Current Password
-            <div className="password-input-wrap">
-              <input
-                type={visibleFields.currentPassword ? 'text' : 'password'}
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                autoComplete="current-password"
-                placeholder="Enter current or temp password"
-              />
-              <button
-                type="button"
-                className="password-visibility-button"
-                onClick={() => toggleFieldVisibility('currentPassword')}
-                aria-label={visibleFields.currentPassword ? 'Hide current password' : 'Show current password'}
-              >
-                {visibleFields.currentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </label>
+          {field('currentPassword', 'Current password', 'current-password', 'Your current or temporary password')}
+          {field('newPassword', 'New password', 'new-password', 'At least 6 characters')}
+          {field('confirmPassword', 'Confirm new password', 'new-password', 'Type the new password again')}
 
-          <label>
-            New Password
-            <div className="password-input-wrap">
-              <input
-                type={visibleFields.newPassword ? 'text' : 'password'}
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                autoComplete="new-password"
-                placeholder="Create new password"
-              />
-              <button
-                type="button"
-                className="password-visibility-button"
-                onClick={() => toggleFieldVisibility('newPassword')}
-                aria-label={visibleFields.newPassword ? 'Hide new password' : 'Show new password'}
-              >
-                {visibleFields.newPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </label>
-
-          <label>
-            Confirm New Password
-            <div className="password-input-wrap">
-              <input
-                type={visibleFields.confirmPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                autoComplete="new-password"
-                placeholder="Re-enter new password"
-              />
-              <button
-                type="button"
-                className="password-visibility-button"
-                onClick={() => toggleFieldVisibility('confirmPassword')}
-                aria-label={visibleFields.confirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-              >
-                {visibleFields.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </label>
-
-          <button className="update-password-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Updating...' : 'Update Password'}
-          </button>
+          <div className="st-actions">
+            <button className="st-save" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Updating…' : 'Update password'}
+            </button>
+          </div>
         </form>
       </div>
-    </section>
+    </div>
   );
 };
 
