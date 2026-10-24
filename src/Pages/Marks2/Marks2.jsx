@@ -10,7 +10,7 @@ import { BusyLabel, Refreshing } from '../../Components/Loading/Loading';
 import { MarksSkeleton, SidebarListSkeleton } from '../../Components/Loading/Skeletons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown, Lock } from 'lucide-react';
+import { Upload, Download, Plus, Trash2, Save, X, FileSpreadsheet, Edit2, Search, Table2, ClipboardList, Sparkles, ChevronDown, Lock, LockOpen } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './Marks2.css';
 import { planImport } from './importMarks';
@@ -1516,7 +1516,7 @@ const Marks2 = () => {
                     </button>
                   ) : (<>
                     {!locked && workspaceChangedCount === 0 && hasSavedMarks(assessments.map((a) => a._id)) && (
-                      <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, workspace: false }))}>Done</button>
+                      <button type="button" className="btn btn-secondary mk-edit is-on" title="Lock marks" onClick={() => setUnlocked((u) => ({ ...u, workspace: false }))}><LockOpen size={15} /> Editing</button>
                     )}
                     <button
                       className="btn btn-primary save-btn"
@@ -1700,7 +1700,7 @@ const Marks2 = () => {
                   </button>
                 ) : (<>
                   {!locked && entryChanged.length === 0 && hasSavedMarks([entryId]) && (
-                    <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: false }))}>Done</button>
+                    <button type="button" className="btn btn-secondary mk-edit is-on" title="Lock marks" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: false }))}><LockOpen size={15} /> Editing</button>
                   )}
                   <button 
                     className="btn btn-primary save-btn"

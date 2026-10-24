@@ -1392,3 +1392,4 @@
   .mk-link { min-height: 2.75rem; padding: 0 0.5rem; }
   .mk-edit { justify-content: center; min-height: 2.75rem; }
 }
+.mk-edit.is-on { border-color: #991D20; color: #991D20; }
