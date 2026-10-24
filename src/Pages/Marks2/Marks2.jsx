@@ -1514,7 +1514,10 @@ const Marks2 = () => {
                     <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, workspace: true }))}>
                       <Lock size={15} /> Edit marks
                     </button>
-                  ) : (
+                  ) : (<>
+                    {!locked && workspaceChangedCount === 0 && hasSavedMarks(assessments.map((a) => a._id)) && (
+                      <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, workspace: false }))}>Done</button>
+                    )}
                     <button
                       className="btn btn-primary save-btn"
                       onClick={saveGradebookWorkspace}
@@ -1523,7 +1526,7 @@ const Marks2 = () => {
                     >
                       <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> {changeLabel(workspaceChangedCount, 'Save Workspace')}</>} />
                     </button>
-                  )}
+                  </>)}
                 </div>
               </div>
 
@@ -1695,7 +1698,10 @@ const Marks2 = () => {
                   <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: true }))}>
                     <Lock size={15} /> Edit marks
                   </button>
-                ) : (
+                ) : (<>
+                  {!locked && entryChanged.length === 0 && hasSavedMarks([entryId]) && (
+                    <button type="button" className="btn btn-secondary mk-edit" onClick={() => setUnlocked((u) => ({ ...u, [entryId]: false }))}>Done</button>
+                  )}
                   <button 
                     className="btn btn-primary save-btn"
                     onClick={saveMarks}
@@ -1704,7 +1710,7 @@ const Marks2 = () => {
                   >
                     <BusyLabel busy={saving} busyText="Saving…" idle={<><Save size={16} /> {changeLabel(entryChanged.length, 'Save Marks')}</>} />
                   </button>
-                )}
+                </>)}
               </div>
 
               {/* Search and Filter Section */}

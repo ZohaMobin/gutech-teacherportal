@@ -224,6 +224,9 @@ describe('editing safeguards', () => {
     await click(container.querySelector('.mk-edit'));
     expect(inputs().every((i) => !i.readOnly)).toBe(true);
     expect(container.querySelector('.mk-dirty')).toBeNull();                       // nothing changed yet: no nagging
+    await click([...container.querySelectorAll('.mk-edit')].find((b) => b.textContent === 'Done'));   // changed your mind: lock again
+    expect(inputs().every((i) => i.readOnly)).toBe(true);
+    await click(container.querySelector('.mk-edit'));
     await type(inputs()[0], '9');
     expect(inputs()[0].classList.contains('mk-changed')).toBe(true);
     expect(container.querySelector('.mk-was').textContent).toBe('was 7');
