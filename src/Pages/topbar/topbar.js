@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './topbar.css';
+import { useAuth } from '../../Components/AuthContext';
 
 const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
   
   const user = JSON.parse(sessionStorage.getItem('user'));
   
@@ -21,9 +23,8 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    navigate('/'); // Redirect to login page
+    logout();                           // clears the session AND tells the app, so no signed-in page is left on screen
+    navigate('/', { replace: true });   // Back must not return to a page of the ended session
   };
 
   return (
