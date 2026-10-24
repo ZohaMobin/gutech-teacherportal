@@ -428,3 +428,34 @@
 .auth-container input::placeholder {
   color: #aaa6a2;
 }
+
+/* ---- Phones ----------------------------------------------------------------------------------------------------------------------
+   The desktop screen is two panels side by side that slide over each other; at phone width each got half of a narrow screen (fields cut
+   off, text one word per line). On a phone it is one column: a compact maroon header (which also holds the switch between Sign In and
+   Register), then the one form that is active, full width. */
+@media (max-width: 767px) {
+  .auth-page { align-items: flex-start; padding: 12px; }
+  .auth-container { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; min-height: 0; border-radius: 22px; }
+
+  .toggle-container, .auth-container.active .toggle-container { position: static; order: -1; width: 100%; height: auto; overflow: visible; border-radius: 0; transform: none !important; transition: none; }
+  .toggle, .auth-container.active .toggle { position: static; left: auto; width: 100%; height: auto; transform: none !important; transition: none; }
+  .toggle-panel { position: static; width: 100%; height: auto; padding: 22px 22px 20px; align-items: flex-start; text-align: left; transform: none !important; transition: none; display: none; }
+  .auth-container:not(.active) .toggle-right, .auth-container.active .toggle-left { display: flex; }
+  .toggle-panel .eyebrow { margin-bottom: 10px; }
+  .toggle-panel h1 { margin: 0 0 4px; font-size: 22px; }
+  .toggle-panel p:not(.toggle-message) { display: none; }
+  .toggle-panel .toggle-message { margin: 4px 0 0; font-size: 13.5px; }
+  .auth-container .toggle-button { align-self: stretch; width: 100%; margin: 12px 0 0; padding: 11px 20px; min-height: 2.75rem; }
+
+  .form-container, .sign-in, .sign-up, .auth-container.active .sign-in, .auth-container.active .sign-up { position: static; width: 100%; height: auto; transform: none !important; transition: none; animation: none; opacity: 1; }
+  .sign-up, .auth-container.active .sign-in { display: none; }
+  .auth-container.active .sign-up { display: block; }
+  .auth-container form { height: auto; padding: 22px 20px 26px; }
+  .auth-container .error-message, .auth-container [role="alert"] { width: 100%; box-sizing: border-box; }
+  .form-title { margin: 0 0 14px; align-self: flex-start; }
+  .auth-container input, .auth-container select { font-size: 16px; min-height: 2.75rem; }
+  .auth-container select { margin: 8px 0; }
+  .auth-container button[type="submit"] { width: 100%; min-height: 2.9rem; margin: 12px 0 0; }
+  .auth-container .forgot-password { margin: 8px 0 0; padding: 6px 0; }
+}
+
